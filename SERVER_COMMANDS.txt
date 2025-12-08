@@ -1,0 +1,117 @@
+===========================================
+КОМАНДЫ ДЛЯ РАЗВЕРТЫВАНИЯ НА СЕРВЕРЕ
+===========================================
+
+1. ПОДКЛЮЧЕНИЕ К СЕРВЕРУ
+-------------------------
+ssh root@31.207.74.12
+
+
+2. УСТАНОВКА ПО (если еще не установлено)
+------------------------------------------
+apt update && apt upgrade -y
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+apt install docker-compose git certbot -y
+
+
+3. КЛОНИРОВАНИЕ РЕПОЗИТОРИЯ
+----------------------------
+cd /var/www
+git clone https://github.com/tazhibaevnurs/ASCO_web.git
+cd ASCO_web
+
+
+4. СОЗДАНИЕ .env ФАЙЛА
+-----------------------
+nano .env
+
+Вставьте следующее (ОБЯЗАТЕЛЬНО ИЗМЕНИТЕ ПАРОЛИ!):
+
+SECRET_KEY=ВАШ-СЕКРЕТНЫЙ-КЛЮЧ-ЗДЕСЬ
+DEBUG=False
+ALLOWED_HOSTS=asco.kg,www.asco.kg
+TIME_ZONE=Asia/Bishkek
+CSRF_TRUSTED_ORIGINS=https://asco.kg,https://www.asco.kg
+
+DB_NAME=ascodb
+DB_USER=ascouser
+DB_PASSWORD=НАДЕЖНЫЙ-ПАРОЛЬ-ДЛЯ-БД
+DB_HOST=db
+DB_PORT=5432
+
+POSTGRES_DB=ascodb
+POSTGRES_USER=ascouser
+POSTGRES_PASSWORD=НАДЕЖНЫЙ-ПАРОЛЬ-ДЛЯ-БД
+
+Для генерации SECRET_KEY выполните:
+python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+
+
+5. ЗАПУСК РАЗВЕРТЫВАНИЯ
+------------------------
+chmod +x deploy.sh
+./deploy.sh
+
+ИЛИ ВРУЧНУЮ:
+mkdir -p logs nginx/ssl certbot/conf certbot/www
+docker-compose up -d --build
+sleep 15
+docker-compose exec web python manage.py migrate --noinput
+docker-compose exec web python manage.py collectstatic --noinput
+
+
+6. СОЗДАНИЕ СУПЕРПОЛЬЗОВАТЕЛЯ
+------------------------------
+docker-compose exec web python manage.py createsuperuser
+
+
+7. НАСТРОЙКА SSL (РЕКОМЕНДУЕТСЯ)
+--------------------------------
+# Остановите nginx
+docker-compose stop nginx
+
+# Получите сертификат
+certbot certonly --standalone \
+  --email your-email@example.com \
+  --agree-tos \
+  --no-eff-email \
+  -d asco.kg \
+  -d www.asco.kg
+
+# Скопируйте сертификаты
+cp /etc/letsencrypt/live/asco.kg/fullchain.pem nginx/ssl/
+cp /etc/letsencrypt/live/asco.kg/privkey.pem nginx/ssl/
+
+# Используйте HTTPS конфигурацию
+cp nginx-https.conf nginx.conf
+
+# Запустите nginx
+docker-compose up -d nginx
+
+
+8. ПРОВЕРКА
+-----------
+docker-compose ps
+docker-compose logs -f
+curl -I http://asco.kg
+
+
+ПОЛЕЗНЫЕ КОМАНДЫ:
+-----------------
+# Просмотр логов
+docker-compose logs -f web
+docker-compose logs -f nginx
+
+# Перезапуск
+docker-compose restart
+
+# Остановка
+docker-compose down
+
+# Обновление кода
+git pull origin master
+docker-compose up -d --build
+docker-compose exec web python manage.py migrate --noinput
+docker-compose exec web python manage.py collectstatic --noinput
+
