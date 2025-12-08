@@ -1,0 +1,149 @@
+{% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% block content %}
+{% include 'partials/_status_badges.html' %}
+<div class="gray py-3">
+    <div class="container">
+        <div class="row">
+            <div class="colxl-12 col-lg-12 col-md-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'store:index' %}">Главная</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'customer:dashboard' %}">Покупатель</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Панель управления</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="middle">
+    <div class="container">
+        <div class="row align-items-start justify-content-between">
+             {% include 'customer/sidebar.html' %}
+
+            <div class="col-12 col-md-12 col-lg-8 col-xl-8">
+                <div class="row mb-4">
+                    <h4 class="mb-0 mb-4 fw-bold">Панель управления</h4>
+
+                    <div class="col-sm-6 col-lg-4 mb-3 mb-lg-0">
+                        <div class="d-flex justify-content-center align-items-center p-4 shadow-sm rounded">
+                            <span class="display-6 text-danger">
+                                <i class="fas fa-shopping-cart text-danger"></i>
+                            </span>
+                            <div class="ms-4">
+                                <div class="d-flex">
+                                    <h5 class="mb-0 fw-bold">{{orders.count}}</h5>
+                                </div>
+                                <p class="mb-0 h6 fw-semibold">Заказы</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6 col-lg-4 mb-3 mb-lg-0">
+                        <div class="d-flex justify-content-center align-items-center p-4 shadow-sm rounded">
+                            <span class="display-6 text-danger">
+                                <i class="fas fa-wallet text-warning"></i>
+                            </span>
+                            <div class="ms-4">
+                                <div class="d-flex">
+                                    <h5 class="mb-0 fw-bold">{{total_spent|floatformat:2|intcomma|default:"0.00"}} сом</h5>
+                                </div>
+                                <p class="mb-0 h6 fw-semibold">Всего потрачено</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6 col-lg-4 mb-3 mb-lg-0">
+                        <div class="d-flex justify-content-center align-items-center p-4 shadow-sm rounded">
+                            <span class="display-6 text-danger">
+                                <i class="fas fa-bell text-primary"></i>
+                            </span>
+                            <div class="ms-4">
+                                <div class="d-flex">
+                                    <h5 class="mb-0 fw-bold">{{notis.count}}</h5>
+                                </div>
+                                <p class="mb-0 h6 fw-semibold">Уведомления</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                {% for order in orders %}
+                    <div class="ord_list_wrap border mb-4 mfliud">
+                        <div class="ord_list_head bg-light bg-opacity-10 d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between px-2 px-md-3 py-2 py-md-3 gap-2 gap-md-0">
+                            <div class="olh_flex">
+                                <p class="m-0 p-0 small"><span class="text-muted">Номер заказа</span></p>
+                                <h6 class="mb-0 ft-medium">#{{order.order_id}}</h6>
+                            </div>
+                            <div class="olh_flex d-flex flex-column flex-sm-row gap-2 w-100 w-md-auto">
+                                <a href="{% url 'customer:order_detail' order.order_id %}" class="btn btn-sm bg-primary rounded text-white w-100 w-sm-auto">Просмотреть заказ <i class="fas fa-arrow-right ms-2"></i></a>
+                                
+                                {% if order.payment_status == "Failed" %}
+                                    <a href="{% url 'store:checkout' order.order_id %}" class="btn btn-sm bg-danger rounded text-white w-100 w-sm-auto">Повторить оплату <i class="fas fa-rotate ms-2"></i></a>
+                                {% endif %}
+                                    
+                            </div>
+                        </div>
+                        <div class="ord_list_body text-left">
+                            <!-- Single Item -->
+                            
+                            {% for item in order.order_items.all %}
+                                <div class="row align-items-center justify-content-center m-0 py-3 py-md-4 br-bottom">
+                                    <div class="col-12 col-md-5 col-lg-5 col-xl-6 mb-3 mb-md-0">
+                                        <div class="cart_single d-flex align-items-start mfliud-bot gap-2 gap-md-3">
+                                            <div class="cart_selected_single_thumb">
+                                                <a href="{% url 'store:product_detail' item.product.slug %}"><img src="{{item.product.image.url}}" width="75" class="img-fluid rounded" alt="" /></a>
+                                            </div>
+                                            <div class="cart_single_caption pl-2 pl-md-3">
+                                                <h4 class="product_title fs-sm ft-medium mb-1 lh-1"> <a href="{% url 'store:product_detail' item.product.slug %}">{{item.product.name}}</a></h4>
+                                                    <p class="mb-2 small">
+                                                    <span class="text-dark medium">Продавец: {{item.product.vendor.profile.full_name}}</span> <br />
+                                                    
+                                                    {% if item.color %}
+                                                        <span class="text-dark medium">Цвет: {{item.color}}</span>
+                                                    {% endif %}
+
+                                                    {% if item.size %}
+                                                        <span class="text-dark medium">Размер: {{item.size}}</span>
+                                                    {% endif %}
+                                                        
+                                                </p>
+                                                <h4 class="fs-sm ft-bold mb-0 lh-1">{{item.price}} сом</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3 col-lg-3 col-xl-2 mb-2 mb-md-0">
+                                        <p class="mb-1 p-0 small"><span class="text-muted">Статус</span></p>
+                                        <div class="delv_status"><span class="ft-medium small text-warning bg-light-warning rounded px-2 px-md-3 py-1">{{ order.get_status_display }}</span></div>
+                                    </div>
+                                    <div class="col-6 col-md-4 col-lg-4 col-xl-2 mb-2 mb-md-0">
+                                    <p class="mb-1 p-0 small"><span class="text-muted">Статус оплаты</span></p>
+                                    <h6 class="mb-0 ft-medium fs-sm">{{ order.get_payment_status_display }}</h6>
+                                    </div>
+                                    <div class="col-12 col-md-4 col-lg-4 col-xl-2">
+                                        <p class="mb-1 p-0 small"><span class="text-muted">Дата/Время заказа</span></p>
+                                        <h6 class="mb-0 ft-medium fs-sm">{{order.date}}</h6>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                                
+                        </div>
+                        <div class="ord_list_footer d-flex align-items-center justify-content-between br-top px-3">
+                            <div class="col-xl-12 pr-0 py-2 olf_flex d-flex align-items-center justify-content-between">
+                                <div class="olf_flex_inner hide_mob">
+                                    <p class="m-0 p-0"><span class="text-muted medium">Оплачено через {{order.payment_method}}</span></p>
+                                </div>
+                                <div class="float-end"><h5 class="mb-0 fs-sm ft-bold">{{order.total|floatformat:2|intcomma}} сом</h5></div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                <p>Заказов пока нет</p>
+                {% endfor %}
+                    
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}

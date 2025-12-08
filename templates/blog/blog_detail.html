@@ -1,0 +1,73 @@
+{% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% block content %}
+
+<main class="container">
+  <div class="p-4 p-md-5 mb-4 rounded text-body-emphasis bg-body-secondary">
+    <div class="d-flex flex-column justify-content-center align-items-center">
+        {% if blog.image %}
+            <img src="{{blog.image.url}}" style="width: 100%; height: 400px; object-fit: cover; border-radius: 10px;" class="mb-5" alt="{{ blog.title }}">
+        {% endif %}
+        <h1 class="display-4 fw-bold text-center">{{blog.title}}</h1>
+    </div>
+  </div>
+
+  <div class="row g-5">
+    <div class="col-md-12">
+
+      <article class="blog-post">
+        <p class="blog-post-meta mb-1 fs-6"><b>Дата:</b> {{blog.date|date:"d M Y, H:i"}}</p>
+        <p class="blog-post-meta mb-1 fs-6"><b>Автор:</b> {{blog.author.profile.full_name|default:blog.author.username}}</p>
+        <p class="blog-post-meta mb-1 fs-6"><b>Лайков:</b> {{total_likes}}</p>
+        <hr>
+        <div class="fs-4 blog-content">{{blog.content|safe}}</div>
+      </article>
+      <hr>
+      <br>
+      <div class="row">
+        <div class="col-lg-6">
+            <form action="{% url 'blog:create_comment' blog.slug %}" method="POST" class="row">
+                {% csrf_token %}
+                <div class="col-lg-12 mb-3">
+                    <label for="" class="fw-semibold">Полное имя</label>
+                    <input type="text" class="form-control" name="full_name" placeholder="Ваше полное имя" id="">
+                </div>
+                <div class="col-lg-12 mb-3">
+                    <label for="" class="fw-semibold">Email</label>
+                    <input type="text" class="form-control" placeholder="Введите ваш email" name="email" id="">
+                </div>
+                <div class="col-lg-12 mb-3">
+                    <label for="" class="fw-semibold">Комментарий</label>
+                    <textarea name="content" class="form-control" id="" placeholder="Напишите комментарий"></textarea>
+                </div>
+                <div class="col-lg-12 mb-3">
+                    <button type="submit" class="btn bg-primary text-white rounded btn-sm">Отправить комментарий <i class="fas fa-paper-plane ms-2"></i></button>
+                </div>
+            </form>
+        </div>
+      </div>
+      <br>
+      <h2>Комментарии ({{comments.count}})</h2>
+      <div class="row d-flex flex-column">
+                
+        
+        {% for c in comments %}
+            <div class="col-lg-4">
+                <div class="bg-light p-3 m-2">
+                    <h3>{{c.full_name}}</h3>
+                    <p class="text-muted small mb-2">{{c.date|date:"d M Y, H:i"}}</p>
+                    <p>{{c.content}}</p>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-lg-12">
+                <p class="text-muted">Пока нет комментариев. Будьте первым, кто оставит комментарий!</p>
+            </div>
+        {% endfor %}
+        
+        
+      </div>
+    </div>
+  </div>
+
+</main>
+
+{% endblock content %}

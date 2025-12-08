@@ -1,0 +1,112 @@
+{% extends 'vendor/base.html' %} {% load static %} {% load humanize %} {% block content %}
+{% include 'partials/_status_badges.html' %}
+<section class="middle">
+    <div class="container-fluid">
+        <div class="row align-items-start justify-content-between">
+            {% include 'vendor/sidebar.html' %}
+            <div class="col-12 col-md-12 col-lg-9 col-xl-10">
+                <h4 class="mb-0 mb-4 fw-bold">Заказы ({{orders_list.count}})</h4>
+
+                {% for order in orders %}
+                    <div class="ord_list_wrap border mb-4 mfliud">
+                        <div class="ord_list_head bg-light bg-opacity-10 d-flex align-items-center justify-content-between px-3 py-3">
+                            <div class="olh_flex">
+                                <p class="m-0 p-0"><span class="text-muted">Номер заказа</span></p>
+                                <h6 class="mb-0 ft-medium">#{{order.order_id}}</h6>
+                            </div>
+                            <div class="olh_flex">
+                                <a href="{% url 'vendor:order_detail' order.order_id %}" class="btn btn-sm bg-primary rounded text-white">Просмотреть заказ <i class="fas fa-arrow-right ms-2"></i></a>
+                            </div>
+                        </div>
+                        <div class="ord_list_body text-left">
+                            <!-- Single Item -->
+                            
+                            {% for item in order.order_items.all %}
+                                <div class="row align-items-center justify-content-center m-0 py-4 br-bottom">
+                                    <div class="col-xl-6 col-lg-5 col-md-5 col-12">
+                                        <div class="cart_single d-flex align-items-start mfliud-bot gap-3">
+                                            <div class="cart_selected_single_thumb">
+                                                <a href="{% url 'store:product_detail' item.product.slug %}"><img src="{{item.product.image.url}}" width="75" class="img-fluid rounded" alt="" /></a>
+                                            </div>
+                                            <div class="cart_single_caption pl-3">
+                                                <h4 class="product_title fs-sm ft-medium mb-1 lh-1"> <a href="{% url 'store:product_detail' item.product.slug %}">{{item.product.name}}</a></h4>
+                                                {% if item.color or item.size %}
+                                                    <p class="mb-2">
+                                                        {% if item.color %}
+                                                            <span class="text-dark medium">Цвет: {{ item.color }}</span><br />
+                                                        {% endif %}
+                                                        {% if item.size %}
+                                                            <span class="text-dark medium">Размер: {{ item.size }}</span>
+                                                        {% endif %}
+                                                    </p>
+                                                {% endif %}
+                                                <h4 class="fs-sm ft-bold mb-0 lh-1">{{item.price}} сом</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-2 col-lg-3 col-md-3 col-6">
+                                        <p class="mb-1 p-0"><span class="text-muted">Статус</span></p>
+                                    <div class="delv_status"><span class="badge-status status-{{ item.status }}">{{ item.get_status_display }}</span></div>
+                                    </div>
+                                    <div class="col-xl-2 col-lg-4 col-md-4 col-6">
+                                        <p class="mb-1 p-0"><span class="text-muted">Статус оплаты</span></p>
+                                        <h6 class="mb-0 ft-medium fs-sm">{{ order.get_payment_status_display }}</h6>
+                                    </div>
+                                    <div class="col-xl-2 col-lg-4 col-md-4 col-6">
+                                        <p class="mb-1 p-0"><span class="text-muted">Дата/Время заказа</span></p>
+                                        <h6 class="mb-0 ft-medium fs-sm">{{order.date}}</h6>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                                
+                        </div>
+                        <div class="ord_list_footer d-flex align-items-center justify-content-between br-top px-3">
+                            <div class="col-xl-12 pr-0 py-2 olf_flex d-flex align-items-center justify-content-between">
+                                {% if order.payment_method %}
+                                    <div class="olf_flex_inner hide_mob">
+                                        <p class="m-0 p-0"><span class="text-muted medium">Оплачено через {{ order.payment_method }}</span></p>
+                                    </div>
+                                {% endif %}
+                                <div class="float-end"><h5 class="mb-0 fs-sm ft-bold">Итого: {{order.total|floatformat:2|intcomma}} сом</h5></div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                <p>Заказов пока нет</p>
+                {% endfor %}
+
+
+                
+            </div>
+            
+        </div>
+        <ul class="pagination">
+            {% if orders.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ orders.previous_page_number }}">Предыдущая</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Предыдущая</span>
+                </li>
+            {% endif %}
+
+            {% for num in orders.paginator.page_range %}
+                <li class="page-item {% if orders.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+            {% endfor %}
+
+            {% if orders.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ orders.next_page_number }}">Следующая</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Следующая</span>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+</section>
+{% endblock content %}

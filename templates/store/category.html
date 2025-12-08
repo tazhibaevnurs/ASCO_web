@@ -1,0 +1,75 @@
+{% extends 'partials/base.html' %} 
+{% load static %} 
+{% load humanize %} 
+{% block content %}
+	
+	<section class="middle">
+		<div class="container">
+			<h2 class="fw-bold mb-3 mb-md-5">{{category.title}} (<span class="product_count">{{ products_list.count }}</span>)</h2>
+			<form class="mb-3 mb-md-5 d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-2">
+				<input type="text" class="form-control rounded" placeholder="Поиск товаров..." name="q" id="">
+				<button type="submit" class="btn bg-primary text-white rounded w-100 w-sm-auto"><i class="fas fa-search"></i></button>
+			</form>
+			<div class="row">
+				<div class="col-12"> 
+					<div class="row align-items-center rows-products" id="products-list">						
+						 
+						 {% for p in products %}
+							<div class="col-6 col-md-4 col-lg-3 mb-3">
+								<div class="product-card card b-0 rounded-3 shadow p-2">
+									<div class="product-card__media">
+										<a class="d-block" href="{% url 'store:product_detail' p.slug %}">
+											<img src="{{p.image.url}}" alt="{{ p.name }}" class="img-fluid">
+										</a>
+									</div>
+									<div class="product-card__body">
+										<div class="text-left">
+											<span class="product-card__category">{{p.category.title}}</span>
+											<h5 class="product-card__title"><a href="{% url 'store:product_detail' p.slug %}">{{p.name}}</a></h5>
+											<div class="product-card__rating">
+												{% if not p.average_rating %}
+													<i class="fas fa-star text-warning"></i>
+												{% elif p.average_rating > 0 and p.average_rating < 2 %}
+													<i class="fas fa-star text-warning"></i>
+												{% elif p.average_rating > 1 and p.average_rating < 3 %}
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+												{% elif p.average_rating > 2 and p.average_rating < 4 %}
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+												{% elif p.average_rating > 3 and p.average_rating < 5 %}
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+												{% elif p.average_rating > 4 %}
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+												{% endif %}
+											</div>
+											<div class="product-card__price">{{p.price}} сом</div>
+										</div>
+										<div class="product-card__actions">
+											<button type="button" class="btn btn-primary text-white w-100 add_to_cart" data-id="{{p.id}}">В корзину <i class="fas fa-shopping-cart ms-2"></i></button>
+											<input type="hidden" class="quantity" value="1">
+										</div>
+									</div>
+								</div>
+							</div>
+                        {% empty %}
+                        <div class="col-12">
+                        	<p class="text-muted text-center">Нет товаров в этой категории</p>
+                        </div>
+						 {% endfor %}
+							
+					</div>
+				</div>				
+			</div>
+		</div>
+	</section>
+
+{% endblock content %}

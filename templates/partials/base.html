@@ -1,0 +1,549 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zxx">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="author" content="Ecommerce" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>ASCO.KG</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+        <link href="{% static 'assets/css/styles.css' %}?v=4" rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+        <style>
+            @media (min-width: 993px) {
+                .nav-menu li {
+                    display: flex;
+                    align-items: center;
+                }
+                .nav-menu li a {
+                    display: flex;
+                    align-items: center;
+                }
+                .nav-menus-wrapper {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 1.5rem;
+                }
+                .nav-menu {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 1.8rem;
+                    flex: 1;
+                    margin: 0;
+                }
+                .nav-menu > li > a {
+                    height: 80px;
+                    padding: 0 0.75rem;
+                }
+                .nav-menu > li {
+                    display: flex;
+                    align-items: center;
+                }
+                .nav-menu.nav-menu-social {
+                    margin-left: auto;
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                }
+                .nav-menu.nav-menu-social li a,
+                .nav-menu.nav-menu-social li .btn {
+                    height: 80px;
+                    display: flex;
+                    align-items: center;
+                }
+                .nav-menu.nav-menu-social li .btn {
+                    height: auto;
+                    padding: 0.35rem 1rem;
+                }
+            }
+            .navigation .nav-menus-wrapper,
+            .navigation .nav-menu,
+            .navigation .nav-menu > li,
+            .navigation .nav-menu > li > a,
+            .nav-menu.nav-menu-social li a,
+            .nav-menu.nav-menu-social li .btn {
+                display: flex;
+                align-items: center;
+            }
+            .navigation {
+                min-height: 80px;
+            }
+            .nav-menu>li .nav-dropdown,
+            .nav-menu>li .nav-submenu {
+                top: 50px !important;
+                margin-top: 0 !important;
+                padding-top: 15px !important;
+            }
+            .nav-menu>li>.nav-dropdown:before {
+                top: -12px !important;
+            }
+            @media (max-width: 992px) {
+                .nav-menu .btn.bg-primary {
+                    padding: 0.25rem 0.75rem !important;
+                    font-size: 0.875rem !important;
+                }
+                .nav-menu-social .fa-shopping-basket {
+                    color: #000000 !important;
+                }
+                .nav-menu-social .fa-search,
+                .nav-menu-social .fa-user,
+                .nav-menu-social .fa-heart {
+                    color: #000000 !important;
+                }
+                .logo-desktop {
+                    display: none !important;
+                }
+                .logo-mobile {
+                    display: block !important;
+                }
+                .nav-brand img {
+                    width: 120px !important;
+                }
+            }
+            
+            @media (max-width: 575.98px) {
+                .nav-brand img {
+                    width: 100px !important;
+                }
+                footer {
+                    margin-top: 2rem !important;
+                }
+            }
+            
+            /* ========== АДАПТИВНОЕ МОБИЛЬНОЕ МЕНЮ (только для экранов < 768px) ========== */
+            @media (max-width: 767.98px) {
+                /* Скрываем заголовок и футер на десктопе */
+                .mobile-menu-header,
+                .mobile-menu-footer {
+                    display: none;
+                }
+                
+                /* Показываем только на мобильных в portrait режиме */
+                .navigation-portrait .mobile-menu-header,
+                .navigation-portrait .mobile-menu-footer {
+                    display: flex;
+                }
+                
+                /* Структура мобильного меню */
+                .navigation-portrait .nav-menus-wrapper {
+                    display: flex !important;
+                    flex-direction: column !important;
+                    height: 100vh !important;
+                    background-color: #ffffff !important;
+                }
+                
+                /* Заголовок меню с логотипом */
+                .navigation-portrait .mobile-menu-header {
+                    align-items: center;
+                    justify-content: flex-start;
+                    padding: 1.25rem 1.5rem;
+                    background-color: #f8f9fa;
+                    border-bottom: 1px solid #e9ecef;
+                    flex-shrink: 0;
+                }
+                
+                .navigation-portrait .mobile-menu-logo img {
+                    width: 140px;
+                    height: auto;
+                }
+                
+                /* Основное меню */
+                .navigation-portrait .nav-menu {
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 0;
+                    margin: 0;
+                    background-color: #ffffff;
+                }
+                
+                .navigation-portrait .nav-menu > li {
+                    border-bottom: 1px solid #f0f0f0;
+                }
+                
+                .navigation-portrait .nav-menu > li > a {
+                    padding: 1.25rem 1.5rem;
+                    color: #333;
+                    font-weight: 500;
+                    font-size: 1rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    transition: all 0.2s ease;
+                }
+                
+                .navigation-portrait .nav-menu > li > a:hover {
+                    background-color: #f8f9fa;
+                    color: #EB332C;
+                }
+                
+                /* Стрелки для выпадающих меню */
+                .navigation-portrait .mobile-arrow-icon {
+                    font-size: 0.75rem;
+                    margin-left: 0.75rem;
+                    transition: transform 0.3s ease;
+                    color: #666;
+                }
+                
+                .navigation-portrait .mobile-dropdown-item.active > a .mobile-arrow-icon {
+                    transform: rotate(180deg);
+                    color: #EB332C;
+                }
+                
+                /* Выпадающие подменю */
+                .navigation-portrait .mobile-submenu-list {
+                    display: none !important;
+                    background-color: #f8f9fa !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    border-radius: 0 !important;
+                    box-shadow: none !important;
+                    position: static !important;
+                    left: auto !important;
+                    top: auto !important;
+                }
+                
+                .navigation-portrait .mobile-dropdown-item.active > .mobile-submenu-list {
+                    display: block !important;
+                }
+                
+                .navigation-portrait .mobile-submenu-list li {
+                    border-bottom: 1px solid #e9ecef;
+                }
+                
+                .navigation-portrait .mobile-submenu-list li:last-child {
+                    border-bottom: none;
+                }
+                
+                .navigation-portrait .mobile-submenu-list li a {
+                    padding: 1rem 1.5rem 1rem 3rem !important;
+                    color: #666 !important;
+                    font-size: 0.95rem;
+                    display: block;
+                    transition: all 0.2s ease;
+                }
+                
+                .navigation-portrait .mobile-submenu-list li a:hover {
+                    background-color: #e9ecef !important;
+                    color: #EB332C !important;
+                    padding-left: 3.5rem !important;
+                }
+                
+                /* Контактные данные внизу */
+                .navigation-portrait .mobile-menu-footer {
+                    flex-shrink: 0;
+                    padding: 1.5rem;
+                    background-color: #f8f9fa;
+                    border-top: 1px solid #e9ecef;
+                    flex-direction: column;
+                }
+                
+                .navigation-portrait .mobile-menu-contacts h5 {
+                    color: #333;
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    margin-bottom: 1rem;
+                }
+                
+                .navigation-portrait .mobile-menu-contacts p {
+                    color: #666;
+                    font-size: 0.9rem;
+                    margin-bottom: 0.75rem;
+                    line-height: 1.6;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 0.75rem;
+                }
+                
+                .navigation-portrait .mobile-menu-contacts p i {
+                    color: #EB332C;
+                    width: 18px;
+                    margin-top: 0.2rem;
+                    flex-shrink: 0;
+                }
+                
+                .navigation-portrait .mobile-menu-contacts p a {
+                    color: #EB332C;
+                    text-decoration: none;
+                    transition: color 0.2s ease;
+                }
+                
+                .navigation-portrait .mobile-menu-contacts p a:hover {
+                    color: #c12721;
+                    text-decoration: underline;
+                }
+                
+                .navigation-portrait .mobile-menu-social {
+                    display: flex;
+                    gap: 0.75rem;
+                    margin-top: 1rem;
+                }
+                
+                .navigation-portrait .mobile-menu-social a {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background-color: #EB332C;
+                    color: #fff;
+                    text-decoration: none;
+                    transition: all 0.3s ease;
+                }
+                
+                .navigation-portrait .mobile-menu-social a:hover {
+                    background-color: #c12721;
+                    transform: translateY(-2px);
+                }
+                
+                /* Скрываем стандартные индикаторы на мобильных */
+                .navigation-portrait .submenu-indicator,
+                .navigation-portrait .submenu-indicator-chevron {
+                    display: none !important;
+                }
+                
+                /* Убираем треугольник перед выпадающим меню на мобильных */
+                .navigation-portrait .nav-menu > li > .nav-dropdown:before {
+                    display: none !important;
+                }
+            }
+            
+            /* На десктопе скрываем мобильные элементы */
+            @media (min-width: 768px) {
+                .mobile-menu-header,
+                .mobile-menu-footer,
+                .mobile-arrow-icon {
+                    display: none !important;
+                }
+                
+                .mobile-dropdown-item {
+                    position: relative;
+                }
+            }
+            @media (min-width: 993px) {
+                .logo-mobile {
+                    display: none !important;
+                }
+                .logo-desktop {
+                    display: block !important;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="main-wrapper">
+            <div class="header header-dark dark-text">
+                <div class="container">
+                    <nav id="navigation" class="navigation navigation-landscape">
+                        <div class="nav-header">
+                            <a class="nav-brand" href="{% url 'store:index' %}">
+                                <img style="width: 170px; object-fit: contain;" src="{% static 'assets/img/asco_logo_white.svg' %}" class="logo logo-desktop" alt="" />
+                                <img style="width: 170px; object-fit: contain;" src="{% static 'assets/img/asco_logo_black.svg' %}" class="logo logo-mobile" alt="" />
+                            </a>
+                            <div class="nav-toggle"></div>
+                            <div class="mobile_nav">
+                                <ul>
+                                    <li>
+                                        <a href="#"><i class="fas fa-search-alt"></i></a>
+                                    </li>
+                                    <li>
+                                        <a href="#"><i class="fas fa-user"></i></a>
+                                    </li>
+                                    <li>
+                                        <a href="{% url 'store:cart' %}"> <i class="fas fa-shopping-basket"></i><span class="dn-counter total_cart_items">{{total_cart_items}}</span> </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="nav-menus-wrapper">
+                            <!-- Мобильный заголовок с логотипом (только для мобильных) -->
+                            <div class="mobile-menu-header">
+                                <a class="mobile-menu-logo" href="{% url 'store:index' %}">
+                                    <img src="{% static 'assets/img/asco_logo_black.svg' %}" alt="ASCO.KG" />
+                                </a>
+                            </div>
+                            
+                            <ul class="nav-menu">
+                                <li><a href="/">Главная</a></li>
+                                <li>
+                                    <a href="{% url 'store:shop' %}">Магазин</a>
+                                </li>
+                                <li class="mobile-dropdown-item">
+                                    <a href="javascript:void(0);" class="mobile-dropdown-link">Категории <i class="fas fa-chevron-down mobile-arrow-icon"></i></a>
+                                    <ul class="nav-dropdown nav-submenu mobile-submenu-list">
+                                        {% for c in category_ %}
+                                            <li><a href="{% url 'store:category' c.id %}">{{ c.title }}</a></li>
+                                        {% endfor %}
+                                    </ul>
+                                </li>
+                                <li class="mobile-dropdown-item">
+                                    <a href="javascript:void(0);" class="mobile-dropdown-link">Страницы <i class="fas fa-chevron-down mobile-arrow-icon"></i></a>
+                                    <ul class="nav-dropdown nav-submenu mobile-submenu-list">
+                                        <li><a href="{% url 'blog:blog_list' %}">Блог</a></li>
+                                        <li><a href="{% url 'store:about' %}">О нас</a></li>
+                                        <li><a href="{% url 'store:contact' %}">Контакты</a></li>
+                                        <li><a href="{% url 'store:faqs' %}">Часто задаваемые вопросы</a></li>
+                                        <li><a href="{% url 'store:privacy_policy' %}">Политика конфиденциальности</a></li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <a href="{% url 'store:contact' %}">Контакты</a>
+                                </li>
+                                {% if request.user.is_authenticated %}
+                                    {% if request.user.role == 'manager' or request.user.role == 'superadmin' or request.user.is_staff or request.user.is_superuser %}
+                                        <li class="mobile-dropdown-item">
+                                            <a href="javascript:void(0);" class="mobile-dropdown-link">Управление <i class="fas fa-chevron-down mobile-arrow-icon"></i></a>
+                                            <ul class="nav-dropdown nav-submenu mobile-submenu-list">
+                                                <li><a href="{% url 'vendor:dashboard' %}">Панель</a></li>
+                                                <li><a href="{% url 'vendor:products' %}">Товары</a></li>
+                                                <li><a href="{% url 'vendor:orders' %}">Заказы</a></li>
+                                                <li><a href="{% url 'vendor:categories' %}">Категории</a></li>
+                                            </ul>
+                                        </li>
+                                    {% endif %}
+                                {% endif %}
+                            </ul>
+                            
+                            <!-- Контактные данные внизу (только для мобильных) -->
+                            <div class="mobile-menu-footer">
+                                <div class="mobile-menu-contacts">
+                                    <h5>Контакты</h5>
+                                    <p><i class="fas fa-map-marker-alt"></i> Кыргызстан, г. Бишкек, ул. Бейшена Егимбаева 145/1</p>
+                                    <p><i class="fas fa-phone"></i> <a href="tel:+996509005005">+996 509 005 005</a></p>
+                                    <p><i class="fas fa-envelope"></i> <a href="mailto:info@asco.com">info@asco.com</a></p>
+                                </div>
+                            </div>
+
+                            <ul class="nav-menu nav-menu-social align-to-right">
+                                <li>
+                                    <a href="{% url 'store:cart' %}"><i class="fas fa-shopping-basket text-white"></i><span class="dn-counter total_cart_items">{{ total_cart_items }}</span></a>
+                                </li>
+                                {% if request.user.is_authenticated %}
+                                    {% if request.user.role == 'manager' or request.user.role == 'superadmin' or request.user.is_staff or request.user.is_superuser %}
+                                        <li>
+                                            <a href="{% url 'vendor:profile' %}"><i class="fas fa-user text-white"></i></a>
+                                        </li>
+                                        <li>
+                                            <a href="{% url 'userauths:sign-out' %}" class="btn bg-primary py-2 px-4 rounded text-white"><i class="fas fa-sign-out-alt me-1"></i> Выйти</a>
+                                        </li>
+                                    {% endif %}
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+
+           
+           {% for message in messages %}
+                <div class="alert alert-{{message.tags}} alert-dismissible fade show text-center" role="alert">
+                    <strong>{{message}}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+           {% endfor %}
+            
+
+            {% block content %} {% endblock content %}
+
+            <footer class="dark-footer skin-dark-footer" style="margin-top: 500px">
+                <div class="footer-middle">
+                    <div class="container">
+                        <div class="row justify-content-center">
+                            <div class="col-12 col-md-6 col-xl-4 col-lg-4 mb-4 mb-md-0">
+                                <div class="footer_widget text-center">
+                                    <img src="{% static 'assets/img/logo-light.png' %}" class="img-footer small mb-2" alt="" />
+
+                                    <div class="address mt-3">Адрес магазина: Кыргызстан, г. Бишкек, ул. Бейшена Егимбаева 145/1</div>
+                                    <div class="address mt-3">+996 509 005 005<br />info@asco.com</div>
+                                    <div class="address mt-3">
+                                        <ul class="list-inline">
+                                            <li class="list-inline-item">
+                                                <a href="#"><i class="fab fa-facebook"></i></a>
+                                            </li>
+                                            <li class="list-inline-item">
+                                                <a href="#"><i class="fab fa-twitter"></i></a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-6 col-xl-4 col-lg-4 mb-4 mb-md-0">
+                                <div class="footer_widget text-center">
+                                    <h4 class="widget_title">Меню</h4>
+                                    <ul class="footer-menu">
+                                        <li><a href="/">Главная</a></li>
+                                        <li><a href="{% url 'store:shop' %}">Магазин</a></li>
+                                        <li><a href="{% url 'blog:blog_list' %}">Блог</a></li>
+                                        <li><a href="{% url 'store:about' %}">О нас</a></li>
+                                        <li><a href="{% url 'store:contact' %}">Контакты</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-6 col-xl-4 col-lg-4">
+                                <div class="footer_widget text-center">
+                                    <h4 class="widget_title">Поддержка</h4>
+                                    <ul class="footer-menu">
+                                        <li><a href="{% url 'store:contact' %}">Связаться с нами</a></li>
+                                        <li><a href="{% url 'store:about' %}">О нас</a></li>
+                                        <li><a href="{% url 'store:faqs' %}">Часто задаваемые вопросы</a></li>
+                                        <li><a href="{% url 'store:privacy_policy' %}">Политика конфиденциальности</a></li>
+                                        <li><a href="{% url 'store:terms_conditions' %}">Условия использования</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+
+        <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+        <script src="{% static 'assets/js/popper.min.js' %}"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+        <script src="{% static 'assets/js/bootstrap.min.js' %}"></script>
+        <script src="{% static 'assets/js/ion.rangeSlider.min.js' %}"></script>
+        <script src="{% static 'assets/js/slick.js' %}"></script>
+        <script src="{% static 'assets/js/slider-bg.js' %}"></script>
+        <script src="{% static 'assets/js/lightbox.js' %}"></script>
+        <script src="{% static 'assets/js/smoothproducts.js' %}"></script>
+        <script src="{% static 'assets/js/snackbar.min.js' %}"></script>
+        <script src="{% static 'assets/js/jQuery.style.switcher.js' %}"></script>
+        <script src="{% static 'assets/js/custom.js' %}"></script>
+        <script src="{% static 'assets/js/function.js' %}?v=3"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        
+        <script>
+            // Обработка мобильного меню
+            $(document).ready(function() {
+                // Выпадающие разделы меню - используем делегирование событий
+                $(document).on('click', '.mobile-dropdown-link', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    var $link = $(this);
+                    var $parent = $link.closest('.mobile-dropdown-item');
+                    var $submenu = $parent.find('.mobile-submenu-list');
+                    
+                    // Закрываем другие открытые подменю
+                    $('.mobile-dropdown-item').not($parent).removeClass('active').find('.mobile-submenu-list').slideUp(300);
+                    
+                    // Переключаем текущее подменю
+                    $parent.toggleClass('active');
+                    $submenu.slideToggle(300);
+                });
+                
+                // Инициализация: закрываем все подменю при загрузке
+                $('.mobile-dropdown-item').removeClass('active');
+                $('.mobile-submenu-list').hide();
+            });
+        </script>
+
+    </body>
+</html>

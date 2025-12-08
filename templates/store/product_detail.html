@@ -1,0 +1,341 @@
+{% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% block content %}
+<section class="middle">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 col-md-6 col-xl-6 mb-4 mb-md-0">
+                <div class="sp-loading"><img src="{{product.image.url}}" alt="" /><br />ЗАГРУЗКА ИЗОБРАЖЕНИЙ</div>
+                <div class="sp-wrap">
+                    <a href="{{product.image.url}}"><img class="product-detail-image img-fluid" src="{{product.image.url}}" alt="{{ product.name }}" /></a>
+
+                    {% for image in product.gallery.all %}
+                    <a href="{{image.image.url}}"><img class="product-detail-image img-fluid" src="{{image.image.url}}" alt="{{ product.name }}" /></a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-6">
+                <div class="prd_details">
+                    <div class="prt_01 mb-1"><span class="text-purple bg-light-purple rounded py-1">{{product.category.title}}</span></div>
+                    <div class="prt_02 mb-3">
+                        <h2 class="ft-bold mb-1">{{product.name}}</h2>
+                        <div class="text-left">
+                            <div class="star-rating align-items-center d-flex justify-content-left mb-1 p-0">
+                                {% if product.average_rating > 0 and product.average_rating < 2 %}
+                                <i class="fas fa-star text-warning"></i>
+                                {% elif product.average_rating > 1 and product.average_rating < 3 %}
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                {% elif product.average_rating > 2 and product.average_rating < 4 %}
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                {% elif product.average_rating > 3 and product.average_rating < 5 %}
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                {% elif product.average_rating > 4 %}
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                {% endif %}
+                                <span class="small ms-2">({{ product.reviews.all.count }} Отзывов)</span>
+                            </div>
+                            <div class="elis_rty mt-3">
+                                <span class="ft-medium text-muted line-through fs-md me-3"> {% if product.regular_price %} {{product.regular_price}} сом {% endif %} </span>
+                                <span class="ft-bold theme-cl fs-lg me-3">{{product.price}} сом</span>
+                                <span class="ft-regular text-light bg-success py-1 px-2 fs-sm"> {% if product.stock > 0 %} В наличии {% else %} Нет в наличии {% endif %} </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prt_03 mb-4">
+                        <p>{{product.description|safe|truncatechars:200}}</p>
+                    </div>
+
+                    <div class="mb-2">
+                        <p class="d-flex align-items-center text-dark ft-medium">Цвет:</p>
+                        <div class="text-left">
+                            {% for variant in product.variants.all %}
+                                {% if variant.name == "Color" %}
+                                    {% for c in variant.items.all %}
+                                        <div class="form-check form-option form-check-inline mb-1">
+                                            <input class="form-check-input" value="{{c.title}}" type="radio" name="color" id="{{c.content}}" />
+                                            <label class="form-option-label" for="{{c.content}}"><span class="form-option-color" style="background-color: {{c.content}}"></span></label>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="prt_04 mb-4">
+                        <p class="d-flex align-items-center mb-0 text-dark ft-medium">Размер:</p>
+                        <div class="text-left pb-0 pt-2">
+                            {% for variant in product.variants.all %}
+                                {% if variant.name == "Size" %}
+                                    {% for s in variant.items.all %}
+                                        <div class="form-check size-option form-option form-check-inline mb-2">
+                                            <input class="form-check-input" value="{{s.title}}" type="radio" name="size" id="{{s.content}}"  />
+                                            <label class="form-option-label" for="{{s.content}}">{{s.content}}</label>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="prt_05 mb-4">
+                        <div class="d-flex flex-column flex-sm-row gap-2 gap-sm-3 mb-7">
+                            <div class="w-100 w-sm-auto">
+                                <select class="form-select quantity" name="quantity" id="quantity">
+                                    {% for qty in product_stock_range %}
+                                        <option class="stock-{{qty}}" value="{{ qty }}">{{ qty }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="w-100 w-sm-auto">
+                                <button type="button" class="btn btn-sm bg-primary text-white rounded w-100 w-sm-auto add_to_cart" data-id="{{product.id}}">В корзину <i class="fas fa-shopping-cart ms-2"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prt_06">
+                        <div class="d-flex flex-column flex-sm-row flex-wrap align-items-start align-items-sm-center gap-2 gap-sm-3">
+                            <span class="mb-2 mb-sm-0">Поделиться:</span>
+                            <a href="#" class="btn btn-sm bg-light text-dark rounded share-btn w-100 w-sm-auto" data-channel="telegram">
+                                <i class="fab fa-telegram-plane me-2"></i>Telegram
+                            </a>
+                            <a href="#" class="btn btn-sm bg-light text-dark rounded share-btn w-100 w-sm-auto" data-channel="whatsapp">
+                                <i class="fab fa-whatsapp me-2 text-success"></i>WhatsApp
+                            </a>
+                        </div>
+                        <small class="text-success d-none mt-2 share-feedback">Ссылка скопирована в буфер обмена</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- ======================= Product Detail End ======================== -->
+
+<!-- ======================= Product Description ======================= -->
+<section class="middle">
+    <div class="container">
+        <div class="row align-items-center justify-content-center">
+            <div class="col-xl-11 col-lg-12 col-md-12 col-sm-12">
+                <ul class="nav nav-tabs b-0 d-flex align-items-center justify-content-center simple_tab_links mb-4" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link active" id="description-tab" href="#description" data-toggle="tab" role="tab" aria-controls="description" aria-selected="true">Описание</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" href="#information" id="information-tab" data-toggle="tab" role="tab" aria-controls="information" aria-selected="false">Дополнительная информация</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" href="#reviews" id="reviews-tab" data-toggle="tab" role="tab" aria-controls="reviews" aria-selected="false">Отзывы</a>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="myTabContent">
+                    <!-- Description Content -->
+                    <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
+                        <div class="description_info">
+                            <p class="p-0 mb-2">
+                                {{product.description|safe}}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Additional Content -->
+                    <div class="tab-pane fade" id="information" role="tabpanel" aria-labelledby="information-tab">
+                        <div class="additionals">
+                            <table class="table">
+                                <tbody>
+                                    {% for variant in product.variants.all %}
+                                        {% if variant.name == "Specifications" %}
+                                            {% for s in variant.items.all %}
+                                                <tr>
+                                                    <th class="ft-medium text-dark">{{s.title}}</th>
+                                                    <td>{{s.content}}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Reviews Content -->
+                    <div class="tab-pane fade" id="reviews" role="tabpanel" aria-labelledby="reviews-tab">
+                        <div class="reviews_info">
+                            
+                            {% for r in product.reviews.all %}
+                                <div class="single_rev d-flex align-items-start br-bottom py-3 bg-light rounded p-3 mb-3">
+                                    <div class="single_rev_caption d-flex align-items-start pl-3">
+                                        <div class="single_capt_left">
+                                            <h5 class="mb-0 fs-md ft-medium lh-1">{{r.user.username|title}}</h5>
+                                            <span class="small">{{r.date|date:"d M, Y"}}.</span>
+                                            <p>{{r.review}}</p>
+                                        </div>
+                                        <div class="single_capt_right">
+                                            <div class="star-rating align-items-center d-flex justify-content-left mb-1 p-0">
+                                                {% if r.rating > 0 and r.rating < 2 %}
+                                                    <i class="fas fa-star text-warning"></i>
+                                                {% elif r.rating > 1 and r.rating < 3 %}
+                                                    <i class="fas fa-star text-warning"></i>
+                                                    <i class="fas fa-star text-warning"></i>
+                                                {% elif r.rating > 2 and r.rating < 4 %}
+                                                    <i class="fas fa-star text-warning"></i>
+                                                    <i class="fas fa-star text-warning"></i>
+                                                    <i class="fas fa-star text-warning"></i>
+                                                {% elif r.rating > 3 and r.rating < 5 %}
+                                                    <i class="fas fa-star text-warning"></i>
+                                                    <i class="fas fa-star text-warning"></i>
+                                                    <i class="fas fa-star text-warning"></i>
+                                                    <i class="fas fa-star text-warning"></i>
+                                                {% elif r.rating > 4 %}
+                                                    <i class="fas fa-star text-warning"></i>
+                                                    <i class="fas fa-star text-warning"></i>
+                                                    <i class="fas fa-star text-warning"></i>
+                                                    <i class="fas fa-star text-warning"></i>
+                                                    <i class="fas fa-star text-warning"></i>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                                
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+{% if related_products %}
+    <section class="middle pt-0">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                    <div class="sec_title position-relative text-center">
+                        <h3 class="ft-bold pt-3">Related Products</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row align-items-center rows-products">
+             {% for p in related_products %}
+                <div class="col-6 col-md-4 col-lg-3 mb-3">
+                    <div class="product-card card b-0 rounded-3 shadow p-2">
+                        <div class="product-card__media">
+                            <a class="d-block" href="{% url 'store:product_detail' p.slug %}">
+                                <img src="{{p.image.url}}" alt="{{ p.name }}" class="img-fluid">
+                            </a>
+                        </div>
+                        <div class="product-card__body">
+                            <div class="text-left">
+                                <span class="product-card__category">{{p.category.title}}</span>
+                                <h5 class="product-card__title"><a href="{% url 'store:product_detail' p.slug %}">{{p.name}}</a></h5>
+                                <div class="product-card__rating">
+                                    {% if not p.average_rating %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% elif p.average_rating > 0 and p.average_rating < 2 %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% elif p.average_rating > 1 and p.average_rating < 3 %}
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% elif p.average_rating > 2 and p.average_rating < 4 %}
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% elif p.average_rating > 3 and p.average_rating < 5 %}
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% elif p.average_rating > 4 %}
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="product-card__price">{{p.price}} сом</div>
+                            </div>
+                            <div class="product-card__actions">
+                                <button type="button" class="btn btn-primary text-white w-100 add_to_cart" data-id="{{p.id}}">В корзину <i class="fas fa-shopping-cart ms-2"></i></button>
+                                <input type="hidden" class="quantity" value="1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        </div>
+    </section>
+{% endif %}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const shareButtons = document.querySelectorAll(".share-btn");
+        const feedback = document.querySelector(".share-feedback");
+        const shareUrl = "{{ request.build_absolute_uri }}";
+        const shareText = "{{ product.name|escapejs }}";
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text);
+            }
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.top = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            return new Promise((resolve, reject) => {
+                try {
+                    document.execCommand("copy");
+                    resolve();
+                } catch (err) {
+                    reject(err);
+                } finally {
+                    document.body.removeChild(textArea);
+                }
+            });
+        }
+
+        shareButtons.forEach((btn) => {
+            btn.addEventListener("click", function (event) {
+                event.preventDefault();
+                const channel = this.dataset.channel;
+
+                copyToClipboard(shareUrl).then(() => {
+                    if (feedback) {
+                        feedback.classList.remove("d-none");
+                        setTimeout(() => feedback.classList.add("d-none"), 2000);
+                    }
+                }).catch(() => {});
+
+                let targetUrl = shareUrl;
+                if (channel === "telegram") {
+                    targetUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+                } else if (channel === "whatsapp") {
+                    targetUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText} - ${shareUrl}`)}`;
+                }
+
+                window.open(targetUrl, "_blank");
+            });
+        });
+    });
+</script>
+
+{% endblock content %}

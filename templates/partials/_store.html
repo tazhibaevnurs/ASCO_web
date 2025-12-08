@@ -1,0 +1,47 @@
+<div class="products-grid" id="products-list">
+						 {% for p in products %}
+	<div class="product-card card b-0 rounded-3 shadow p-2">
+		<div class="product-card__media">
+			<a class="d-block" href="{% url 'store:product_detail' p.slug %}">
+				<img src="{{p.image.url}}" alt="{{ p.name }}" class="img-fluid">
+			</a>
+										</div>
+		<div class="product-card__body">
+										<div class="text-left">
+				<span class="product-card__category">{{p.category.title}}</span>
+				<h5 class="product-card__title"><a href="{% url 'store:product_detail' p.slug %}">{{p.name}}</a></h5>
+				<div class="product-card__rating">
+					{% if not p.average_rating %}
+													<i class="fas fa-star text-warning"></i>
+													{% elif p.average_rating > 0 and p.average_rating < 2 %}
+													<i class="fas fa-star text-warning"></i>
+													{% elif p.average_rating > 1 and p.average_rating < 3 %}
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													{% elif p.average_rating > 2 and p.average_rating < 4 %}
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													{% elif p.average_rating > 3 and p.average_rating < 5 %}
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													{% elif p.average_rating > 4 %}
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													<i class="fas fa-star text-warning"></i>
+													{% endif %}
+												</div>
+				<div class="product-card__price">{{p.price}} сом</div>
+											</div>
+			<div class="product-card__actions">
+				<button type="button" class="btn btn-primary text-white w-100 add_to_cart" data-id="{{p.id}}">В корзину <i class="fas fa-shopping-cart ms-2"></i></button>
+                                        		<input type="hidden" class="quantity" value="1" name="" id="">
+									</div>
+								</div>
+							</div>
+						 {% endfor %}
+					</div>

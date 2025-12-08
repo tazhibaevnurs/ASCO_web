@@ -1,0 +1,163 @@
+{% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% block content %}
+
+<div class="gray py-3">
+    <div class="container">
+        <div class="row">
+            <div class="colxl-12 col-lg-12 col-md-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Главная</a></li>
+                        <li class="breadcrumb-item"><a href="/shop.html">Магазин</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Корзина</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="middle">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                <div class="sec_title position-relative text-center">
+                    <h3 class="ft-bold pt-3">Корзина</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 col-lg-9 order-2 order-lg-1">
+                <h4 class="fw-bold p-2 p-md-3">Товары в корзине</h4>
+                <div style="overflow-y: auto; max-height: 650px; overflow-x: hidden" class="p-2 p-md-3">
+                    {% for item in items %}
+                        <div class="shadow rounded mb-3 item_div_{{item.id}}">
+                            <div class="row d-flex align-items-center p-2 p-md-3">
+                                <div class="col-12 col-md-4 d-flex gap-2 gap-md-3 mb-3 mb-md-0">
+                                    <img src="{{item.product.image.url}}" alt="{{ item.product.name }}" class="img-fluid" style="width: 80px; height: 80px; min-width: 80px; object-fit: cover" />
+                                    <div class="p-1 p-md-2">
+                                        <h5 class="fs-6 fs-md-5">{{item.product.name}}</h5>
+                                        <p class="mb-0 mt-0 small">Цена: {{item.price|intcomma}} сом</p>
+                                        <p class="mb-0 mt-0 small">Продавец: {{item.product.vendor.profile.full_name}}</p>
+                                    </div>
+                                </div> 
+                                <div class="col-6 col-md-2 mb-2 mb-md-0">
+                                    <p class="mb-0 small d-md-none">Цена за шт:</p>
+                                    <h4 class="fs-6 fs-md-5">{{ item.price|intcomma }} сом</h4>
+                                </div>
+                                <div class="col-6 col-md-2 d-flex mb-2 mb-md-0">
+                                    <button type="button" class="btn bg-primary text-white btn-sm update_cart_qty" data-update_type="decrease" data-product_id="{{item.product.id}}" data-item_id="{{item.id}}">-</button>
+                                    <input type="number" readonly class="form-control form-sm item-qty-{{item.id}}" value="{{item.qty}}" style="max-width: 60px;" />
+                                    <button type="button" class="btn bg-primary text-white btn-sm update_cart_qty" data-update_type="increase" data-product_id="{{item.product.id}}" data-item_id="{{item.id}}">+</button>
+                                </div>
+                                <div class="col-6 col-md-2 mb-2 mb-md-0">
+                                    <p class="mb-0 small d-md-none">Итого:</p>
+                                    <h4 class="fs-6 fs-md-5 mb-0"><span class="item_sub_total_{{item.id}}">{{item.sub_total|intcomma}}</span> сом</h4>
+                                </div>
+                                <div class="col-6 col-md-2 text-end text-md-start">
+                                    <button type="button" class="btn bg-danger text-white btn-sm rounded delete_cart_item" data-item_id="{{item.id}}" data-product_id="{{item.product.id}}"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-12 col-lg-3 order-1 order-lg-2 mb-4 mb-lg-0">
+                <div class="shadow rounded p-3">
+                    <h4 class="fw-bold">Итого по заказу</h4>
+
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <p class="fw-semibold fs-6">Подытог</p>
+                            <p class="fs-6"><span class="cart_sub_total">{{cart_sub_total|intcomma}}</span> сом</p>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <p class="fw-semibold fs-6">Доставка</p>
+                            <p class="fs-6">0 сом</p>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <p class="fw-semibold fs-6">Налог</p>
+                            <p class="fs-6">0 сом</p>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <p class="fw-bold text-dark fs-5">Итого</p>
+                            <p class="fw-bold text-dark fs-5"><span class="cart_sub_total">{{cart_sub_total|intcomma}}</span> сом</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column w-100 mt-3 gap-2">
+                    <a href="{% url 'store:shop' %}" class="btn btn-outline-primary rounded text-primary w-100">Продолжить покупки</a>
+                    <button type="button" class="btn bg-primary rounded text-white w-100" data-bs-toggle="modal" data-bs-target="#deliveryModal">Оформление доставки <i class="fas fa-arrow-right ms-1"></i></button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="deliveryModal" tabindex="-1" aria-labelledby="deliveryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="deliveryModalLabel">Оформление доставки</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">Укажите контактные данные, и продавец свяжется с вами для подтверждения заказа и доставки.</p>
+                    <form action="{% url 'store:delivery_request' %}" method="POST" id="delivery-form">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Имя и фамилия *</label>
+                            <input type="text" name="full_name" class="form-control" placeholder="Ваше имя" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Номер телефона *</label>
+                            <input type="text" name="phone" class="form-control" placeholder="Например, +996 000 00 00 00" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Адрес доставки *</label>
+                            <textarea name="address" rows="3" class="form-control" placeholder="Введите полный адрес доставки" required></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="submit" class="btn bg-primary text-white">Отправить заявку <i class="fas fa-paper-plane ms-1"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deliverySuccessModal" tabindex="-1" aria-labelledby="deliverySuccessModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2" id="deliverySuccessModalLabel">Заявка успешно отправлена!</h5>
+                    <p class="text-muted mb-3">Мы свяжемся с вами в ближайшее время.</p>
+                    <button type="button" class="btn bg-primary text-white" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock content %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.level_tag == 'success' %}
+                    var successModal = new bootstrap.Modal(document.getElementById('deliverySuccessModal'));
+                    successModal.show();
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    });
+</script>
+{% endblock extra_js %}

@@ -1,0 +1,197 @@
+{% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% block content %}
+<div class="gray py-3">
+    <div class="container">
+        <div class="row">
+            <div class="colxl-12 col-lg-12 col-md-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Главная</a></li>
+                        <li class="breadcrumb-item"><a href="#">Страницы</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Часто задаваемые вопросы</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<section class="middle">
+    <div class="container">
+    
+        <div class="row justify-content-center">
+            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                <div class="sec_title position-relative text-center">
+                    <h3 class="ft-bold pt-3">Часто задаваемые вопросы</h3>
+                    <p class="text-muted">Здесь вы найдете ответы на самые популярные вопросы о покупке бытовой техники в ASCO.KG</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row align-items-center justify-content-between">
+            <div class="col-xl-12 ">
+                
+                <div class="d-block position-relative border rounded py-3 px-3 mb-4">
+                    <h4 class="ft-medium">Заказы и доставка:</h4>
+                    <div id="accordion" class="accordion">
+                        <div class="card">
+                            <div class="card-header" id="h1">
+                                <h5 class="mb-0">
+                                <button class="btn btn-link" data-toggle="collapse" data-target="#ord1" aria-expanded="true" aria-controls="ord1">
+                                    Как оформить заказ на бытовую технику?
+                                </button>
+                                </h5>
+                            </div>
+
+                            <div id="ord1" class="collapse show" aria-labelledby="h1" data-parent="#accordion">
+                                <div class="card-body">
+                                    Оформить заказ очень просто! Выберите понравившуюся технику, добавьте её в корзину, заполните форму доставки с указанием вашего имени, телефона и адреса доставки. После оформления заказа наш менеджер свяжется с вами в ближайшее время для подтверждения заказа и уточнения деталей доставки.                                
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header" id="h2">
+                                <h5 class="mb-0">
+                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#ord2" aria-expanded="false" aria-controls="ord2">
+                                    Как отследить статус моего заказа?
+                                </button>
+                                </h5>
+                            </div>
+                            <div id="ord2" class="collapse" aria-labelledby="h2" data-parent="#accordion">
+                                <div class="card-body">
+                                    После оформления заказа вы получите номер заказа. Вы можете отслеживать статус вашего заказа в личном кабинете или связаться с нашим менеджером по телефону. Мы информируем вас о каждом этапе обработки заказа: новый заказ, в обработке, собран, отправлен, доставлен.                                
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header" id="h3">
+                                <h5 class="mb-0">
+                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#ord3" aria-expanded="false" aria-controls="ord3">
+                                    Какие способы оплаты доступны?
+                                </button>
+                                </h5>
+                            </div>
+                            <div id="ord3" class="collapse" aria-labelledby="h3" data-parent="#accordion">
+                                <div class="card-body">
+                                    Мы предлагаем несколько удобных способов оплаты: наличными при получении товара, банковской картой, а также возможность оплаты после доставки. Все платежи обрабатываются безопасно, и мы гарантируем конфиденциальность ваших платежных данных.                                
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header" id="h4">
+                                <h5 class="mb-0">
+                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#ord4" aria-expanded="false" aria-controls="ord4">
+                                    Сколько времени занимает доставка?
+                                </button>
+                                </h5>
+                            </div>
+                            <div id="ord4" class="collapse" aria-labelledby="h4" data-parent="#accordion">
+                                <div class="card-body">
+                                    Срок доставки зависит от наличия товара на складе и вашего местоположения. Обычно доставка по Бишкеку занимает 1-3 рабочих дня, по регионам Кыргызстана — 3-7 рабочих дней. Для товаров, которых нет в наличии, срок может быть увеличен. Точные сроки доставки уточняются при подтверждении заказа.                                
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header" id="h5">
+                                <h5 class="mb-0">
+                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#ord5" aria-expanded="false" aria-controls="ord5">
+                                    Есть ли доставка в регионы Кыргызстана?
+                                </button>
+                                </h5>
+                            </div>
+                            <div id="ord5" class="collapse" aria-labelledby="h5" data-parent="#accordion">
+                                <div class="card-body">
+                                    Да, мы осуществляем доставку по всей территории Кыргызстана. Стоимость и сроки доставки в регионы рассчитываются индивидуально в зависимости от веса и габаритов товара, а также удаленности вашего населенного пункта. Подробности уточняйте у наших менеджеров.                                
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-block position-relative border rounded py-3 px-3 mb-4">
+                    <h4 class="ft-medium">Гарантия и обслуживание:</h4>
+                    <div id="accordion2" class="accordion">
+                        <div class="card">
+                            <div class="card-header" id="h6">
+                                <h5 class="mb-0">
+                                <button class="btn btn-link" data-toggle="collapse" data-target="#warr1" aria-expanded="true" aria-controls="warr1">
+                                    Какая гарантия предоставляется на технику?
+                                </button>
+                                </h5>
+                            </div>
+
+                            <div id="warr1" class="collapse show" aria-labelledby="h6" data-parent="#accordion2">
+                                <div class="card-body">
+                                    На всю бытовую технику, приобретенную в ASCO.KG, предоставляется официальная гарантия производителя. Срок гарантии зависит от типа техники и составляет от 12 до 24 месяцев. Гарантийный талон выдается при покупке и содержит всю необходимую информацию о гарантийных обязательствах.                                
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header" id="h7">
+                                <h5 class="mb-0">
+                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#warr2" aria-expanded="false" aria-controls="warr2">
+                                    Что делать, если техника сломалась?
+                                </button>
+                                </h5>
+                            </div>
+                            <div id="warr2" class="collapse" aria-labelledby="h7" data-parent="#accordion2">
+                                <div class="card-body">
+                                    Если ваша техника вышла из строя в течение гарантийного срока, свяжитесь с нашим сервисным центром. Мы организуем диагностику и ремонт техники. Если ремонт невозможен, мы заменим товар на аналогичный или вернем деньги в соответствии с гарантийными обязательствами.                                
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header" id="h8">
+                                <h5 class="mb-0">
+                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#warr3" aria-expanded="false" aria-controls="warr3">
+                                    Предоставляете ли вы услуги по установке техники?
+                                </button>
+                                </h5>
+                            </div>
+                            <div id="warr3" class="collapse" aria-labelledby="h8" data-parent="#accordion2">
+                                <div class="card-body">
+                                    Да, мы предоставляем услуги по установке и подключению бытовой техники. Наши квалифицированные специалисты помогут правильно установить холодильник, стиральную машину, кондиционер и другую технику. Стоимость установки зависит от типа техники и сложности работ.                                
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-block position-relative border rounded py-3 px-3 mb-4">
+                    <h4 class="ft-medium">Возврат и обмен:</h4>
+                    <div id="accordion3" class="accordion">
+                        <div class="card">
+                            <div class="card-header" id="h9">
+                                <h5 class="mb-0">
+                                <button class="btn btn-link" data-toggle="collapse" data-target="#ret1" aria-expanded="true" aria-controls="ret1">
+                                    Можно ли вернуть или обменять технику?
+                                </button>
+                                </h5>
+                            </div>
+
+                            <div id="ret1" class="collapse show" aria-labelledby="h9" data-parent="#accordion3">
+                                <div class="card-body">
+                                    В соответствии с законодательством Кыргызстана, вы можете вернуть или обменять технику в течение 14 дней с момента покупки, если товар не подошел по размеру, цвету или другим характеристикам. Техника должна быть в оригинальной упаковке, без следов использования и с сохранением всех документов.                                
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header" id="h10">
+                                <h5 class="mb-0">
+                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#ret2" aria-expanded="false" aria-controls="ret2">
+                                    Как происходит возврат денег?
+                                </button>
+                                </h5>
+                            </div>
+                            <div id="ret2" class="collapse" aria-labelledby="h10" data-parent="#accordion3">
+                                <div class="card-body">
+                                    Возврат денежных средств осуществляется тем же способом, которым была произведена оплата. При оплате наличными деньги возвращаются наличными, при оплате картой — на карту. Срок возврата средств составляет от 3 до 10 рабочих дней в зависимости от способа оплаты.                                
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}

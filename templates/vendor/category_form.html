@@ -1,0 +1,46 @@
+{% extends 'vendor/base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="middle">
+    <div class="container-fluid">
+        <div class="row align-items-start justify-content-between">
+            {% include 'vendor/sidebar.html' %}
+            <div class="col-12 col-md-12 col-lg-9 col-xl-10">
+                <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+                    <h2 class="fw-bold mb-0">Редактирование категории</h2>
+                    <a href="{% url 'vendor:categories' %}" class="btn btn-light rounded">
+                        <i class="fas fa-arrow-left me-2"></i>Вернуться к списку
+                    </a>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data" class="row g-3">
+                            {% csrf_token %}
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-medium">Название категории</label>
+                                <input type="text" name="title" value="{{ category.title }}" class="form-control rounded" required />
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-medium">Изображение (необязательно)</label>
+                                <input type="file" name="image" accept="image/*" class="form-control rounded" />
+                                {% if category.image %}
+                                    <small class="text-muted d-block mt-2">Текущее изображение:</small>
+                                    <img src="{{ category.image.url }}" alt="{{ category.title }}" class="img-fluid rounded mt-1" style="max-width: 120px;" />
+                                {% endif %}
+                            </div>
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn bg-primary text-white rounded">
+                                    Сохранить изменения <i class="fas fa-save ms-2"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}
+

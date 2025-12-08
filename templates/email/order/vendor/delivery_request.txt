@@ -1,0 +1,17 @@
+Здравствуйте, {{ vendor.store_name|default:vendor.user.get_full_name|default:vendor.user.email }}!
+
+Получена новая заявка на доставку от клиента.
+
+Имя: {{ full_name }}
+Телефон: {{ phone }}
+Адрес доставки: {{ address }}
+
+Товары:
+{% for item in items %}- {{ item.product.name }} — {{ item.qty }} шт. по {{ item.price|floatformat:2 }} сом (итого {{ item.sub_total|floatformat:2 }} сом)
+{% endfor %}
+Сумма корзины: {{ cart_total|floatformat:2 }} сом
+
+Свяжитесь с клиентом для подтверждения деталей и доставки.
+
+С уважением,
+ASCO.KG

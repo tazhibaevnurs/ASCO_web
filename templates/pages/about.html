@@ -1,0 +1,101 @@
+{% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% block content %}
+<div class="gray py-3">
+    <div class="container">
+        <div class="row">
+            <div class="colxl-12 col-lg-12 col-md-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Главная</a></li>
+                        <li class="breadcrumb-item"><a href="#">Страницы</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">О нас</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="middle">
+    <div class="container">
+        <div class="row align-items-center justify-content-between">
+        
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                <div class="abt_caption">
+                    <h2 class="ft-medium mb-4">О компании ASCO.KG</h2>
+                    <p class="mb-4">ASCO.KG — ведущий поставщик брендовой бытовой техники для дома в Кыргызстане. Наша компания работает на рынке более 20 лет, предоставляя клиентам качественную технику от ведущих мировых производителей.</p>
+                    <p class="mb-4">Мы специализируемся на продаже широкого ассортимента бытовой техники: холодильников, стиральных машин, посудомоечных машин, микроволновых печей, пылесосов, кондиционеров и многих других товаров для комфорта вашего дома. Наша цель — сделать ваш дом современным, удобным и энергоэффективным.</p>
+                    <p class="mb-4">За годы работы мы завоевали доверие тысяч клиентов благодаря высокому качеству продукции, профессиональному сервису и индивидуальному подходу к каждому покупателю. Мы гордимся тем, что помогаем создавать уют в домах наших клиентов.</p>
+                    <div class="form-group mt-4">
+                        <a href="{% url 'store:shop' %}" class="btn bg-primary rounded btn-sm text-white">Перейти в магазин <i class="fas fa-shopping-cart ms-1"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                <div class="abt_caption">
+                    <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800" class="img-fluid rounded" alt="ASCO.KG - Бытовые приборы" />
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="middle">
+    <div class="container">
+        <div class="row align-items-center justify-content-between">
+            
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                <div class="abt_caption">
+                    <img src="https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?w=800" class="img-fluid rounded" alt="Наша миссия" />
+                </div>
+            </div>
+            
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                <div class="abt_caption">
+                    <h2 class="ft-medium mb-4">Наша миссия и видение</h2>
+                    <p class="mb-4"><strong>Наша миссия:</strong> Предоставлять нашим клиентам доступную, качественную и надежную бытовую технику, которая делает их жизнь проще и комфортнее. Мы стремимся быть надежным партнером в создании идеального дома для каждой семьи.</p>
+                    <p class="mb-4"><strong>Наше видение:</strong> Стать ведущим поставщиком бытовой техники в Кыргызстане, известным своим качеством, сервисом и инновациями. Мы постоянно расширяем ассортимент, следим за новинками рынка и предлагаем только проверенные временем бренды.</p>
+                    <p class="mb-4">Мы ценим долгосрочные отношения с нашими клиентами и гарантируем профессиональную поддержку на всех этапах: от выбора техники до установки и обслуживания. Наш опыт более 20 лет позволяет нам понимать потребности клиентов и предлагать оптимальные решения.</p>
+                    <div class="form-group mt-4">
+                        <a href="{% url 'store:shop' %}" class="btn bg-primary rounded btn-sm text-white">Узнать больше <i class="fas fa-arrow-right ms-2"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</section>
+
+<section class="middle">
+    <div class="container">
+        <div class="row">
+            <div class="col-xl-12">
+                <h3 class="ft-medium mb-4 text-center">Почему выбирают ASCO.KG?</h3>
+                <div class="row">
+                    <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 mb-4">
+                        <div class="text-center">
+                            <i class="fas fa-award fa-3x text-primary mb-3"></i>
+                            <h5 class="ft-medium mb-2">Более 20 лет опыта</h5>
+                            <p class="text-muted">Мы работаем на рынке бытовой техники с 2003 года и знаем все тонкости выбора качественной техники.</p>
+                        </div>
+                    </div>
+                    <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 mb-4">
+                        <div class="text-center">
+                            <i class="fas fa-check-circle fa-3x text-primary mb-3"></i>
+                            <h5 class="ft-medium mb-2">Только проверенные бренды</h5>
+                            <p class="text-muted">Мы предлагаем технику только от ведущих мировых производителей с гарантией качества и надежности.</p>
+                        </div>
+                    </div>
+                    <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 mb-4">
+                        <div class="text-center">
+                            <i class="fas fa-headset fa-3x text-primary mb-3"></i>
+                            <h5 class="ft-medium mb-2">Профессиональный сервис</h5>
+                            <p class="text-muted">Наша команда экспертов всегда готова помочь с выбором, установкой и обслуживанием техники.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock content %}

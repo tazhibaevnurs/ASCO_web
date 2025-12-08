@@ -1,0 +1,18 @@
+{% autoescape off %}
+<p>Здравствуйте, {{ vendor.store_name|default:vendor.user.get_full_name|default:vendor.user.email }}!</p>
+<p>Получена новая заявка на доставку от клиента.</p>
+<p>
+    <strong>Имя:</strong> {{ full_name }}<br>
+    <strong>Телефон:</strong> {{ phone }}<br>
+    <strong>Адрес доставки:</strong> {{ address }}
+</p>
+<p><strong>Товары:</strong></p>
+<ul>
+    {% for item in items %}
+        <li>{{ item.product.name }} — {{ item.qty }} шт. по {{ item.price|floatformat:2 }} сом (итого {{ item.sub_total|floatformat:2 }} сом)</li>
+    {% endfor %}
+</ul>
+<p><strong>Сумма корзины:</strong> {{ cart_total|floatformat:2 }} сом</p>
+<p>Свяжитесь с клиентом для подтверждения деталей и доставки.</p>
+<p>С уважением,<br>ASCO.KG</p>
+{% endautoescape %}

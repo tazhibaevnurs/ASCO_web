@@ -1,0 +1,144 @@
+{% load i18n static jazzmin admin_urls %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}
+{% get_jazzmin_settings request as jazzmin_settings %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:"en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+    <title>{% block title %}{{ title }} | {{ jazzmin_settings.site_title }}{% endblock %}</title>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="{% static "vendor/fontawesome-free/css/all.min.css" %}">
+
+    <!-- Bootstrap and adminLTE -->
+    <link rel="stylesheet" href="{% static "vendor/adminlte/css/adminlte.min.css" %}">
+
+    <!-- Bootswatch theme -->
+    {% if jazzmin_ui.theme.name != 'default' %}
+        <link rel="stylesheet" href="{{ jazzmin_ui.theme.src }}" id="jazzmin-theme" />
+    {% endif %}
+
+    {% if jazzmin_ui.dark_mode_theme %}
+        <link rel="stylesheet" href="{{ jazzmin_ui.dark_mode_theme.src }}" id="jazzmin-dark-mode-theme" media="(prefers-color-scheme: dark)"/>
+    {% endif %}
+
+    <!-- Custom fixes for django -->
+    <link rel="stylesheet" href="{% static "jazzmin/css/main.css" %}">
+
+    {% if jazzmin_settings.custom_css %}
+        <!-- Custom CSS -->
+        <link rel="stylesheet" href="{% static jazzmin_settings.custom_css %}">
+    {% endif %}
+
+    <!-- favicons -->
+    {% if jazzmin_settings.site_icon %}
+        <link rel="shortcut icon" href="{% static jazzmin_settings.site_icon %}" type="image/png">
+        <link rel="icon" href="{% static jazzmin_settings.site_icon %}" sizes="32x32" type="image/png">
+    {% endif %}
+
+    {% if jazzmin_settings.use_google_fonts_cdn %}
+    <!-- Google Font: Source Sans Pro -->
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+    {% endif %}
+
+    <style>
+        /* Кастомные стили для страницы входа ASCO */
+        .login-box {
+            width: 400px;
+            margin: 5% auto;
+        }
+        
+        .login-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-logo img {
+            max-width: 200px;
+            height: auto;
+            margin: 0 auto;
+        }
+        
+        .login-box-msg {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+        
+        .btn-login-asco {
+            background-color: #EB332C !important;
+            border-color: #EB332C !important;
+            color: #fff !important;
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-login-asco:hover {
+            background-color: #c12721 !important;
+            border-color: #c12721 !important;
+            color: #fff !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(235, 51, 44, 0.3);
+        }
+        
+        .btn-login-asco:active,
+        .btn-login-asco:focus {
+            background-color: #c12721 !important;
+            border-color: #c12721 !important;
+            color: #fff !important;
+            box-shadow: 0 2px 4px rgba(235, 51, 44, 0.3);
+        }
+        
+        .input-group-text {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+        }
+        
+        .form-control:focus {
+            border-color: #EB332C;
+            box-shadow: 0 0 0 0.2rem rgba(235, 51, 44, 0.25);
+        }
+    </style>
+
+    {% block extrastyle %} {% endblock %}
+    {% block extrahead %} {% endblock %}
+</head>
+<body class="hold-transition jazzmin-login-page">
+
+<div class="login-box">
+    <div class="login-logo">
+        <a href="/">
+            <img src="{% static 'assets/img/asco_logo_black.svg' %}" alt="ASCO.KG" />
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% block content %} {% endblock %}
+        </div>
+    </div>
+</div>
+
+<!-- jQuery -->
+<script src="{% static "admin/js/vendor/jquery/jquery.js" %}"></script>
+<!-- Bootstrap 4 -->
+<script src="{% static 'vendor/bootstrap/js/bootstrap.min.js' %}"></script>
+<!-- AdminLTE App -->
+<script src="{% static 'vendor/adminlte/js/adminlte.min.js' %}"></script>
+
+{% if jazzmin_settings.custom_js %}
+    <script src="{% static jazzmin_settings.custom_js %}"></script>
+{% endif %}
+
+</body>
+</html>
+

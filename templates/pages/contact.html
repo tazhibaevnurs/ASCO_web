@@ -1,0 +1,73 @@
+{% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% block content %}
+<div class="gray py-3">
+    <div class="container">
+        <div class="row">
+            <div class="colxl-12 col-lg-12 col-md-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'store:index' %}">Главная</a></li>
+                        <li class="breadcrumb-item"><a href="#">Страницы</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Контакты</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="middle">
+    <div class="container">
+    
+        <div class="row justify-content-center">
+            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                <div class="sec_title position-relative ">
+                    <h1 class="fw-bold pt-3">Свяжитесь с нами</h1>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row align-items-start justify-content-between">
+        
+            <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12">
+                <div class="card-wrap-body mb-4">
+                    <h4 class="fw-bold mb-3 text-dark">Адрес магазина</h4>
+                    <p>Кыргызстан, г. Бишкек, ул. Бейшена Егимбаева 145/1</p>
+                </div>
+                
+                <div class="card-wrap-body mb-3">
+                    <h4 class="fw-bold mb-3 text-dark">Позвоните нам</h4>
+                    <p class="mb-0">+996 700 123 456</p>
+                    <p class="mb-0">+996 555 234 567</p>
+                    <p class="mb-0">+996 770 345 678</p>
+                    
+                </div>
+                
+                <div class="card-wrap-body mb-3">
+                    <h4 class="fw-bold mb-3 text-dark">Напишите нам</h4>
+                    <p class="lh-1 text-dark"> info@asco.kg</p>
+                    <p class="lh-1 text-dark"> help@asco.kg</p>
+                    <p class="lh-1 text-dark"> query@asco.kg</p>
+                    <p class="lh-1 text-dark"> support@asco.kg</p>
+                    <p class="lh-1 text-dark"> call@asco.kg</p>
+                </div>
+            </div>
+            
+            <div class="col-xl-7 col-lg-8 col-md-12 col-sm-12">
+                <div class="card-wrap-body">
+                    <h4 class="fw-bold mb-3 text-dark">Наше местоположение</h4>
+                    <iframe 
+                        src="https://www.google.com/maps?q=Кыргызстан,+г.+Бишкек,+ул.+Бейшена+Егимбаева+145/1&output=embed" 
+                        width="100%" 
+                        height="450" 
+                        style="border:0; border-radius: 8px;" 
+                        allowfullscreen="" 
+                        loading="lazy" 
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</section>
+{% endblock content %}

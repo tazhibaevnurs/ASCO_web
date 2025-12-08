@@ -1,0 +1,157 @@
+{% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% block content %}
+    <section class="p-0 pb-5 mb-5">
+        <div class="container">
+
+            <div class="row d-flex justify-content-center align-items-center">
+                <div class="col-12 col-lg-7 p-3 p-md-4 rounded-3 bg-white order-2 order-lg-1">
+                    <p class="text-secondary fs-5 fs-md-4 mb-0 mt-3 mt-md-5 mb-3">20% скидка только сегодня! <img
+                            src="https://cdn-icons-png.flaticon.com/128/9004/9004955.png" width="30" alt=""></p>
+                    <h1 class="display-5 display-md-4 fw-bold">Всё о технике, <span class="text-success"> <br> Лучшие цены <br><span
+                            class="text-dark">& Бесплатная доставка</span></span></h1>
+                    <p class="text-secondary fs-6 mt-3 mt-md-4">Добро пожаловать ASCO.KG, покупайте быстрее, проще,
+                        безопаснее, с хорошими предложениями, поддержкой клиентов, быстрыми возвратами и многими другими
+                        удивительными функциями, которые вас ждут!</p>
+                    <form method="GET" action="{% url 'store:shop' %}" class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 mt-4 mt-md-5">
+                        <div class="d-flex align-items-center border rounded-3 bg-light w-100 w-sm-75">
+                            <input type="text" class="form-control shadow-none border-0 bg-transparent"
+                                   placeholder="Поиск товара" name="q" id="search-input" required/>
+                        </div>
+                        <button type="submit" class="btn bg-primary text-white rounded w-100 w-sm-auto"> <i
+                                class="fas fa-search text-white"></i></button>
+                    </form>
+                    <div class="d-flex justify-content-start gap-2 gap-md-4 align-items-center mt-3">
+                        <p class="text-secondary small small-md">Бесплатная доставка только сегодня! Применяются <b>Условия
+                            использования</b></p>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-start gap-3 gap-md-5 fs-5 text-secondary mt-2">
+                        <i class="fab text-success fa-telegram"></i>
+                        <i class="fab fa-whatsapp"></i>
+                        <i class="fab text-success fa-instagram"></i>
+                        <i class="fab text-success fa-facebook"></i>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-5 order-1 order-lg-2 mb-3 mb-lg-0">
+                    <img class="img-fluid rounded-3 w-100" style="height: auto; min-height: 300px; max-height: 500px; width: 100%; object-fit: contain"
+                         src="{% static 'assets/img/home-hero.jpg' %}" alt=""/>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="middle mt-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                    <div class="sec_title position-relative text-center">
+                        <h1 class="ft-bold pt-3">Популярные категории <img
+                                src="https://cdn-icons-png.flaticon.com/128/7183/7183999.png" width="40" alt=""></h1>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row align-items-center justify-content-center">
+
+                {% for c in categories %}
+                    <div class="col-6 col-sm-4 col-md-3 col-lg-2 col-xl-2 mb-3">
+                        <div class="cats_side_wrap text-center mx-auto mb-3">
+                            <div class="sl_cat_01">
+                                <div class="d-inline-flex align-items-center justify-content-center p-4 circle mb-2 border">
+                                    <a href="{% url 'store:category' c.id %}" class="d-block">
+
+                                        {% if c.image %}
+                                            <img src="{{ c.image.url }}" class="img-fluid" width="80" alt=""/>
+                                        {% else %}
+                                            <img src="{% static 'assets/img/headphones.png' %}" class="img-fluid"
+                                                 width="40" alt=""/>
+                                        {% endif %}
+
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="sl_cat_02">
+                                <h6 class="m-0 ft-medium fs-sm"><a
+                                        href="{% url 'store:category' c.id %}">{{ c.title }}</a></h6>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+
+            </div>
+        </div>
+    </section>
+
+    <section class="middle mt-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                    <div class="sec_title position-relative text-center">
+                        <h1 class="ft-bold pt-3">Популярные товары <img
+                                src="https://cdn-icons-png.flaticon.com/128/785/785116.png" width="40" alt=""></h1>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row align-items-center rows-products">
+                {% for p in products %}
+                    <div class="col-6 col-md-4 col-lg-3 mb-3">
+                        <div class="product-card card b-0 rounded-3 shadow p-2">
+                            <div class="product-card__media">
+                                <a class="d-block" href="{% url 'store:product_detail' p.slug %}">
+                                    <img src="{{ p.image.url }}" alt="{{ p.name }}" class="img-fluid">
+                                </a>
+                            </div>
+                            <div class="product-card__body">
+                                <div class="text-left">
+                                    <span class="product-card__category">{{ p.category.title }}</span>
+                                    <h5 class="product-card__title"><a href="{% url 'store:product_detail' p.slug %}">{{ p.name }}</a></h5>
+                                    <div class="product-card__rating">
+                                        {% if not p.average_rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% elif p.average_rating > 0 and p.average_rating < 2 %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% elif p.average_rating > 1 and p.average_rating < 3 %}
+                                            <i class="fas fa-star text-warning"></i>
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% elif p.average_rating > 2 and p.average_rating < 4 %}
+                                            <i class="fas fa-star text-warning"></i>
+                                            <i class="fas fa-star text-warning"></i>
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% elif p.average_rating > 3 and p.average_rating < 5 %}
+                                            <i class="fas fa-star text-warning"></i>
+                                            <i class="fas fa-star text-warning"></i>
+                                            <i class="fas fa-star text-warning"></i>
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% elif p.average_rating > 4 %}
+                                            <i class="fas fa-star text-warning"></i>
+                                            <i class="fas fa-star text-warning"></i>
+                                            <i class="fas fa-star text-warning"></i>
+                                            <i class="fas fa-star text-warning"></i>
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="product-card__price">{{ p.price }} сом</div>
+                                </div>
+                                <div class="product-card__actions">
+                                    <button type="button" class="btn btn-primary text-white w-100 add_to_cart" data-id="{{ p.id }}">В корзину <i class="fas fa-shopping-cart ms-2"></i></button>
+                                    <input type="hidden" class="quantity" value="1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                    <div class="position-relative text-center">
+                        <a href="{% url 'store:shop' %}" class="btn bg-dark text-light rounded btn-sm mt-5">Перейти в
+                            магазин <i class="fas fa-arrow-right ms-2"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock content %}

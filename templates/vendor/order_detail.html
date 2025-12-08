@@ -1,0 +1,139 @@
+{% extends 'vendor/base.html' %} {% load static %} {% load humanize %} {% block content %}
+{% load humanize %}
+{% include 'partials/_status_badges.html' %}
+<section class="middle">
+    <div class="container-fluid">
+        <div class="row align-items-start justify-content-between">
+            {% include 'vendor/sidebar.html' %}
+            <div class="col-12 col-md-12 col-lg-9 col-xl-10">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="row mb-4">
+                        <h4 class="mb-0 mb-2 fw-bold">Номер заказа: #{{order.order_id}}</h4>
+                    </div>
+
+                    <div>
+                        <form action="{% url 'vendor:update_order_status' order.order_id %}" class="row g-2 align-items-center" method="POST">
+                            {% csrf_token %}
+                            <div class="col-auto">
+                                <select name="status" class="form-select">
+                                    <option value="">Статус заказа</option>
+                                    <option {% if order.status == 'new' %} selected {% endif %} value="new">Новый</option>
+                                    <option {% if order.status == 'processing' %} selected {% endif %} value="processing">В обработке</option>
+                                    <option {% if order.status == 'assembled' %} selected {% endif %} value="assembled">Собран</option>
+                                    <option {% if order.status == 'shipped' %} selected {% endif %} value="shipped">Отправлен</option>
+                                    <option {% if order.status == 'delivered' %} selected {% endif %} value="delivered">Доставлен</option>
+                                    <option {% if order.status == 'cancelled' %} selected {% endif %} value="cancelled">Отменён</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <select name="payment_status" class="form-select">
+                                    <option value="">Статус оплаты</option>
+                                    <option value="Paid" {% if order.payment_status == 'Paid' %}selected{% endif %}>Оплачено</option>
+                                    <option value="Processing" {% if order.payment_status == 'Processing' %}selected{% endif %}>После доставки будет оплачено</option>
+                                    <option value="Unpaid" {% if order.payment_status == 'Unpaid' %}selected{% endif %}>Не оплачено</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md">
+                                <input type="text" name="cancel_comment" class="form-control" placeholder="Комментарий к отмене (опционально)"
+                                    value="{{ order.cancel_comment|default_if_none:'' }}">
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn bg-primary btn-sm rounded text-white w-100">Сохранить <i class="fas fa-save ms-2"></i></button>
+                            </div>
+                        </form>
+                        {% if order.status_changed_by %}
+                            <small class="text-muted d-block mt-1">
+                                Последнее изменение: {{ order.status_changed_at|date:"d.m.Y H:i" }} ({{ order.status_changed_by.profile.full_name|default:order.status_changed_by.email }})
+                            </small>
+                        {% endif %}
+                    </div>
+               </div>
+
+                <div class="order-data mt-5">
+                    <div class="ord_list_wrap border mb-4 mfliud">
+                        <div class="ord_list_body text-left">
+                            {% for item in order.order_items.all %}
+                                <div class="row align-items-center justify-content-center m-0 py-4 br-bottom">
+                                    <div class="col-xl-6 col-lg-5 col-md-5 col-12">
+                                        <div class="cart_single d-flex align-items-start mfliud-bot gap-3">
+                                            <div class="cart_selected_single_thumb">
+                                                <a href="{% url 'store:product_detail' item.product.slug %}"><img src="{{item.product.image.url}}" width="75" class="img-fluid rounded" alt="" /></a>
+                                            </div>
+                                            <div class="cart_single_caption pl-3">
+                                                <h4 class="product_title fs-sm ft-medium mb-1 lh-1"> <a href="{% url 'store:product_detail' item.product.slug %}">{{item.product.name}}</a></h4>
+                                                <p class="mb-2">
+                                                    <span class="text-dark medium">Продавец: {{item.product.vendor.profile.full_name}}</span> <br />
+                                                    
+                                                    {% if item.color %}
+                                                        <span class="text-dark medium">Цвет: {{item.color}}</span>
+                                                    {% endif %}
+
+                                                    {% if item.size %}
+                                                        <span class="text-dark medium">Размер: {{item.size}}</span>
+                                                    {% endif %}
+                                                        
+                                                </p>
+                                                <h4 class="fs-sm ft-bold mb-0 lh-1">{{item.price}} сом</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-2 col-lg-3 col-md-3 col-6">
+                                        <p class="mb-1 p-0"><span class="text-muted">Статус доставки</span></p>
+                                        <div class="delv_status">
+                                            <span class="badge-status status-{{ item.status }}">{{ item.get_status_display }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-2 col-lg-4 col-md-4 col-6">
+                                        <p class="mb-1 p-0"><span class="text-muted">Статус оплаты</span></p>
+                                        {% with order.get_payment_status_display as pay_status %}
+                                            <div class="badge-status
+                                                {% if order.payment_status == 'Paid' %}payment-paid
+                                                {% elif order.payment_status == 'Processing' %}payment-post
+                                                {% elif order.payment_status == 'Unpaid' %}payment-unpaid
+                                                {% else %}payment-unpaid{% endif %}">
+                                                {{ pay_status }}
+                                            </div>
+                                        {% endwith %}
+                                    </div>
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-6">
+                                        <a href="{% url 'vendor:order_item_detail' order.order_id item.item_id %}" class="btn btn-outline-primary btn-sm rounded w-100"><i class="fas fa-eye me-1"></i>Подробнее</a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <h4 class="mt-5 mb-2 fw-bold">Итого по заказу</h4>
+                    <div class="">
+                        <h5 class="mb-2 fs-sm"><span class="fw-bold">Подытог:</span> {{order.sub_total|intcomma}} сом</h5>
+                        <h5 class="mb-2 fs-sm"><span class="fw-bold">Доставка:</span> {{order.shipping|intcomma}} сом</h5>
+                        <h5 class="mb-2 fs-sm"><span class="fw-bold">Налог:</span> {{order.tax}} сом</h5>
+                        
+                        {% if order.saved %}
+                        <h5 class="mb-2 fs-sm"><span class="fw-bold">Скидка:</span> -{{order.saved|intcomma}} сом</h5>
+                        {% endif %}
+                            
+                        <h5 class="mb-2 fs-sm"><span class="fw-bold">Итого:</span> {{order.total|intcomma}} сом</h5>
+                    </div>
+
+                    <h4 class="mt-5 mb-2 fw-bold">Личные данные</h4>
+                    <div class="">
+                        <h5 class="mb-2 fs-sm"><span class="fw-bold">Полное имя:</span> {{order.address.full_name}}</h5>
+                        <h5 class="mb-2 fs-sm"><span class="fw-bold">Email:</span> {{order.address.email}}</h5>
+                        <h5 class="mb-2 fs-sm"><span class="fw-bold">Мобильный:</span> {{order.address.mobile}}</h5>
+                    </div>
+
+                    <h4 class="mt-5 mb-2 fw-bold">Детали доставки</h4>
+                    <div class="">
+                        <h5 class="mb-2 fs-sm"><span class="fw-bold">Адрес:</span> {{order.address.address}}</h5>
+                        <h5 class="mb-2 fs-sm"><span class="fw-bold">Город:</span> {{order.address.city}}</h5>
+                        <h5 class="mb-2 fs-sm"><span class="fw-bold">Область:</span> {{order.address.state}}</h5>
+                        <h5 class="mb-2 fs-sm"><span class="fw-bold">Страна:</span> {{order.address.country}}</h5>
+                        <h5 class="mb-2 fs-sm"><span class="fw-bold">Индекс:</span> {{order.address.zip_code}}</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}
