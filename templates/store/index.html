@@ -1,157 +1,166 @@
-{% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% block content %}
-    <section class="p-0 pb-5 mb-5">
-        <div class="container">
+{% extends 'partials/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load wishlist_tags %}
+{% block content %}
+<style>
+    .home-hero-desktop { aspect-ratio: 21/9; }
+    .home-hero-mobile { aspect-ratio: 1/1; }
+    .bento-tile { transition: transform 0.3s ease; }
+    .bento-tile:hover { transform: scale(1.03); }
+    .home-product-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.5rem; }
+    .add_to_cart:focus { outline: none !important; box-shadow: none !important; border: none !important; }
+</style>
 
-            <div class="row d-flex justify-content-center align-items-center">
-                <div class="col-12 col-lg-7 p-3 p-md-4 rounded-3 bg-white order-2 order-lg-1">
-                    <p class="text-secondary fs-5 fs-md-4 mb-0 mt-3 mt-md-5 mb-3">20% скидка только сегодня! <img
-                            src="https://cdn-icons-png.flaticon.com/128/9004/9004955.png" width="30" alt=""></p>
-                    <h1 class="display-5 display-md-4 fw-bold">Всё о технике, <span class="text-success"> <br> Лучшие цены <br><span
-                            class="text-dark">& Бесплатная доставка</span></span></h1>
-                    <p class="text-secondary fs-6 mt-3 mt-md-4">Добро пожаловать ASCO.KG, покупайте быстрее, проще,
-                        безопаснее, с хорошими предложениями, поддержкой клиентов, быстрыми возвратами и многими другими
-                        удивительными функциями, которые вас ждут!</p>
-                    <form method="GET" action="{% url 'store:shop' %}" class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 mt-4 mt-md-5">
-                        <div class="d-flex align-items-center border rounded-3 bg-light w-100 w-sm-75">
-                            <input type="text" class="form-control shadow-none border-0 bg-transparent"
-                                   placeholder="Поиск товара" name="q" id="search-input" required/>
-                        </div>
-                        <button type="submit" class="btn bg-primary text-white rounded w-100 w-sm-auto"> <i
-                                class="fas fa-search text-white"></i></button>
-                    </form>
-                    <div class="d-flex justify-content-start gap-2 gap-md-4 align-items-center mt-3">
-                        <p class="text-secondary small small-md">Бесплатная доставка только сегодня! Применяются <b>Условия
-                            использования</b></p>
-                    </div>
-                    <div class="d-flex align-items-center justify-content-start gap-3 gap-md-5 fs-5 text-secondary mt-2">
-                        <i class="fab text-success fa-telegram"></i>
-                        <i class="fab fa-whatsapp"></i>
-                        <i class="fab text-success fa-instagram"></i>
-                        <i class="fab text-success fa-facebook"></i>
+{# ========== HERO: слайды из админки (Слайды Hero). Если пусто — один статичный баннер. ========== #}
+<section class="tw-relative tw-w-full tw-overflow-hidden tw-bg-white tw-mt-0 tw-pt-0" x-data="{ heroSlide: 0, heroSlidesCount: {{ hero_slides|length|default:1 }} }">
+    {% if hero_slides %}
+    {# Десктоп: слайдер из админки #}
+    <div class="tw-hidden md:tw-block tw-relative tw-w-full home-hero-desktop">
+        <div class="tw-absolute tw-inset-0 tw-flex tw-transition-transform tw-duration-500 tw-ease-out" :style="'transform: translateX(-' + heroSlide * 100 + '%)'">
+            {% for slide in hero_slides %}
+            <div class="tw-w-full tw-flex-shrink-0 tw-relative">
+                {% if slide.image %}
+                    <img src="{{ slide.image.url }}" alt="{{ slide.title }}" class="tw-w-full tw-h-full tw-object-cover" />
+                {% else %}
+                    <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ slide.title }}" class="tw-w-full tw-h-full tw-object-cover" />
+                {% endif %}
+                <div class="tw-absolute tw-inset-0 tw-bg-black/30 tw-flex tw-items-center tw-justify-center">
+                    <div class="tw-text-center tw-text-white tw-px-4">
+                        <h1 class="tw-text-3xl lg:tw-text-5xl tw-font-bold tw-mb-2">{{ slide.title }}</h1>
+                        {% if slide.subtitle %}<p class="tw-text-lg tw-opacity-90">{{ slide.subtitle }}</p>{% endif %}
+                        {% if slide.button_text %}<a href="{{ slide.button_url|default:'/shop/' }}" class="tw-inline-block tw-mt-4 tw-px-6 tw-py-3 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-semibold tw-transition-colors">{{ slide.button_text }}</a>{% endif %}
                     </div>
                 </div>
-                <div class="col-12 col-lg-5 order-1 order-lg-2 mb-3 mb-lg-0">
-                    <img class="img-fluid rounded-3 w-100" style="height: auto; min-height: 300px; max-height: 500px; width: 100%; object-fit: contain"
-                         src="{% static 'assets/img/home-hero.jpg' %}" alt=""/>
+            </div>
+            {% endfor %}
+        </div>
+        {% if hero_slides|length > 1 %}
+        <button type="button" @click="heroSlide = (heroSlide + 1) % heroSlidesCount" class="tw-absolute tw-right-4 tw-top-1/2 -tw-translate-y-1/2 tw-w-12 tw-h-12 tw-rounded-full tw-bg-white/90 tw-shadow tw-flex tw-items-center tw-justify-center tw-text-gray-800 hover:tw-bg-white tw-transition-colors" aria-label="Следующий слайд">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+        <div class="tw-absolute tw-bottom-4 tw-left-1/2 -tw-translate-x-1/2 tw-flex tw-gap-2">
+            {% for slide in hero_slides %}
+            <button type="button" @click="heroSlide = {{ forloop.counter0 }}" class="tw-w-2 tw-h-2 tw-rounded-full tw-transition-colors" :class="heroSlide === {{ forloop.counter0 }} ? 'tw-bg-[#EB332C] tw-scale-125' : 'tw-bg-white/70'"></button>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    {# Мобилка: первый слайд как квадратный баннер #}
+    {% with first_slide=hero_slides.0 %}
+    <div class="tw-block md:tw-hidden tw-relative tw-w-full home-hero-mobile">
+        {% if first_slide.image %}
+            <img src="{{ first_slide.image.url }}" alt="{{ first_slide.title }}" class="tw-w-full tw-h-full tw-object-cover" />
+        {% else %}
+            <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ first_slide.title }}" class="tw-w-full tw-h-full tw-object-cover" />
+        {% endif %}
+        <div class="tw-absolute tw-inset-0 tw-bg-black/35 tw-flex tw-items-end tw-justify-center tw-pb-6 tw-px-4">
+            <div class="tw-text-center tw-text-white">
+                <h1 class="tw-text-xl tw-font-bold tw-mb-1">{{ first_slide.title }}</h1>
+                {% if first_slide.subtitle %}<p class="tw-text-sm tw-opacity-90 tw-mb-3">{{ first_slide.subtitle }}</p>{% endif %}
+                {% if first_slide.button_text %}<a href="{{ first_slide.button_url|default:'/shop/' }}" class="tw-inline-block tw-px-5 tw-py-2.5 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-semibold tw-text-sm tw-transition-colors">{{ first_slide.button_text }}</a>{% endif %}
+            </div>
+        </div>
+    </div>
+    {% endwith %}
+    {% else %}
+    {# Нет слайдов в админке — один статичный баннер #}
+    <div class="tw-hidden md:tw-block tw-relative tw-w-full home-hero-desktop">
+        <div class="tw-absolute tw-inset-0">
+            <img src="{% static 'assets/img/home-hero.jpg' %}" alt="ASCO.KG" class="tw-w-full tw-h-full tw-object-cover" />
+            <div class="tw-absolute tw-inset-0 tw-bg-black/30 tw-flex tw-items-center tw-justify-center">
+                <div class="tw-text-center tw-text-white tw-px-4">
+                    <h1 class="tw-text-3xl lg:tw-text-5xl tw-font-bold tw-mb-2">Техника и гаджеты</h1>
+                    <p class="tw-text-lg tw-opacity-90">Лучшие цены и бесплатная доставка</p>
+                    <a href="{% url 'store:shop' %}" class="tw-inline-block tw-mt-4 tw-px-6 tw-py-3 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-semibold tw-transition-colors">В магазин</a>
                 </div>
             </div>
         </div>
-    </section>
-
-
-    <section class="middle mt-5">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
-                    <div class="sec_title position-relative text-center">
-                        <h1 class="ft-bold pt-3">Популярные категории <img
-                                src="https://cdn-icons-png.flaticon.com/128/7183/7183999.png" width="40" alt=""></h1>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row align-items-center justify-content-center">
-
-                {% for c in categories %}
-                    <div class="col-6 col-sm-4 col-md-3 col-lg-2 col-xl-2 mb-3">
-                        <div class="cats_side_wrap text-center mx-auto mb-3">
-                            <div class="sl_cat_01">
-                                <div class="d-inline-flex align-items-center justify-content-center p-4 circle mb-2 border">
-                                    <a href="{% url 'store:category' c.id %}" class="d-block">
-
-                                        {% if c.image %}
-                                            <img src="{{ c.image.url }}" class="img-fluid" width="80" alt=""/>
-                                        {% else %}
-                                            <img src="{% static 'assets/img/headphones.png' %}" class="img-fluid"
-                                                 width="40" alt=""/>
-                                        {% endif %}
-
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="sl_cat_02">
-                                <h6 class="m-0 ft-medium fs-sm"><a
-                                        href="{% url 'store:category' c.id %}">{{ c.title }}</a></h6>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-
-
+    </div>
+    <div class="tw-block md:tw-hidden tw-relative tw-w-full home-hero-mobile">
+        <img src="{% static 'assets/img/home-hero.jpg' %}" alt="ASCO.KG" class="tw-w-full tw-h-full tw-object-cover" />
+        <div class="tw-absolute tw-inset-0 tw-bg-black/35 tw-flex tw-items-end tw-justify-center tw-pb-6 tw-px-4">
+            <div class="tw-text-center tw-text-white">
+                <h1 class="tw-text-xl tw-font-bold tw-mb-1">Техника и гаджеты</h1>
+                <p class="tw-text-sm tw-opacity-90 tw-mb-3">Лучшие цены · Бесплатная доставка</p>
+                <a href="{% url 'store:shop' %}" class="tw-inline-block tw-px-5 tw-py-2.5 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-semibold tw-text-sm tw-transition-colors">В магазин</a>
             </div>
         </div>
-    </section>
+    </div>
+    {% endif %}
+</section>
 
-    <section class="middle mt-5">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
-                    <div class="sec_title position-relative text-center">
-                        <h1 class="ft-bold pt-3">Популярные товары <img
-                                src="https://cdn-icons-png.flaticon.com/128/785/785116.png" width="40" alt=""></h1>
+{# ========== BENTO: популярные категории ========== #}
+<section class="tw-container tw-mx-auto tw-px-4 tw-py-10 md:tw-py-14">
+    <h2 class="tw-text-2xl md:tw-text-3xl tw-font-bold tw-text-gray-900 tw-text-center tw-mb-8">Популярные категории</h2>
+    <div class="tw-grid tw-grid-cols-2 md:tw-grid-cols-3 lg:tw-grid-cols-4 tw-gap-3 md:tw-gap-4 tw-grid-auto-rows-[minmax(120px,1fr)] md:tw-grid-auto-rows-[minmax(140px,1fr)]">
+        {% for c in categories %}
+            <a href="{% url 'store:category' c.id %}" class="bento-tile tw-group tw-block tw-rounded-2xl tw-overflow-hidden tw-shadow-md hover:tw-shadow-xl tw-bg-gray-100 {% if forloop.counter0 == 0 %}tw-col-span-2 tw-row-span-2{% elif forloop.counter0 == 3 or forloop.counter0 == 6 %}tw-col-span-2{% endif %}">
+                <div class="tw-relative tw-w-full tw-h-full tw-min-h-[120px] md:tw-min-h-[140px] {% if forloop.counter0 == 0 %}tw-min-h-[220px] md:tw-min-h-[280px]{% endif %}">
+                    {% if c.image %}
+                        <img src="{{ c.image.url }}" alt="{{ c.title }}" class="tw-absolute tw-inset-0 tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-300" />
+                    {% else %}
+                        <div class="tw-absolute tw-inset-0 tw-bg-gradient-to-br tw-from-[#1e3a5f] tw-to-[#0f2744] tw-flex tw-items-center tw-justify-center">
+                            <i class="fas fa-th-large tw-text-white/80 tw-text-4xl md:tw-text-5xl"></i>
+                        </div>
+                    {% endif %}
+                    <div class="tw-absolute tw-inset-0 tw-bg-gradient-to-t tw-from-black/70 tw-via-transparent tw-to-transparent"></div>
+                    <div class="tw-absolute tw-bottom-0 tw-left-0 tw-right-0 tw-p-3 md:tw-p-4">
+                        <span class="tw-font-semibold tw-text-white tw-drop-shadow-sm tw-text-sm md:tw-text-base" style="text-shadow: 0 1px 2px rgba(0,0,0,0.5);">{{ c.title }}</span>
                     </div>
                 </div>
-            </div>
+            </a>
+        {% empty %}
+            <p class="tw-col-span-full tw-text-center tw-text-gray-500 tw-py-8">Категории пока не добавлены.</p>
+        {% endfor %}
+    </div>
+</section>
 
-            <div class="row align-items-center rows-products">
-                {% for p in products %}
-                    <div class="col-6 col-md-4 col-lg-3 mb-3">
-                        <div class="product-card card b-0 rounded-3 shadow p-2">
-                            <div class="product-card__media">
-                                <a class="d-block" href="{% url 'store:product_detail' p.slug %}">
-                                    <img src="{{ p.image.url }}" alt="{{ p.name }}" class="img-fluid">
-                                </a>
-                            </div>
-                            <div class="product-card__body">
-                                <div class="text-left">
-                                    <span class="product-card__category">{{ p.category.title }}</span>
-                                    <h5 class="product-card__title"><a href="{% url 'store:product_detail' p.slug %}">{{ p.name }}</a></h5>
-                                    <div class="product-card__rating">
-                                        {% if not p.average_rating %}
-                                            <i class="fas fa-star text-warning"></i>
-                                        {% elif p.average_rating > 0 and p.average_rating < 2 %}
-                                            <i class="fas fa-star text-warning"></i>
-                                        {% elif p.average_rating > 1 and p.average_rating < 3 %}
-                                            <i class="fas fa-star text-warning"></i>
-                                            <i class="fas fa-star text-warning"></i>
-                                        {% elif p.average_rating > 2 and p.average_rating < 4 %}
-                                            <i class="fas fa-star text-warning"></i>
-                                            <i class="fas fa-star text-warning"></i>
-                                            <i class="fas fa-star text-warning"></i>
-                                        {% elif p.average_rating > 3 and p.average_rating < 5 %}
-                                            <i class="fas fa-star text-warning"></i>
-                                            <i class="fas fa-star text-warning"></i>
-                                            <i class="fas fa-star text-warning"></i>
-                                            <i class="fas fa-star text-warning"></i>
-                                        {% elif p.average_rating > 4 %}
-                                            <i class="fas fa-star text-warning"></i>
-                                            <i class="fas fa-star text-warning"></i>
-                                            <i class="fas fa-star text-warning"></i>
-                                            <i class="fas fa-star text-warning"></i>
-                                            <i class="fas fa-star text-warning"></i>
-                                        {% endif %}
-                                    </div>
-                                    <div class="product-card__price">{{ p.price }} сом</div>
+{# ========== Популярные товары (оставляем блок как на витрине) ========== #}
+<section class="tw-bg-gray-50 tw-py-10 md:tw-py-14">
+    <div class="tw-container tw-mx-auto tw-px-4">
+        <h2 class="tw-text-2xl md:tw-text-3xl tw-font-bold tw-text-gray-900 tw-text-center tw-mb-8">Популярные товары</h2>
+        <div class="tw-grid tw-grid-cols-2 md:tw-grid-cols-3 lg:tw-grid-cols-4 tw-gap-4 md:tw-gap-6">
+            {% for p in products %}
+                <div class="tw-bg-white tw-rounded-2xl tw-shadow-md hover:tw-shadow-lg tw-overflow-hidden tw-transition-shadow tw-group">
+                    <div class="tw-relative tw-aspect-square tw-bg-gray-100 tw-overflow-hidden">
+                        <a href="{% url 'store:product_detail' p.slug %}" class="tw-block tw-absolute tw-inset-0 tw-z-0">
+                            {% if p.image %}
+                                <img src="{{ p.image.url }}" alt="{{ p.name }}" class="tw-absolute tw-inset-0 tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-300" />
+                            {% else %}
+                                <div class="tw-absolute tw-inset-0 tw-flex tw-items-center tw-justify-center tw-text-gray-400">
+                                    <i class="fas fa-image tw-text-5xl"></i>
                                 </div>
-                                <div class="product-card__actions">
-                                    <button type="button" class="btn btn-primary text-white w-100 add_to_cart" data-id="{{ p.id }}">В корзину <i class="fas fa-shopping-cart ms-2"></i></button>
-                                    <input type="hidden" class="quantity" value="1">
-                                </div>
-                            </div>
+                            {% endif %}
+                        </a>
+                        <div class="tw-absolute tw-top-2 tw-right-2 tw-z-10">
+                            {% with is_in_wishlist=p.id|in_wishlist:wishlist_product_ids %}
+                                {% include "customer/includes/wishlist_btn.html" with product=p is_in_wishlist=is_in_wishlist %}
+                            {% endwith %}
                         </div>
                     </div>
-                {% endfor %}
-            </div>
-
-            <div class="row justify-content-center">
-                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
-                    <div class="position-relative text-center">
-                        <a href="{% url 'store:shop' %}" class="btn bg-dark text-light rounded btn-sm mt-5">Перейти в
-                            магазин <i class="fas fa-arrow-right ms-2"></i></a>
+                    <div class="tw-p-4">
+                        <span class="tw-text-xs tw-text-gray-500 tw-font-medium">{{ p.category.title|default:"" }}</span>
+                        <h3 class="home-product-title tw-font-semibold tw-text-gray-900 tw-mt-0.5">
+                            <a href="{% url 'store:product_detail' p.slug %}" class="hover:tw-text-[#EB332C] tw-transition-colors">{{ p.name }}</a>
+                        </h3>
+                        <div class="tw-mt-2 tw-flex tw-items-center tw-justify-between">
+                            <span class="tw-font-bold tw-text-[#EB332C]">{{ p.price|intcomma }} сом</span>
+                            <button type="button" class="add_to_cart tw-p-2 tw-rounded-lg tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-transition-colors focus:tw-outline-none focus:tw-ring-0 focus:tw-shadow-none" data-id="{{ p.id }}" aria-label="В корзину">
+                                <i class="fas fa-shopping-cart"></i>
+                            </button>
+                        </div>
+                        <input type="hidden" class="quantity" value="1">
                     </div>
                 </div>
-            </div>
+            {% endfor %}
         </div>
-    </section>
-
+        <div class="tw-text-center tw-mt-10">
+            <a href="{% url 'store:shop' %}" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-6 tw-py-3 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-semibold tw-transition-colors">
+                Перейти в магазин <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</section>
 {% endblock content %}

@@ -1,0 +1,7 @@
+{% comment %}
+HTMX-ответ: фрагмент кнопки (подставляется в target) + OOB счётчики для шапки и нижнего меню.
+{% endcomment %}
+{% include "customer/includes/wishlist_btn.html" with product=product is_in_wishlist=is_in_wishlist %}
+
+<span id="wishlist-count-desktop" class="wishlist-count-badge tw-absolute -tw-top-0.5 -tw-right-0.5 tw-flex tw-items-center tw-justify-center tw-min-w-[1.25rem] tw-h-5 tw-px-1 tw-rounded-full tw-bg-[var(--accent)] tw-text-white tw-text-xs tw-font-semibold {% if wishlist_count == 0 %}tw-hidden{% endif %}" hx-swap-oob="true">{{ wishlist_count }}</span>
+<span id="wishlist-count-mobile" class="wishlist-count-badge tw-absolute tw-top-1 tw-right-1/4 tw-flex tw-items-center tw-justify-center tw-min-w-[1rem] tw-h-4 tw-px-0.5 tw-rounded-full tw-bg-[#EB332C] tw-text-white tw-text-[10px] tw-font-semibold {% if wishlist_count == 0 %}tw-hidden{% endif %}" hx-swap-oob="true">{{ wishlist_count }}</span>

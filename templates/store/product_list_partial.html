@@ -1,0 +1,46 @@
+{% load humanize %}
+{% load wishlist_tags %}
+{# OOB: обновить счётчики в шапке и в чипах #}
+<span id="shop-product-count" class="product_count" hx-swap-oob="true">{{ product_count }}</span>
+<span id="shop-product-count-inline" class="product_count tw-text-gray-900" hx-swap-oob="true">{{ product_count }}</span>
+
+	{% for p in products %}
+		<div class="tw-bg-white tw-rounded-2xl tw-shadow-sm hover:tw-shadow-md tw-overflow-hidden tw-transition-shadow tw-group tw-flex tw-flex-col">
+			<div class="tw-relative tw-aspect-square tw-bg-gray-100 tw-overflow-hidden tw-flex-shrink-0">
+				<a href="{% url 'store:product_detail' p.slug %}" class="tw-block tw-absolute tw-inset-0 tw-z-0">
+					{% if p.image %}
+						<img src="{{ p.image.url }}" alt="{{ p.name }}" class="tw-absolute tw-inset-0 tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-300" />
+					{% else %}
+						<div class="tw-absolute tw-inset-0 tw-flex tw-items-center tw-justify-center tw-text-gray-400">
+							<i class="fas fa-image tw-text-4xl md:tw-text-5xl"></i>
+						</div>
+					{% endif %}
+				</a>
+				<div class="tw-absolute tw-top-1.5 tw-right-1.5 tw-z-10">
+					{% with is_in_wishlist=p.id|in_wishlist:wishlist_product_ids %}
+						{% include "customer/includes/wishlist_btn.html" with product=p is_in_wishlist=is_in_wishlist %}
+					{% endwith %}
+				</div>
+				<div class="tw-absolute tw-bottom-1.5 tw-right-1.5 tw-z-10 md:tw-hidden">
+					<button type="button" class="add_to_cart tw-w-9 tw-h-9 tw-rounded-lg tw-flex tw-items-center tw-justify-center tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-shadow-md" data-id="{{ p.id }}" aria-label="В корзину">
+						<i class="fas fa-shopping-cart tw-text-sm"></i>
+					</button>
+				</div>
+			</div>
+			<div class="tw-p-2 md:tw-p-4 tw-flex tw-flex-col tw-flex-1 tw-min-h-0">
+				<span class="tw-text-xs tw-text-gray-500 tw-font-medium tw-truncate">{{ p.category.title|default:"" }}</span>
+				<h3 class="shop-product-title tw-font-semibold tw-text-gray-900 tw-mt-0.5 tw-text-sm md:tw-text-base tw-line-clamp-2 tw-flex-1">
+					<a href="{% url 'store:product_detail' p.slug %}" class="hover:tw-text-[#EB332C] tw-transition-colors">{{ p.name }}</a>
+				</h3>
+				<div class="tw-mt-2 tw-flex tw-items-center tw-justify-between tw-gap-2">
+					<span class="tw-font-bold tw-text-[#EB332C] tw-text-sm md:tw-text-base">{{ p.price|intcomma }} сом</span>
+					<button type="button" class="add_to_cart tw-hidden md:tw-inline-flex tw-p-2 tw-rounded-lg tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-transition-colors focus:tw-outline-none focus:tw-ring-0" data-id="{{ p.id }}" aria-label="В корзину">
+						<i class="fas fa-shopping-cart"></i>
+					</button>
+				</div>
+				<input type="hidden" class="quantity" value="1">
+			</div>
+		</div>
+	{% empty %}
+		<p class="tw-col-span-full tw-text-center tw-text-gray-500 tw-py-12">Товары не найдены.</p>
+	{% endfor %}

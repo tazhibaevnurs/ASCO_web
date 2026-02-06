@@ -1,0 +1,12 @@
+{% comment %}HTMX: заменяем карточку пустым блоком (скрыт), обновляем счётчики OOB.{% endcomment %}
+<div style="display: none;" class="wishlist-item-removed"></div>
+<span id="wishlist-count-desktop" class="wishlist-count-badge tw-absolute -tw-top-0.5 -tw-right-0.5 tw-flex tw-items-center tw-justify-center tw-min-w-[1.25rem] tw-h-5 tw-px-1 tw-rounded-full tw-bg-[var(--accent)] tw-text-white tw-text-xs tw-font-semibold {% if wishlist_count == 0 %}tw-hidden{% endif %}" hx-swap-oob="true">{{ wishlist_count }}</span>
+<span id="wishlist-count-mobile" class="wishlist-count-badge tw-absolute tw-top-1 tw-right-1/4 tw-flex tw-items-center tw-justify-center tw-min-w-[1rem] tw-h-4 tw-px-0.5 tw-rounded-full tw-bg-[#EB332C] tw-text-white tw-text-[10px] tw-font-semibold {% if wishlist_count == 0 %}tw-hidden{% endif %}" hx-swap-oob="true">{{ wishlist_count }}</span>
+<span id="wishlist-page-heading-count" hx-swap-oob="true">{{ wishlist_count }}</span>
+<strong id="wishlist-page-items-count" class="tw-text-gray-900" hx-swap-oob="true">{{ wishlist_count }}</strong>
+{% if wishlist_count == 0 %}
+<div id="wishlist-grid-wrapper" class="tw-bg-white tw-rounded-2xl tw-shadow-sm tw-border tw-border-gray-100 tw-p-8 tw-text-center" hx-swap-oob="true">
+	<p class="tw-text-gray-500 tw-mb-4">В избранном нет товаров.</p>
+	<a href="{% url 'store:shop' %}" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-medium tw-transition-colors">Перейти в магазин <i class="fas fa-arrow-right"></i></a>
+</div>
+{% endif %}

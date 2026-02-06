@@ -1,0 +1,340 @@
+{% load static %}
+{# Десктоп: поиск в шапке (hidden md:block). Мобилка: иконка лупы (block md:hidden), по клику — полноэкранный оверлей с результатами. #}
+<header
+    x-data="headerComponent()"
+    x-init="init()"
+    @open-mobile-search.window="openMobileSearch()"
+    class="tw-sticky tw-top-0 tw-z-50 tw-bg-white tw-shadow-sm tw-border-b tw-border-gray-200"
+    style="--brand: #1e3a5f; --brand-hover: #0f2744; --accent: #EB332C;"
+>
+    <div class="tw-container tw-mx-auto tw-px-4 tw-py-3 lg:tw-py-4">
+        <div class="tw-flex tw-items-center tw-justify-between tw-gap-4">
+            {# Логотип #}
+            <a href="{% url 'store:index' %}" class="tw-shrink-0 tw-flex tw-items-center" aria-label="ASCO.KG Главная">
+                <img src="{% static 'assets/img/asco_logo_black.svg' %}" alt="ASCO.KG" class="tw-h-8 sm:tw-h-9 tw-w-auto tw-object-contain lg:tw-h-10" />
+            </a>
+
+            {# Десктопный поиск: только md и выше #}
+            <div class="tw-hidden md:tw-block md:tw-flex-1 md:tw-flex md:tw-justify-center md:tw-max-w-xl md:tw-mx-4 tw-relative">
+                <form action="{% url 'store:search' %}" method="get" class="tw-w-full tw-relative">
+                    <label for="header-search" class="tw-sr-only">Поиск</label>
+                    <div class="tw-relative tw-w-full tw-rounded-2xl tw-border tw-border-gray-300 tw-bg-gray-50 tw-shadow-sm focus-within:tw-ring-2 focus-within:tw-ring-[var(--brand)] focus-within:tw-border-transparent focus-within:tw-bg-white focus-within:tw-shadow-md tw-transition-all tw-duration-200">
+                        <input
+                            type="search"
+                            id="header-search"
+                            name="q"
+                            autocomplete="off"
+                            x-model="searchQuery"
+                            @input.debounce.300ms="fetchSuggestions()"
+                            @focus="searchQuery && (resultsOpen = true)"
+                            @keydown.escape.window="resultsOpen = false"
+                            placeholder="Поиск товаров..."
+                            class="tw-w-full tw-pl-4 tw-pr-12 tw-py-3 tw-rounded-2xl tw-border-0 tw-bg-transparent tw-text-gray-900 placeholder:tw-text-gray-500 focus:tw-outline-none focus:tw-ring-0"
+                        />
+                        <button type="submit" class="tw-absolute tw-right-2 tw-top-1/2 -tw-translate-y-1/2 tw-p-2 tw-rounded-xl tw-text-[var(--accent)] hover:tw-bg-gray-100 tw-transition-colors" aria-label="Найти">
+                            <i class="fas fa-search tw-text-lg"></i>
+                        </button>
+                    </div>
+                    {# Десктоп: выпадающий список результатов #}
+                    <div
+                        x-show="resultsOpen && (searchResults.length > 0 || searchLoading)"
+                        x-cloak
+                        @click.outside="resultsOpen = false"
+                        class="tw-absolute tw-left-0 tw-right-0 tw-top-full tw-mt-1 tw-rounded-xl tw-border tw-border-gray-200 tw-bg-white tw-shadow-lg tw-max-h-[70vh] tw-overflow-y-auto tw-z-10"
+                        style="display: none;"
+                    >
+                        <template x-if="searchLoading">
+                            <div class="tw-p-4 tw-text-center tw-text-gray-500">
+                                <i class="fas fa-spinner fa-spin tw-mr-2"></i> Поиск...
+                            </div>
+                        </template>
+                        <template x-if="!searchLoading && searchResults.length > 0">
+                            <ul class="tw-py-2 tw-divide-y tw-divide-gray-100">
+                                <template x-for="item in searchResults" :key="item.url">
+                                    <li>
+                                        <a :href="item.url" class="tw-flex tw-items-center tw-gap-3 tw-px-4 tw-py-3 tw-text-left hover:tw-bg-gray-50 tw-transition-colors">
+                                            <span class="tw-w-12 tw-h-12 tw-rounded-lg tw-bg-gray-100 tw-shrink-0 tw-overflow-hidden tw-flex tw-items-center tw-justify-center">
+                                                <img x-show="item.image" :src="item.image" :alt="item.name" class="tw-w-full tw-h-full tw-object-cover" onerror="this.style.display='none'" />
+                                                <i x-show="!item.image" class="fas fa-image tw-text-gray-400"></i>
+                                            </span>
+                                            <div class="tw-min-w-0 tw-flex-1">
+                                                <span class="tw-font-medium tw-text-gray-900 tw-block tw-truncate" x-text="item.name"></span>
+                                                <span class="tw-text-sm tw-text-[var(--accent)] tw-font-semibold" x-text="item.price + ' сом'"></span>
+                                            </div>
+                                            <i class="fas fa-chevron-right tw-text-gray-400 tw-shrink-0"></i>
+                                        </a>
+                                    </li>
+                                </template>
+                            </ul>
+                        </template>
+                    </div>
+                </form>
+            </div>
+
+            {# Правая часть: иконки #}
+            <div class="tw-flex tw-items-center tw-gap-2 sm:tw-gap-3">
+                {# Мобильный триггер: только иконка лупы (< 768px) #}
+                <button
+                    type="button"
+                    class="tw-block md:tw-hidden tw-flex tw-items-center tw-justify-center tw-w-10 tw-h-10 tw-rounded-lg tw-text-gray-700 hover:tw-bg-gray-100 tw-transition-colors"
+                    :class="searchOpen ? 'tw-text-[var(--accent)]' : ''"
+                    @click="openMobileSearch()"
+                    aria-label="Поиск"
+                >
+                    <i class="fas fa-search tw-text-lg"></i>
+                </button>
+
+                {# Избранное — id для OOB-обновления счётчика из HTMX #}
+                <a href="{% url 'customer:wishlist' %}" class="tw-flex tw-items-center tw-gap-1.5 tw-px-2 tw-py-2 tw-rounded-lg tw-text-gray-700 hover:tw-bg-gray-100 hover:tw-text-[var(--accent)] tw-transition-colors tw-relative" title="Избранное">
+                    <i class="fas fa-heart tw-text-lg"></i>
+                    <span class="tw-hidden sm:tw-inline tw-text-sm tw-font-medium">Избранное</span>
+                    <span id="wishlist-count-desktop" class="wishlist-count-badge tw-absolute -tw-top-0.5 -tw-right-0.5 tw-flex tw-items-center tw-justify-center tw-min-w-[1.25rem] tw-h-5 tw-px-1 tw-rounded-full tw-bg-[var(--accent)] tw-text-white tw-text-xs tw-font-semibold {% if not wishlist_count or wishlist_count == 0 %}tw-hidden{% endif %}">{{ wishlist_count|default:0 }}</span>
+                </a>
+
+                {# Корзина #}
+                <a href="{% url 'store:cart' %}" class="tw-flex tw-items-center tw-gap-1.5 tw-px-2 tw-py-2 tw-rounded-lg tw-text-gray-700 hover:tw-bg-gray-100 hover:tw-text-[var(--accent)] tw-transition-colors tw-relative" title="Корзина">
+                    <i class="fas fa-shopping-basket tw-text-lg"></i>
+                    <span class="tw-hidden sm:tw-inline tw-text-sm tw-font-medium">Корзина</span>
+                    <span class="tw-flex tw-items-center tw-justify-center tw-min-w-[1.25rem] tw-h-5 tw-px-1 tw-rounded-full tw-bg-[var(--brand)] tw-text-white tw-text-xs tw-font-semibold total_cart_items">{{ total_cart_items|default:0 }}</span>
+                </a>
+
+                {# Бургер #}
+                <button
+                    type="button"
+                    @click="drawerOpen = true"
+                    class="tw-md:hidden tw-flex tw-items-center tw-justify-center tw-w-10 tw-h-10 tw-rounded-lg tw-text-gray-700 hover:tw-bg-gray-100 tw-border tw-border-gray-200"
+                    aria-label="Меню"
+                >
+                    <i class="fas fa-bars tw-text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {# Мобильный полноэкранный оверлей поиска: fixed inset-0 z-100, только < 768px #}
+    <div
+        x-show="searchOpen"
+        x-cloak
+        x-transition:enter="tw-transition tw-ease-out tw-duration-200"
+        x-transition:enter-start="tw-opacity-0"
+        x-transition:enter-end="tw-opacity-100"
+        x-transition:leave="tw-transition tw-ease-in tw-duration-150"
+        x-transition:leave-start="tw-opacity-100"
+        x-transition:leave-end="tw-opacity-0"
+        class="tw-fixed tw-inset-0 tw-z-[100] tw-bg-white tw-flex tw-flex-col tw-block md:tw-hidden"
+        role="dialog"
+        aria-label="Поиск"
+    >
+        {# Верхняя строка: Назад | поле ввода | Очистить #}
+        <div class="tw-flex tw-items-center tw-gap-2 tw-p-3 tw-pb-2 tw-border-b tw-border-gray-200 tw-shrink-0 tw-bg-white">
+            <button
+                type="button"
+                @click="closeMobileSearch()"
+                class="tw-flex tw-items-center tw-justify-center tw-w-10 tw-h-10 tw-rounded-lg tw-text-gray-700 hover:tw-bg-gray-100 tw-shrink-0"
+                aria-label="Назад"
+            >
+                <i class="fas fa-arrow-left tw-text-lg"></i>
+            </button>
+            <form action="{% url 'store:search' %}" method="get" class="tw-flex-1 tw-min-w-0" @submit="resultsOpen = false">
+                <label for="header-search-mobile" class="tw-sr-only">Поиск</label>
+                <input
+                    type="search"
+                    id="header-search-mobile"
+                    name="q"
+                    x-ref="mobileSearchInput"
+                    x-model="searchQuery"
+                    @input.debounce.300ms="fetchSuggestions()"
+                    @keydown.escape="closeMobileSearch()"
+                    placeholder="Поиск товаров..."
+                    class="tw-w-full tw-h-11 tw-pl-4 tw-pr-4 tw-rounded-xl tw-border tw-border-gray-300 tw-bg-gray-50 tw-text-gray-900 placeholder:tw-text-gray-500 focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-[var(--brand)] focus:tw-border-transparent"
+                />
+            </form>
+            <button
+                type="button"
+                x-show="searchQuery.length > 0"
+                @click="searchQuery = ''; searchResults = []; resultsOpen = false"
+                class="tw-flex tw-items-center tw-justify-center tw-w-10 tw-h-10 tw-rounded-lg tw-text-gray-500 hover:tw-bg-gray-100 tw-shrink-0"
+                aria-label="Очистить"
+            >
+                <i class="fas fa-times tw-text-lg"></i>
+            </button>
+        </div>
+
+        {# Результаты на весь экран под инпутом #}
+        <div class="tw-flex-1 tw-overflow-y-auto tw-min-h-0 tw-px-3 tw-pb-4">
+            <template x-if="searchLoading">
+                <div class="tw-py-8 tw-text-center tw-text-gray-500">
+                    <i class="fas fa-spinner fa-spin tw-text-2xl tw-mb-2 tw-block"></i>
+                    <span>Поиск...</span>
+                </div>
+            </template>
+            <template x-if="!searchLoading && searchResults.length > 0">
+                <ul class="tw-pt-2 tw-space-y-3">
+                    <template x-for="item in searchResults" :key="item.url">
+                        <li>
+                            <a :href="item.url" @click="closeMobileSearch()" class="tw-flex tw-items-center tw-gap-4 tw-p-4 tw-py-4 tw-rounded-xl tw-bg-white hover:tw-bg-gray-50 active:tw-bg-gray-100 tw-transition-colors tw-border tw-border-gray-100 tw-text-left tw-min-h-[72px]">
+                                <span class="tw-w-[60px] tw-h-[60px] tw-rounded-lg tw-bg-gray-100 tw-shrink-0 tw-overflow-hidden tw-flex tw-items-center tw-justify-center">
+                                    <img x-show="item.image" :src="item.image" :alt="item.name" class="tw-w-full tw-h-full tw-object-cover" onerror="this.style.display='none'" />
+                                    <i x-show="!item.image" class="fas fa-image tw-text-gray-400 tw-text-xl"></i>
+                                </span>
+                                <div class="tw-min-w-0 tw-flex-1">
+                                    <span class="tw-font-medium tw-text-gray-900 tw-block tw-truncate" x-text="item.name"></span>
+                                    <span class="tw-text-sm tw-text-gray-500 tw-block tw-truncate" x-text="item.category || ''"></span>
+                                </div>
+                                <span class="tw-font-bold tw-text-gray-900 tw-shrink-0 tw-text-[var(--accent)]" x-text="item.price + ' сом'"></span>
+                            </a>
+                        </li>
+                    </template>
+                </ul>
+            </template>
+            <template x-if="!searchLoading && searchQuery.trim() && searchResults.length === 0">
+                <div class="tw-py-8 tw-text-center tw-text-gray-500">
+                    <span>Ничего не найдено</span>
+                </div>
+            </template>
+            {# Кнопка «Показать все результаты» #}
+            <template x-if="!searchLoading && searchResults.length > 0">
+                <div class="tw-pt-4 tw-pb-2">
+                    <a
+                        :href="'/search/?q=' + encodeURIComponent(searchQuery.trim())"
+                        @click="closeMobileSearch()"
+                        class="tw-block tw-w-full tw-py-4 tw-rounded-xl tw-text-center tw-font-semibold tw-text-white tw-bg-[var(--accent)] hover:tw-opacity-90 active:tw-opacity-80 tw-transition-opacity"
+                    >
+                        Показать все результаты
+                    </a>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    {# Drawer: боковая панель (Mobile/Tablet) #}
+    <div
+        x-show="drawerOpen"
+        x-cloak
+        x-transition:enter="tw-transition tw-ease-out tw-duration-200"
+        x-transition:enter-start="tw-opacity-0"
+        x-transition:enter-end="tw-opacity-100"
+        x-transition:leave="tw-transition tw-ease-in tw-duration-150"
+        x-transition:leave-start="tw-opacity-100"
+        x-transition:leave-end="tw-opacity-0"
+        @click="drawerOpen = false"
+        class="tw-fixed tw-inset-0 tw-z-[60] tw-bg-black/50 tw-md:hidden"
+        aria-hidden="true"
+    ></div>
+    <aside
+        x-show="drawerOpen"
+        x-cloak
+        x-transition:enter="tw-transition tw-ease-out tw-duration-200"
+        x-transition:enter-start="-tw-translate-x-full"
+        x-transition:enter-end="tw-translate-x-0"
+        x-transition:leave="tw-transition tw-ease-in tw-duration-150"
+        x-transition:leave-start="tw-translate-x-0"
+        x-transition:leave-end="-tw-translate-x-full"
+        class="tw-fixed tw-top-0 tw-left-0 tw-z-[70] tw-w-full tw-max-w-sm tw-h-full tw-bg-white tw-shadow-xl tw-overflow-y-auto tw-md:hidden"
+        role="dialog"
+        aria-label="Меню"
+    >
+        <div class="tw-sticky tw-top-0 tw-flex tw-items-center tw-justify-between tw-px-4 tw-py-4 tw-bg-white tw-border-b tw-border-gray-200">
+            <a href="{% url 'store:index' %}" class="tw-flex tw-items-center" @click="drawerOpen = false">
+                <img src="{% static 'assets/img/asco_logo_black.svg' %}" alt="ASCO.KG" class="tw-h-8 tw-w-auto tw-object-contain" />
+            </a>
+            <button type="button" @click="drawerOpen = false" class="tw-w-10 tw-h-10 tw-flex tw-items-center tw-justify-center tw-rounded-lg tw-text-gray-600 hover:tw-bg-gray-100" aria-label="Закрыть меню">
+                <i class="fas fa-times tw-text-xl"></i>
+            </button>
+        </div>
+        <nav class="tw-px-4 tw-py-4">
+            <ul class="tw-space-y-0 tw-divide-y tw-divide-gray-100">
+                <li><a href="/" class="tw-block tw-py-3 tw-text-gray-800 tw-font-medium hover:tw-text-[var(--brand)]" @click="drawerOpen = false">Главная</a></li>
+                <li><a href="{% url 'store:shop' %}" class="tw-block tw-py-3 tw-text-gray-800 tw-font-medium hover:tw-text-[var(--brand)]" @click="drawerOpen = false">Магазин</a></li>
+                <li>
+                    <span class="tw-block tw-py-2 tw-text-sm tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Категории</span>
+                    <ul class="tw-pb-3 tw-space-y-0">
+                        {% for c in category_ %}
+                            <li><a href="{% url 'store:category' c.id %}" class="tw-block tw-py-2 tw-pl-4 tw-text-gray-700 hover:tw-text-[var(--brand)]" @click="drawerOpen = false">{{ c.title }}</a></li>
+                        {% empty %}
+                            <li class="tw-py-2 tw-pl-4 tw-text-gray-500 tw-text-sm">Нет категорий</li>
+                        {% endfor %}
+                    </ul>
+                </li>
+                <li><span class="tw-block tw-py-2 tw-text-sm tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Страницы</span></li>
+                <li><a href="{% url 'blog:blog_list' %}" class="tw-block tw-py-2 tw-pl-4 tw-text-gray-700 hover:tw-text-[var(--brand)]" @click="drawerOpen = false">Блог</a></li>
+                <li><a href="{% url 'store:about' %}" class="tw-block tw-py-2 tw-pl-4 tw-text-gray-700 hover:tw-text-[var(--brand)]" @click="drawerOpen = false">О нас</a></li>
+                <li><a href="{% url 'store:contact' %}" class="tw-block tw-py-2 tw-pl-4 tw-text-gray-700 hover:tw-text-[var(--brand)]" @click="drawerOpen = false">Контакты</a></li>
+                <li><a href="{% url 'store:faqs' %}" class="tw-block tw-py-2 tw-pl-4 tw-text-gray-700 hover:tw-text-[var(--brand)]" @click="drawerOpen = false">Часто задаваемые вопросы</a></li>
+                <li><a href="{% url 'store:privacy_policy' %}" class="tw-block tw-py-2 tw-pl-4 tw-text-gray-700 hover:tw-text-[var(--brand)]" @click="drawerOpen = false">Политика конфиденциальности</a></li>
+                <li><a href="{% url 'store:contact' %}" class="tw-block tw-py-3 tw-text-gray-800 tw-font-medium hover:tw-text-[var(--brand)]" @click="drawerOpen = false">Контакты</a></li>
+                {% if request.user.is_authenticated %}
+                    {% if request.user.role == 'manager' or request.user.role == 'superadmin' or request.user.is_staff or request.user.is_superuser %}
+                        <li><span class="tw-block tw-py-2 tw-text-sm tw-font-semibold tw-text-gray-500 tw-uppercase tw-tracking-wide">Управление</span></li>
+                        <li><a href="{% url 'vendor:dashboard' %}" class="tw-block tw-py-2 tw-pl-4 tw-text-gray-700 hover:tw-text-[var(--brand)]" @click="drawerOpen = false">Панель</a></li>
+                        <li><a href="{% url 'vendor:products' %}" class="tw-block tw-py-2 tw-pl-4 tw-text-gray-700 hover:tw-text-[var(--brand)]" @click="drawerOpen = false">Товары</a></li>
+                        <li><a href="{% url 'vendor:orders' %}" class="tw-block tw-py-2 tw-pl-4 tw-text-gray-700 hover:tw-text-[var(--brand)]" @click="drawerOpen = false">Заказы</a></li>
+                        <li><a href="{% url 'vendor:categories' %}" class="tw-block tw-py-2 tw-pl-4 tw-text-gray-700 hover:tw-text-[var(--brand)]" @click="drawerOpen = false">Категории</a></li>
+                        <li><a href="{% url 'userauths:sign-out' %}" class="tw-block tw-py-3 tw-text-[var(--accent)] tw-font-medium" @click="drawerOpen = false">Выйти</a></li>
+                    {% endif %}
+                {% endif %}
+            </ul>
+            <div class="tw-mt-6 tw-pt-4 tw-border-t tw-border-gray-200">
+                <p class="tw-text-sm tw-text-gray-600 tw-font-medium">Контакты</p>
+                <p class="tw-text-sm tw-text-gray-600">ТК Табылга, Жибек-Жолу 150, Бишкек</p>
+                <p class="tw-mt-1"><a href="tel:+996700454578" class="tw-text-[var(--brand)] hover:tw-underline">+996 700 454 578</a></p>
+                <p><a href="tel:+996705640165" class="tw-text-[var(--brand)] hover:tw-underline">+996 705 640 165</a></p>
+                <p><a href="mailto:info@asco.kg" class="tw-text-[var(--brand)] hover:tw-underline">info@asco.kg</a></p>
+            </div>
+        </nav>
+    </aside>
+</header>
+
+<script>
+document.addEventListener('alpine:init', function() {
+    Alpine.data('headerComponent', function() {
+        return {
+            searchQuery: '',
+            searchOpen: false,
+            drawerOpen: false,
+            searchResults: [],
+            searchLoading: false,
+            resultsOpen: false,
+            isMobile: false,
+            init() {
+                var self = this;
+                function checkMobile() { self.isMobile = window.innerWidth < 768; }
+                checkMobile();
+                window.addEventListener('resize', checkMobile);
+                var params = new URLSearchParams(window.location.search);
+                if (params.has('q')) this.searchQuery = params.get('q') || '';
+            },
+            openMobileSearch() {
+                this.searchOpen = true;
+                this.resultsOpen = true;
+                var self = this;
+                this.$nextTick(function() { self.$refs.mobileSearchInput && self.$refs.mobileSearchInput.focus(); });
+            },
+            closeMobileSearch() {
+                this.searchOpen = false;
+                this.resultsOpen = false;
+            },
+            fetchSuggestions() {
+                var q = (this.searchQuery || '').trim();
+                this.resultsOpen = true;
+                if (!q) {
+                    this.searchResults = [];
+                    return;
+                }
+                this.searchLoading = true;
+                var self = this;
+                fetch('/search_suggestions/?q=' + encodeURIComponent(q))
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        self.searchResults = data.results || [];
+                        self.searchLoading = false;
+                    })
+                    .catch(function() {
+                        self.searchResults = [];
+                        self.searchLoading = false;
+                    });
+            }
+        };
+    });
+});
+</script>

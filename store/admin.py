@@ -14,6 +14,14 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ['title', 'image']
     list_editable = ['image']
     prepopulated_fields = {'slug': ('title',)}
+    list_display_links = ['title']
+
+
+class HeroSlideAdmin(admin.ModelAdmin):
+    list_display = ['title', 'order', 'is_active', 'image']
+    list_editable = ['order', 'is_active']
+    list_filter = ['is_active']
+    search_fields = ['title', 'subtitle']
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ['name', 'category', 'price', 'regular_price', 'stock', 'status', 'featured', 'vendor', 'created_by', 'date']
@@ -71,6 +79,7 @@ class ReviewAdmin(admin.ModelAdmin):
     list_filter = ['active', 'rating']
 
 admin.site.register(store_models.Category, CategoryAdmin)
+admin.site.register(store_models.HeroSlide, HeroSlideAdmin)
 admin.site.register(store_models.Product, ProductAdmin)
 admin.site.register(store_models.Variant, VariantAdmin)
 admin.site.register(store_models.VariantItem, VariantItemAdmin)

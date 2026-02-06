@@ -1,147 +1,148 @@
-{% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% block content %}
+{% extends 'partials/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+<style>
+	.add_to_cart:focus, .btn:focus { outline: none !important; box-shadow: none !important; border: none !important; }
+</style>
 
-<div class="gray py-3">
-    <div class="container">
-        <div class="row">
-            <div class="colxl-12 col-lg-12 col-md-12">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/">Главная</a></li>
-                        <li class="breadcrumb-item"><a href="/shop.html">Магазин</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Корзина</li>
-                    </ol>
-                </nav>
-            </div>
-        </div>
-    </div>
-</div>
+<section class="tw-min-h-screen tw-bg-gray-50">
+	<div class="tw-container tw-mx-auto tw-px-4 tw-py-4 md:tw-py-6">
+		{# Заголовок в стиле магазина #}
+		<div class="tw-flex tw-flex-col sm:tw-flex-row sm:tw-items-center sm:tw-justify-between tw-gap-3 tw-mb-4">
+			<h1 class="tw-text-xl md:tw-text-2xl tw-font-bold tw-text-gray-900">Корзина (<span id="cart-heading-count">{{ items|length }}</span>)</h1>
+		</div>
 
-<section class="middle">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
-                <div class="sec_title position-relative text-center">
-                    <h3 class="ft-bold pt-3">Корзина</h3>
-                </div>
-            </div>
-        </div>
+		<div class="tw-flex tw-flex-col lg:tw-flex-row tw-gap-6 tw-items-stretch">
+			{# Список товаров #}
+			<div class="tw-flex-1 tw-min-w-0">
+				<div class="tw-flex tw-flex-wrap tw-items-center tw-gap-2 tw-mb-4 tw-min-h-[2.5rem]">
+					<span class="tw-text-sm tw-text-gray-500">Товаров в корзине: <strong id="cart-items-count" class="tw-text-gray-900">{{ items|length }}</strong></span>
+				</div>
+				<div class="tw-space-y-3 tw-max-h-[70vh] lg:tw-max-h-none lg:tw-space-y-4" style="overflow-y: auto; overflow-x: hidden;">
+					{% for item in items %}
+						<div class="item_div_{{ item.id }} tw-bg-white tw-rounded-2xl tw-shadow-sm tw-border tw-border-gray-100 tw-overflow-hidden tw-transition-shadow hover:tw-shadow-md">
+							<div class="tw-flex tw-flex-col sm:tw-flex-row tw-items-stretch tw-gap-3 tw-p-3 md:tw-p-4">
+								<div class="tw-flex tw-gap-3 tw-flex-shrink-0">
+									<div class="tw-w-20 tw-h-20 sm:tw-w-24 sm:tw-h-24 tw-rounded-xl tw-overflow-hidden tw-bg-gray-100 tw-flex-shrink-0">
+										{% if item.product.image %}
+											<img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="tw-w-full tw-h-full tw-object-cover" />
+										{% else %}
+											<div class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-text-gray-400"><i class="fas fa-image tw-text-2xl"></i></div>
+										{% endif %}
+									</div>
+									<div class="tw-flex tw-flex-col tw-justify-center tw-min-w-0 sm:tw-min-w-[140px]">
+										<h3 class="tw-font-semibold tw-text-gray-900 tw-text-sm md:tw-text-base tw-line-clamp-2">
+											<a href="{% url 'store:product_detail' item.product.slug %}" class="hover:tw-text-[#EB332C] tw-transition-colors">{{ item.product.name }}</a>
+										</h3>
+										<p class="tw-text-xs tw-text-gray-500 tw-mt-0.5">Продавец: {{ item.product.vendor.profile.full_name|default:"—" }}</p>
+									</div>
+								</div>
+								<div class="tw-flex tw-flex-wrap tw-items-center tw-gap-2 sm:tw-gap-4 tw-flex-1 tw-justify-between sm:tw-justify-end">
+									<div class="tw-flex tw-items-center tw-gap-2">
+										<span class="tw-text-xs tw-text-gray-500 md:tw-hidden">Цена за шт:</span>
+										<span class="tw-font-semibold tw-text-gray-900 tw-text-sm md:tw-text-base">{{ item.price|intcomma }} сом</span>
+									</div>
+									<div class="tw-flex tw-items-center tw-gap-1">
+										<button type="button" class="update_cart_qty tw-w-9 tw-h-9 tw-flex tw-items-center tw-justify-center tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-text-gray-700 hover:tw-bg-gray-50 tw-font-medium tw-text-lg" data-update_type="decrease" data-product_id="{{ item.product.id }}" data-item_id="{{ item.id }}" aria-label="Уменьшить">−</button>
+										<input type="number" readonly class="item-qty-{{ item.id }} tw-w-12 tw-h-9 tw-text-center tw-rounded-lg tw-border tw-border-gray-200 tw-text-sm tw-font-medium" value="{{ item.qty }}" />
+										<button type="button" class="update_cart_qty tw-w-9 tw-h-9 tw-flex tw-items-center tw-justify-center tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-text-gray-700 hover:tw-bg-gray-50 tw-font-medium tw-text-lg" data-update_type="increase" data-product_id="{{ item.product.id }}" data-item_id="{{ item.id }}" aria-label="Увеличить">+</button>
+									</div>
+									<div class="tw-flex tw-items-center tw-gap-2">
+										<span class="tw-text-xs tw-text-gray-500 md:tw-hidden">Итого:</span>
+										<span class="tw-font-bold tw-text-[#EB332C] tw-text-sm md:tw-text-base"><span class="item_sub_total_{{ item.id }}">{{ item.sub_total|intcomma }}</span> сом</span>
+									</div>
+									<button type="button" class="delete_cart_item tw-w-9 tw-h-9 tw-flex tw-items-center tw-justify-center tw-rounded-lg tw-bg-red-50 hover:tw-bg-red-100 tw-text-red-600 tw-transition-colors" data-item_id="{{ item.id }}" data-product_id="{{ item.product.id }}" aria-label="Удалить"><i class="fas fa-trash tw-text-sm"></i></button>
+								</div>
+							</div>
+						</div>
+					{% empty %}
+						<div id="cart-empty-state" class="tw-bg-white tw-rounded-2xl tw-shadow-sm tw-border tw-border-gray-100 tw-p-8 tw-text-center">
+							<p class="tw-text-gray-500 tw-mb-4">В корзине нет товаров.</p>
+							<a href="{% url 'store:shop' %}" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-medium tw-transition-colors">Перейти в магазин <i class="fas fa-arrow-right"></i></a>
+						</div>
+					{% endfor %}
+				</div>
+			</div>
 
-        <div class="row">
-            <div class="col-12 col-lg-9 order-2 order-lg-1">
-                <h4 class="fw-bold p-2 p-md-3">Товары в корзине</h4>
-                <div style="overflow-y: auto; max-height: 650px; overflow-x: hidden" class="p-2 p-md-3">
-                    {% for item in items %}
-                        <div class="shadow rounded mb-3 item_div_{{item.id}}">
-                            <div class="row d-flex align-items-center p-2 p-md-3">
-                                <div class="col-12 col-md-4 d-flex gap-2 gap-md-3 mb-3 mb-md-0">
-                                    <img src="{{item.product.image.url}}" alt="{{ item.product.name }}" class="img-fluid" style="width: 80px; height: 80px; min-width: 80px; object-fit: cover" />
-                                    <div class="p-1 p-md-2">
-                                        <h5 class="fs-6 fs-md-5">{{item.product.name}}</h5>
-                                        <p class="mb-0 mt-0 small">Цена: {{item.price|intcomma}} сом</p>
-                                        <p class="mb-0 mt-0 small">Продавец: {{item.product.vendor.profile.full_name}}</p>
-                                    </div>
-                                </div> 
-                                <div class="col-6 col-md-2 mb-2 mb-md-0">
-                                    <p class="mb-0 small d-md-none">Цена за шт:</p>
-                                    <h4 class="fs-6 fs-md-5">{{ item.price|intcomma }} сом</h4>
-                                </div>
-                                <div class="col-6 col-md-2 d-flex mb-2 mb-md-0">
-                                    <button type="button" class="btn bg-primary text-white btn-sm update_cart_qty" data-update_type="decrease" data-product_id="{{item.product.id}}" data-item_id="{{item.id}}">-</button>
-                                    <input type="number" readonly class="form-control form-sm item-qty-{{item.id}}" value="{{item.qty}}" style="max-width: 60px;" />
-                                    <button type="button" class="btn bg-primary text-white btn-sm update_cart_qty" data-update_type="increase" data-product_id="{{item.product.id}}" data-item_id="{{item.id}}">+</button>
-                                </div>
-                                <div class="col-6 col-md-2 mb-2 mb-md-0">
-                                    <p class="mb-0 small d-md-none">Итого:</p>
-                                    <h4 class="fs-6 fs-md-5 mb-0"><span class="item_sub_total_{{item.id}}">{{item.sub_total|intcomma}}</span> сом</h4>
-                                </div>
-                                <div class="col-6 col-md-2 text-end text-md-start">
-                                    <button type="button" class="btn bg-danger text-white btn-sm rounded delete_cart_item" data-item_id="{{item.id}}" data-product_id="{{item.product.id}}"><i class="fas fa-trash"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-            <div class="col-12 col-lg-3 order-1 order-lg-2 mb-4 mb-lg-0">
-                <div class="shadow rounded p-3">
-                    <h4 class="fw-bold">Итого по заказу</h4>
+			{# Боковая панель — итого (скрыта при пустой корзине) #}
+			<div id="cart-sidebar" class="lg:tw-w-80 tw-flex-shrink-0 {% if not items %}tw-hidden{% endif %}">
+				<div class="tw-bg-white tw-rounded-2xl tw-shadow-sm tw-border tw-border-gray-100 tw-p-4 lg:tw-sticky lg:tw-top-24">
+					<h2 class="tw-font-bold tw-text-gray-900 tw-text-lg tw-mb-4">Итого по заказу</h2>
+					<div class="tw-space-y-3">
+						<div class="tw-flex tw-justify-between tw-items-center tw-text-sm">
+							<span class="tw-text-gray-600">Подытог</span>
+							<span class="tw-font-medium tw-text-gray-900"><span class="cart_sub_total">{{ cart_sub_total|intcomma }}</span> сом</span>
+						</div>
+						<div class="tw-flex tw-justify-between tw-items-center tw-text-sm">
+							<span class="tw-text-gray-600">Доставка</span>
+							<span class="tw-font-medium tw-text-gray-900">0 сом</span>
+						</div>
+						<div class="tw-flex tw-justify-between tw-items-center tw-text-sm">
+							<span class="tw-text-gray-600">Налог</span>
+							<span class="tw-font-medium tw-text-gray-900">0 сом</span>
+						</div>
+						<div class="tw-border-t tw-border-gray-100 tw-pt-3 tw-mt-3 tw-flex tw-justify-between tw-items-center">
+							<span class="tw-font-bold tw-text-gray-900">Итого</span>
+							<span class="tw-font-bold tw-text-[#EB332C] tw-text-lg"><span class="cart_sub_total">{{ cart_sub_total|intcomma }}</span> сом</span>
+						</div>
+					</div>
+					<div class="tw-flex tw-flex-col tw-gap-2 tw-mt-4">
+						<a href="{% url 'store:shop' %}" class="tw-w-full tw-py-3 tw-px-4 tw-rounded-xl tw-border tw-border-gray-200 tw-text-gray-700 tw-font-medium tw-text-center hover:tw-bg-gray-50 tw-transition-colors">Продолжить покупки</a>
+						<button type="button" class="tw-w-full tw-py-3 tw-px-4 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-medium tw-flex tw-items-center tw-justify-center tw-gap-2" data-bs-toggle="modal" data-bs-target="#deliveryModal">Заказ в один клик <i class="fas fa-bolt"></i></button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
-                    <div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <p class="fw-semibold fs-6">Подытог</p>
-                            <p class="fs-6"><span class="cart_sub_total">{{cart_sub_total|intcomma}}</span> сом</p>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <p class="fw-semibold fs-6">Доставка</p>
-                            <p class="fs-6">0 сом</p>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <p class="fw-semibold fs-6">Налог</p>
-                            <p class="fs-6">0 сом</p>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <p class="fw-bold text-dark fs-5">Итого</p>
-                            <p class="fw-bold text-dark fs-5"><span class="cart_sub_total">{{cart_sub_total|intcomma}}</span> сом</p>
-                        </div>
-                    </div>
-                </div>
+	{# Модальное окно: оформление доставки #}
+	<div class="modal fade" id="deliveryModal" tabindex="-1" aria-labelledby="deliveryModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content tw-rounded-2xl tw-border-0 tw-shadow-xl">
+				<div class="modal-header tw-border-b tw-border-gray-100 tw-px-4 tw-pt-4 tw-pb-3">
+					<h5 class="modal-title tw-font-bold tw-text-gray-900" id="deliveryModalLabel">Оформление доставки</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+				</div>
+				<div class="modal-body tw-p-4">
+					<p class="tw-text-sm tw-text-gray-500 tw-mb-4">Укажите контактные данные — продавец свяжется с вами для подтверждения заказа и доставки.</p>
+					<form action="{% url 'store:delivery_request' %}" method="POST" id="delivery-form">
+						{% csrf_token %}
+						<div class="tw-mb-3">
+							<label class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Имя и фамилия *</label>
+							<input type="text" name="full_name" class="form-control tw-rounded-xl tw-border-gray-200" placeholder="Ваше имя" required>
+						</div>
+						<div class="tw-mb-3">
+							<label class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Номер телефона (Кыргызстан, +996) *</label>
+							<input type="tel" name="phone" id="delivery-phone" class="form-control tw-rounded-xl tw-border-gray-200" placeholder="+996 XXX XXX XXX" maxlength="16" required autocomplete="tel">
+						</div>
+						<div class="tw-mb-4">
+							<label class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Адрес доставки *</label>
+							<textarea name="address" rows="3" class="form-control tw-rounded-xl tw-border-gray-200" placeholder="Полный адрес доставки" required></textarea>
+						</div>
+						<div class="tw-flex tw-justify-end tw-gap-2">
+							<button type="button" class="tw-px-4 tw-py-2 tw-rounded-xl tw-border tw-border-gray-200 tw-text-gray-700 tw-font-medium hover:tw-bg-gray-50" data-bs-dismiss="modal">Отмена</button>
+							<button type="submit" class="tw-px-4 tw-py-2 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-medium">Заказ в один клик <i class="fas fa-bolt tw-ml-1"></i></button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
 
-                <div class="d-flex flex-column w-100 mt-3 gap-2">
-                    <a href="{% url 'store:shop' %}" class="btn btn-outline-primary rounded text-primary w-100">Продолжить покупки</a>
-                    <button type="button" class="btn bg-primary rounded text-white w-100" data-bs-toggle="modal" data-bs-target="#deliveryModal">Оформление доставки <i class="fas fa-arrow-right ms-1"></i></button>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="modal fade" id="deliveryModal" tabindex="-1" aria-labelledby="deliveryModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold" id="deliveryModalLabel">Оформление доставки</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="text-muted">Укажите контактные данные, и продавец свяжется с вами для подтверждения заказа и доставки.</p>
-                    <form action="{% url 'store:delivery_request' %}" method="POST" id="delivery-form">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label class="form-label">Имя и фамилия *</label>
-                            <input type="text" name="full_name" class="form-control" placeholder="Ваше имя" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Номер телефона *</label>
-                            <input type="text" name="phone" class="form-control" placeholder="Например, +996 000 00 00 00" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Адрес доставки *</label>
-                            <textarea name="address" rows="3" class="form-control" placeholder="Введите полный адрес доставки" required></textarea>
-                        </div>
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
-                            <button type="submit" class="btn bg-primary text-white">Отправить заявку <i class="fas fa-paper-plane ms-1"></i></button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="deliverySuccessModal" tabindex="-1" aria-labelledby="deliverySuccessModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body text-center p-4">
-                    <div class="mb-3">
-                        <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
-                    </div>
-                    <h5 class="fw-bold mb-2" id="deliverySuccessModalLabel">Заявка успешно отправлена!</h5>
-                    <p class="text-muted mb-3">Мы свяжемся с вами в ближайшее время.</p>
-                    <button type="button" class="btn bg-primary text-white" data-bs-dismiss="modal">Закрыть</button>
-                </div>
-            </div>
-        </div>
-    </div>
+	{# Модальное окно: успешная отправка #}
+	<div class="modal fade" id="deliverySuccessModal" tabindex="-1" aria-labelledby="deliverySuccessModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content tw-rounded-2xl tw-border-0 tw-shadow-xl">
+				<div class="modal-body tw-text-center tw-p-8">
+					<div class="tw-mb-4"><i class="fas fa-check-circle tw-text-[#22c55e] tw-text-5xl"></i></div>
+					<h5 class="tw-font-bold tw-text-gray-900 tw-mb-2" id="deliverySuccessModalLabel">Заявка успешно отправлена!</h5>
+					<p class="tw-text-gray-500 tw-mb-4">Мы свяжемся с вами в ближайшее время.</p>
+					<button type="button" class="tw-px-4 tw-py-2 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-medium" data-bs-dismiss="modal">Закрыть</button>
+				</div>
+			</div>
+		</div>
+	</div>
 </section>
 
 {% endblock content %}
@@ -149,15 +150,37 @@
 {% block extra_js %}
 {{ block.super }}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        {% if messages %}
-            {% for message in messages %}
-                {% if message.level_tag == 'success' %}
-                    var successModal = new bootstrap.Modal(document.getElementById('deliverySuccessModal'));
-                    successModal.show();
-                {% endif %}
-            {% endfor %}
-        {% endif %}
-    });
+	document.addEventListener('DOMContentLoaded', function () {
+		{% if messages %}
+			{% for message in messages %}
+				{% if message.level_tag == 'success' %}
+					var successModal = new bootstrap.Modal(document.getElementById('deliverySuccessModal'));
+					successModal.show();
+				{% endif %}
+			{% endfor %}
+		{% endif %}
+
+		var phoneInput = document.getElementById('delivery-phone');
+		if (phoneInput) {
+			function formatKgPhone() {
+				var v = phoneInput.value.replace(/\D/g, '');
+				if (v.indexOf('996') === 0) v = v.slice(3);
+				v = v.slice(0, 9);
+				if (v.length === 0) {
+					phoneInput.value = '';
+					return;
+				}
+				var s = '';
+				for (var i = 0; i < v.length; i++) {
+					if (i > 0 && i % 3 === 0) s += ' ';
+					s += v[i];
+				}
+				phoneInput.value = '+996 ' + s;
+			}
+			phoneInput.addEventListener('input', formatKgPhone);
+			phoneInput.addEventListener('paste', function() { setTimeout(formatKgPhone, 0); });
+			phoneInput.addEventListener('blur', formatKgPhone);
+		}
+	});
 </script>
 {% endblock extra_js %}

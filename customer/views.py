@@ -1,5 +1,6 @@
-from django.http import JsonResponse
-from django.shortcuts import redirect, render
+import json
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.db import models
 from django.contrib.auth.decorators import login_required
@@ -7,6 +8,7 @@ from django.contrib.auth.hashers import check_password
 
 from plugin.paginate_queryset import paginate_queryset
 from store import models as store_models
+from store.context import WISHLIST_SESSION_KEY
 from customer import models as customer_models
 
 @login_required
@@ -72,34 +74,103 @@ def wishlist(request):
 
 @login_required
 def remove_from_wishlist(request, id):
-    wishlist = customer_models.Wishlist.objects.get(user=request.user, id=id)
-    wishlist.delete()
-    
+    wishlist_entry = get_object_or_404(customer_models.Wishlist, user=request.user, id=id)
+    wishlist_entry.delete()
+
+    if request.headers.get("HX-Request"):
+        wishlist_count = customer_models.Wishlist.objects.filter(user=request.user).count()
+        html = render(
+            request,
+            "customer/includes/wishlist_remove_response.html",
+            {"wishlist_count": wishlist_count},
+        ).content.decode()
+        response = HttpResponse(html)
+        response["HX-Trigger"] = json.dumps({"showWishlistToast": {"text": "Товар удалён из избранного", "tag": "success"}})
+        return response
+
     messages.success(request, "Товар удалён из избранного")
     return redirect("customer:wishlist")
 
 
-def add_to_wishlist(request, id):
+def sync_wishlist_from_storage(request):
+    """Для гостей: принимает ids из LocalStorage (GET ids=1,2,3) и записывает в сессию. reload=True только если сессия была пуста и мы что-то записали."""
     if request.user.is_authenticated:
-        product = store_models.Product.objects.get(id=id)
-        wishlist_entry, created = customer_models.Wishlist.objects.get_or_create(product=product, user=request.user)
+        return JsonResponse({"ok": True, "reload": False})
+    ids_str = request.GET.get("ids", "")
+    if not ids_str:
+        return JsonResponse({"ok": True, "reload": False})
+    try:
+        ids = [int(x.strip()) for x in ids_str.split(",") if x.strip()]
+    except ValueError:
+        ids = []
+    current = list(request.session.get(WISHLIST_SESSION_KEY) or [])
+    need_reload = not current and ids
+    request.session[WISHLIST_SESSION_KEY] = ids
+    request.session.modified = True
+    return JsonResponse({"ok": True, "count": len(ids), "reload": need_reload})
 
+
+def add_to_wishlist(request, id):
+    """Legacy endpoint; prefer toggle_wishlist for HTMX."""
+    return toggle_wishlist(request, id)
+
+
+def toggle_wishlist(request, id):
+    """Добавляет или удаляет товар из избранного. Для гостей — session, для юзеров — БД. HTMX: возвращает фрагмент кнопки + OOB счётчиков."""
+    product = get_object_or_404(store_models.Product, id=id)
+    is_in_wishlist = False
+    wishlist_count = 0
+
+    if request.user.is_authenticated:
+        wishlist_entry, created = customer_models.Wishlist.objects.get_or_create(
+            product=product, user=request.user
+        )
         if not created:
             wishlist_entry.delete()
-            message = "Товар удалён из избранного"
             is_in_wishlist = False
         else:
-            message = "Товар добавлен в избранное"
             is_in_wishlist = True
-
-        wishlist = customer_models.Wishlist.objects.filter(user=request.user)
-        return JsonResponse({
-            "message": message,
-            "wishlist_count": wishlist.count(),
-            "is_in_wishlist": is_in_wishlist
-        })
+        wishlist_count = customer_models.Wishlist.objects.filter(user=request.user).count()
     else:
-        return JsonResponse({"message": "Пользователь не авторизован", "wishlist_count": "0", "is_in_wishlist": False})
+        session_ids = list(request.session.get(WISHLIST_SESSION_KEY) or [])
+        try:
+            session_ids = [int(x) for x in session_ids]
+        except (TypeError, ValueError):
+            session_ids = []
+        if product.id in session_ids:
+            session_ids = [x for x in session_ids if x != product.id]
+            is_in_wishlist = False
+        else:
+            session_ids.append(product.id)
+            is_in_wishlist = True
+        request.session[WISHLIST_SESSION_KEY] = session_ids
+        request.session.modified = True
+        wishlist_count = len(session_ids)
+
+    if request.headers.get("HX-Request"):
+        html = render(
+            request,
+            "customer/includes/wishlist_response.html",
+            {
+                "product": product,
+                "is_in_wishlist": is_in_wishlist,
+                "wishlist_count": wishlist_count,
+            },
+        ).content.decode()
+        response = HttpResponse(html)
+        toast_text = "Товар добавлен в избранное" if is_in_wishlist else "Товар удалён из избранного"
+        trigger = {"showWishlistToast": {"text": toast_text, "tag": "success"}}
+        if not request.user.is_authenticated:
+            trigger["wishlistIds"] = list(request.session.get(WISHLIST_SESSION_KEY) or [])
+        response["HX-Trigger"] = json.dumps(trigger)
+        return response
+
+    return JsonResponse({
+        "status": "added" if is_in_wishlist else "removed",
+        "message": "Товар добавлен в избранное" if is_in_wishlist else "Товар удалён из избранного",
+        "wishlist_count": wishlist_count,
+        "is_in_wishlist": is_in_wishlist,
+    })
 
 
 

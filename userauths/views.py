@@ -7,6 +7,9 @@ from django.urls import reverse
 
 from userauths import models as userauths_models
 from userauths import forms as userauths_forms
+from store.context import WISHLIST_SESSION_KEY
+from customer import models as customer_models
+from store import models as store_models
 
 
 def register_view(request):
@@ -32,6 +35,18 @@ def login_view(request):
 
                     if user_instance is not None:
                         login(request, user_authenticate)
+                        session_ids = list(request.session.get(WISHLIST_SESSION_KEY) or [])
+                        try:
+                            for pid in session_ids:
+                                pid = int(pid)
+                                product = store_models.Product.objects.filter(id=pid).first()
+                                if product:
+                                    customer_models.Wishlist.objects.get_or_create(product=product, user=request.user)
+                        except (TypeError, ValueError):
+                            pass
+                        if WISHLIST_SESSION_KEY in request.session:
+                            del request.session[WISHLIST_SESSION_KEY]
+                            request.session.modified = True
                         messages.success(request, "Вы вошли в систему")
                         next_url = request.GET.get("next", 'store:index')
 

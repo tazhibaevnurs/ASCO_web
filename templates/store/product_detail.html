@@ -1,341 +1,284 @@
-{% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% block content %}
-<section class="middle">
-    <div class="container">
-        <div class="row">
-            <div class="col-12 col-md-6 col-xl-6 mb-4 mb-md-0">
-                <div class="sp-loading"><img src="{{product.image.url}}" alt="" /><br />ЗАГРУЗКА ИЗОБРАЖЕНИЙ</div>
-                <div class="sp-wrap">
-                    <a href="{{product.image.url}}"><img class="product-detail-image img-fluid" src="{{product.image.url}}" alt="{{ product.name }}" /></a>
+{% extends 'partials/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load wishlist_tags %}
+{% block content %}
+<style>
+    .product-gallery-main { aspect-ratio: 1; }
+    .product-gallery-thumb { aspect-ratio: 1; }
+    .product-carousel { scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+    .product-carousel img { scroll-snap-align: start; }
+</style>
 
-                    {% for image in product.gallery.all %}
-                    <a href="{{image.image.url}}"><img class="product-detail-image img-fluid" src="{{image.image.url}}" alt="{{ product.name }}" /></a>
+<section class="tw-bg-white tw-py-4 md:tw-py-8" x-data="productDetail()">
+    <div class="tw-container tw-mx-auto tw-px-4">
+        <div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-6 lg:tw-gap-10">
+            {# ========== ГАЛЕРЕЯ: слева ========== #}
+            <div class="tw-order-2 lg:tw-order-1">
+                {# Десктоп: основное фото + миниатюры снизу #}
+                <div class="tw-hidden md:tw-block">
+                    <div class="tw-relative tw-rounded-2xl tw-overflow-hidden tw-bg-gray-100 tw-mb-3 product-gallery-main">
+                        <img
+                            x-ref="mainImage"
+                            :src="currentImageUrl"
+                            alt="{{ product.name }}"
+                            class="tw-w-full tw-h-full tw-object-cover"
+                            x-show="currentImageUrl"
+                        />
+                        <div x-show="!currentImageUrl" class="tw-absolute tw-inset-0 tw-flex tw-items-center tw-justify-center tw-text-gray-400">
+                            <i class="fas fa-image tw-text-5xl"></i>
+                        </div>
+                    </div>
+                    <div class="tw-flex tw-gap-2 tw-overflow-x-auto tw-pb-1">
+                        {% if product.image %}
+                        <button type="button" @click="setImage('{{ product.image.url }}')" class="tw-flex-shrink-0 tw-w-16 tw-h-16 tw-rounded-lg tw-overflow-hidden tw-border-2 tw-transition-colors product-gallery-thumb"
+                                :class="currentImageUrl === '{{ product.image.url }}' ? 'tw-border-[#EB332C]' : 'tw-border-transparent hover:tw-border-gray-300'">
+                            <img src="{{ product.image.url }}" alt="" class="tw-w-full tw-h-full tw-object-cover" />
+                        </button>
+                        {% endif %}
+                        {% for image in product.gallery %}
+                        <button type="button" @click="setImage('{{ image.image.url }}')" class="tw-flex-shrink-0 tw-w-16 tw-h-16 tw-rounded-lg tw-overflow-hidden tw-border-2 tw-transition-colors product-gallery-thumb"
+                                :class="currentImageUrl === '{{ image.image.url }}' ? 'tw-border-[#EB332C]' : 'tw-border-transparent hover:tw-border-gray-300'">
+                            <img src="{{ image.image.url }}" alt="" class="tw-w-full tw-h-full tw-object-cover" />
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                {# Мобилка: горизонтальный свайп (carousel) #}
+                <div class="tw-block md:tw-hidden tw-flex tw-overflow-x-auto tw-gap-0 product-carousel tw-rounded-2xl tw-bg-gray-100 tw-snap-x">
+                    {% if product.image %}
+                    <div class="tw-flex-shrink-0 tw-w-full tw-snap-center">
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="tw-w-full tw-aspect-square tw-object-cover" />
+                    </div>
+                    {% endif %}
+                    {% for image in product.gallery %}
+                    <div class="tw-flex-shrink-0 tw-w-full tw-snap-center">
+                        <img src="{{ image.image.url }}" alt="{{ product.name }}" class="tw-w-full tw-aspect-square tw-object-cover" />
+                    </div>
                     {% endfor %}
+                    {% if not product.image and not product.gallery %}
+                    <div class="tw-flex-shrink-0 tw-w-full tw-aspect-square tw-flex tw-items-center tw-justify-center tw-text-gray-400">
+                        <i class="fas fa-image tw-text-5xl"></i>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
-            <div class="col-12 col-md-6 col-xl-6">
-                <div class="prd_details">
-                    <div class="prt_01 mb-1"><span class="text-purple bg-light-purple rounded py-1">{{product.category.title}}</span></div>
-                    <div class="prt_02 mb-3">
-                        <h2 class="ft-bold mb-1">{{product.name}}</h2>
-                        <div class="text-left">
-                            <div class="star-rating align-items-center d-flex justify-content-left mb-1 p-0">
-                                {% if product.average_rating > 0 and product.average_rating < 2 %}
-                                <i class="fas fa-star text-warning"></i>
-                                {% elif product.average_rating > 1 and product.average_rating < 3 %}
-                                <i class="fas fa-star text-warning"></i>
-                                <i class="fas fa-star text-warning"></i>
-                                {% elif product.average_rating > 2 and product.average_rating < 4 %}
-                                <i class="fas fa-star text-warning"></i>
-                                <i class="fas fa-star text-warning"></i>
-                                <i class="fas fa-star text-warning"></i>
-                                {% elif product.average_rating > 3 and product.average_rating < 5 %}
-                                <i class="fas fa-star text-warning"></i>
-                                <i class="fas fa-star text-warning"></i>
-                                <i class="fas fa-star text-warning"></i>
-                                <i class="fas fa-star text-warning"></i>
-                                {% elif product.average_rating > 4 %}
-                                <i class="fas fa-star text-warning"></i>
-                                <i class="fas fa-star text-warning"></i>
-                                <i class="fas fa-star text-warning"></i>
-                                <i class="fas fa-star text-warning"></i>
-                                <i class="fas fa-star text-warning"></i>
-                                {% endif %}
-                                <span class="small ms-2">({{ product.reviews.all.count }} Отзывов)</span>
-                            </div>
-                            <div class="elis_rty mt-3">
-                                <span class="ft-medium text-muted line-through fs-md me-3"> {% if product.regular_price %} {{product.regular_price}} сом {% endif %} </span>
-                                <span class="ft-bold theme-cl fs-lg me-3">{{product.price}} сом</span>
-                                <span class="ft-regular text-light bg-success py-1 px-2 fs-sm"> {% if product.stock > 0 %} В наличии {% else %} Нет в наличии {% endif %} </span>
-                            </div>
-                        </div>
+            {# ========== БЛОК ПОКУПКИ: справа ========== #}
+            <div class="tw-order-1 lg:tw-order-2 tw-flex tw-flex-col">
+                <span class="tw-text-sm tw-text-gray-500 tw-font-medium">{{ product.category.title|default:"" }}</span>
+                <h1 class="tw-text-2xl md:tw-text-3xl tw-font-bold tw-text-gray-900 tw-mt-1 tw-mb-2">{{ product.name }}</h1>
+                <div class="tw-flex tw-items-center tw-gap-2 tw-mb-4">
+                    {% if product.average_rating %}
+                    <div class="tw-flex tw-items-center tw-gap-1 tw-text-amber-500">
+                        {% with rating=product.average_rating %}
+                        {% for i in "12345" %}<i class="fas fa-star tw-text-sm"></i>{% endfor %}
+                        {% endwith %}
                     </div>
+                    {% endif %}
+                    <span class="tw-text-sm tw-text-gray-500">({{ product.reviews.all.count }} отзывов)</span>
+                </div>
 
-                    <div class="prt_03 mb-4">
-                        <p>{{product.description|safe|truncatechars:200}}</p>
-                    </div>
+                <div class="tw-mb-4">
+                    {% if product.regular_price and product.regular_price > product.price %}
+                    <span class="tw-text-gray-500 tw-line-through tw-text-lg tw-mr-2">{{ product.regular_price|intcomma }} сом</span>
+                    {% endif %}
+                    <span class="tw-text-2xl tw-font-bold tw-text-[#EB332C]">{{ product.price|intcomma }} сом</span>
+                    <span class="tw-ml-3 tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-text-sm tw-font-medium {% if product.stock > 0 %}tw-bg-green-100 tw-text-green-800{% else %}tw-bg-gray-200 tw-text-gray-700{% endif %}">
+                        {% if product.stock > 0 %}В наличии{% else %}Нет в наличии{% endif %}
+                    </span>
+                </div>
 
-                    <div class="mb-2">
-                        <p class="d-flex align-items-center text-dark ft-medium">Цвет:</p>
-                        <div class="text-left">
-                            {% for variant in product.variants.all %}
-                                {% if variant.name == "Color" %}
-                                    {% for c in variant.items.all %}
-                                        <div class="form-check form-option form-check-inline mb-1">
-                                            <input class="form-check-input" value="{{c.title}}" type="radio" name="color" id="{{c.content}}" />
-                                            <label class="form-option-label" for="{{c.content}}"><span class="form-option-color" style="background-color: {{c.content}}"></span></label>
-                                        </div>
-                                    {% endfor %}
-                                {% endif %}
+                {% if product.description %}
+                <p class="tw-text-gray-600 tw-text-sm tw-mb-4 tw-line-clamp-3">{{ product.description|striptags|truncatewords:30 }}</p>
+                {% endif %}
+
+                {# Варианты: цвет, размер #}
+                {% for variant in product.variants.all %}
+                    {% if variant.name == "Color" and variant.variant_items.all %}
+                    <div class="tw-mb-4">
+                        <p class="tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-2">Цвет:</p>
+                        <div class="tw-flex tw-flex-wrap tw-gap-2">
+                            {% for c in variant.variant_items.all %}
+                            <label class="tw-flex tw-items-center tw-gap-1.5 tw-cursor-pointer">
+                                <input type="radio" name="color" value="{{ c.title }}" class="tw-sr-only" />
+                                <span class="tw-w-6 tw-h-6 tw-rounded-full tw-border-2 tw-border-gray-300 tw-shadow-inner" style="background-color: {{ c.content }};"></span>
+                            </label>
                             {% endfor %}
                         </div>
                     </div>
-
-                    <div class="prt_04 mb-4">
-                        <p class="d-flex align-items-center mb-0 text-dark ft-medium">Размер:</p>
-                        <div class="text-left pb-0 pt-2">
-                            {% for variant in product.variants.all %}
-                                {% if variant.name == "Size" %}
-                                    {% for s in variant.items.all %}
-                                        <div class="form-check size-option form-option form-check-inline mb-2">
-                                            <input class="form-check-input" value="{{s.title}}" type="radio" name="size" id="{{s.content}}"  />
-                                            <label class="form-option-label" for="{{s.content}}">{{s.content}}</label>
-                                        </div>
-                                    {% endfor %}
-                                {% endif %}
+                    {% endif %}
+                    {% if variant.name == "Size" and variant.variant_items.all %}
+                    <div class="tw-mb-4">
+                        <p class="tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-2">Размер:</p>
+                        <div class="tw-flex tw-flex-wrap tw-gap-2">
+                            {% for s in variant.variant_items.all %}
+                            <label class="tw-cursor-pointer tw-px-3 tw-py-1.5 tw-rounded-lg tw-border tw-border-gray-300 tw-text-sm hover:tw-border-[#EB332C] tw-transition-colors">
+                                <input type="radio" name="size" value="{{ s.title }}" class="tw-sr-only" />
+                                <span>{{ s.content }}</span>
+                            </label>
                             {% endfor %}
                         </div>
                     </div>
+                    {% endif %}
+                {% endfor %}
 
-                    <div class="prt_05 mb-4">
-                        <div class="d-flex flex-column flex-sm-row gap-2 gap-sm-3 mb-7">
-                            <div class="w-100 w-sm-auto">
-                                <select class="form-select quantity" name="quantity" id="quantity">
-                                    {% for qty in product_stock_range %}
-                                        <option class="stock-{{qty}}" value="{{ qty }}">{{ qty }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="w-100 w-sm-auto">
-                                <button type="button" class="btn btn-sm bg-primary text-white rounded w-100 w-sm-auto add_to_cart" data-id="{{product.id}}">В корзину <i class="fas fa-shopping-cart ms-2"></i></button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="prt_06">
-                        <div class="d-flex flex-column flex-sm-row flex-wrap align-items-start align-items-sm-center gap-2 gap-sm-3">
-                            <span class="mb-2 mb-sm-0">Поделиться:</span>
-                            <a href="#" class="btn btn-sm bg-light text-dark rounded share-btn w-100 w-sm-auto" data-channel="telegram">
-                                <i class="fab fa-telegram-plane me-2"></i>Telegram
-                            </a>
-                            <a href="#" class="btn btn-sm bg-light text-dark rounded share-btn w-100 w-sm-auto" data-channel="whatsapp">
-                                <i class="fab fa-whatsapp me-2 text-success"></i>WhatsApp
-                            </a>
-                        </div>
-                        <small class="text-success d-none mt-2 share-feedback">Ссылка скопирована в буфер обмена</small>
-                    </div>
+                <div class="tw-flex tw-flex-wrap tw-gap-3 tw-mb-4 tw-items-center">
+                    {% if product.stock > 0 %}
+                    <select class="quantity tw-rounded-lg tw-border tw-border-gray-300 tw-px-4 tw-py-2.5 tw-text-gray-900 tw-bg-white" name="quantity" id="quantity">
+                        {% for qty in product_stock_range %}
+                        <option value="{{ qty }}">{{ qty }}</option>
+                        {% empty %}
+                        <option value="1">1</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="add_to_cart tw-flex-1 tw-min-w-[140px] tw-px-6 tw-py-3 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-semibold tw-transition-colors" data-id="{{ product.id }}">
+                        Купить <i class="fas fa-shopping-cart tw-ml-2"></i>
+                    </button>
+                    {% endif %}
+                    {% with is_in_wishlist=product.id|in_wishlist:wishlist_product_ids %}
+                        {% include "customer/includes/wishlist_btn.html" with product=product is_in_wishlist=is_in_wishlist %}
+                    {% endwith %}
+                    <a href="#" class="product-whatsapp-btn tw-inline-flex tw-items-center tw-justify-center tw-gap-2 tw-px-5 tw-py-3 tw-rounded-xl tw-bg-[#25D366] hover:tw-bg-[#20BD5A] tw-text-white tw-font-semibold tw-transition-colors tw-flex-1 tw-min-w-[200px]">
+                        <i class="fab fa-whatsapp tw-text-xl"></i> WhatsApp консультация
+                    </a>
                 </div>
             </div>
         </div>
     </div>
+
+    {# Мобильный sticky-блок: цена + кнопка покупки (прилипает к низу при скролле) #}
+    <div class="tw-fixed tw-bottom-0 tw-left-0 tw-right-0 tw-z-40 tw-bg-white tw-border-t tw-border-gray-200 tw-shadow-[0_-4px_12px_rgba(0,0,0,0.08)] tw-px-4 tw-py-3 tw-flex tw-items-center tw-justify-between tw-gap-4 md:tw-hidden">
+        <div>
+            <span class="tw-text-xl tw-font-bold tw-text-[#EB332C]">{{ product.price|intcomma }} сом</span>
+            <span class="tw-block tw-text-xs tw-text-gray-500">{% if product.stock > 0 %}В наличии{% else %}Нет в наличии{% endif %}</span>
+        </div>
+        {% if product.stock > 0 %}
+        <button type="button" class="add_to_cart tw-flex-1 tw-max-w-[200px] tw-py-3 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-semibold" data-id="{{ product.id }}">Купить</button>
+        {% endif %}
+    </div>
+    <div class="tw-h-24 md:tw-hidden" aria-hidden="true"></div>
 </section>
-<!-- ======================= Product Detail End ======================== -->
 
-<!-- ======================= Product Description ======================= -->
-<section class="middle">
-    <div class="container">
-        <div class="row align-items-center justify-content-center">
-            <div class="col-xl-11 col-lg-12 col-md-12 col-sm-12">
-                <ul class="nav nav-tabs b-0 d-flex align-items-center justify-content-center simple_tab_links mb-4" id="myTab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <a class="nav-link active" id="description-tab" href="#description" data-toggle="tab" role="tab" aria-controls="description" aria-selected="true">Описание</a>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <a class="nav-link" href="#information" id="information-tab" data-toggle="tab" role="tab" aria-controls="information" aria-selected="false">Дополнительная информация</a>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <a class="nav-link" href="#reviews" id="reviews-tab" data-toggle="tab" role="tab" aria-controls="reviews" aria-selected="false">Отзывы</a>
-                    </li>
-                </ul>
+{# ========== ВКЛАДКИ: Описание, Характеристики, Отзывы ========== #}
+<section class="tw-bg-gray-50 tw-py-8 tw-mb-8" x-data="{ activeTab: 'description' }">
+    <div class="tw-container tw-mx-auto tw-px-4">
+        <div class="tw-flex tw-flex-wrap tw-gap-1 tw-border-b tw-border-gray-200 tw-mb-6">
+            <button type="button" @click="activeTab = 'description'" class="tw-px-4 tw-py-3 tw-font-medium tw-text-sm tw-rounded-t-lg tw-transition-colors"
+                    :class="activeTab === 'description' ? 'tw-bg-white tw-text-[#EB332C] tw-border tw-border-b-0 tw-border-gray-200 -tw-mb-px' : 'tw-text-gray-600 hover:tw-text-gray-900'">
+                Описание
+            </button>
+            <button type="button" @click="activeTab = 'specs'" class="tw-px-4 tw-py-3 tw-font-medium tw-text-sm tw-rounded-t-lg tw-transition-colors"
+                    :class="activeTab === 'specs' ? 'tw-bg-white tw-text-[#EB332C] tw-border tw-border-b-0 tw-border-gray-200 -tw-mb-px' : 'tw-text-gray-600 hover:tw-text-gray-900'">
+                Характеристики
+            </button>
+            <button type="button" @click="activeTab = 'reviews'" class="tw-px-4 tw-py-3 tw-font-medium tw-text-sm tw-rounded-t-lg tw-transition-colors"
+                    :class="activeTab === 'reviews' ? 'tw-bg-white tw-text-[#EB332C] tw-border tw-border-b-0 tw-border-gray-200 -tw-mb-px' : 'tw-text-gray-600 hover:tw-text-gray-900'">
+                Отзывы
+            </button>
+        </div>
 
-                <div class="tab-content" id="myTabContent">
-                    <!-- Description Content -->
-                    <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
-                        <div class="description_info">
-                            <p class="p-0 mb-2">
-                                {{product.description|safe}}
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Additional Content -->
-                    <div class="tab-pane fade" id="information" role="tabpanel" aria-labelledby="information-tab">
-                        <div class="additionals">
-                            <table class="table">
-                                <tbody>
-                                    {% for variant in product.variants.all %}
-                                        {% if variant.name == "Specifications" %}
-                                            {% for s in variant.items.all %}
-                                                <tr>
-                                                    <th class="ft-medium text-dark">{{s.title}}</th>
-                                                    <td>{{s.content}}</td>
-                                                </tr>
-                                            {% endfor %}
-                                        {% endif %}
-                                    {% endfor %}
-                                    
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Reviews Content -->
-                    <div class="tab-pane fade" id="reviews" role="tabpanel" aria-labelledby="reviews-tab">
-                        <div class="reviews_info">
-                            
-                            {% for r in product.reviews.all %}
-                                <div class="single_rev d-flex align-items-start br-bottom py-3 bg-light rounded p-3 mb-3">
-                                    <div class="single_rev_caption d-flex align-items-start pl-3">
-                                        <div class="single_capt_left">
-                                            <h5 class="mb-0 fs-md ft-medium lh-1">{{r.user.username|title}}</h5>
-                                            <span class="small">{{r.date|date:"d M, Y"}}.</span>
-                                            <p>{{r.review}}</p>
-                                        </div>
-                                        <div class="single_capt_right">
-                                            <div class="star-rating align-items-center d-flex justify-content-left mb-1 p-0">
-                                                {% if r.rating > 0 and r.rating < 2 %}
-                                                    <i class="fas fa-star text-warning"></i>
-                                                {% elif r.rating > 1 and r.rating < 3 %}
-                                                    <i class="fas fa-star text-warning"></i>
-                                                    <i class="fas fa-star text-warning"></i>
-                                                {% elif r.rating > 2 and r.rating < 4 %}
-                                                    <i class="fas fa-star text-warning"></i>
-                                                    <i class="fas fa-star text-warning"></i>
-                                                    <i class="fas fa-star text-warning"></i>
-                                                {% elif r.rating > 3 and r.rating < 5 %}
-                                                    <i class="fas fa-star text-warning"></i>
-                                                    <i class="fas fa-star text-warning"></i>
-                                                    <i class="fas fa-star text-warning"></i>
-                                                    <i class="fas fa-star text-warning"></i>
-                                                {% elif r.rating > 4 %}
-                                                    <i class="fas fa-star text-warning"></i>
-                                                    <i class="fas fa-star text-warning"></i>
-                                                    <i class="fas fa-star text-warning"></i>
-                                                    <i class="fas fa-star text-warning"></i>
-                                                    <i class="fas fa-star text-warning"></i>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                                
-                        </div>
-                    </div>
-                </div>
+        <div x-show="activeTab === 'description'" x-cloak class="tw-bg-white tw-rounded-xl tw-border tw-border-gray-200 tw-p-6 tw-prose tw-prose-gray tw-max-w-none">
+            <div class="product-description-content">
+                {{ product.description|safe }}
             </div>
         </div>
-    </div>
-</section>
 
+        <div x-show="activeTab === 'specs'" x-cloak class="tw-bg-white tw-rounded-xl tw-border tw-border-gray-200 tw-overflow-hidden">
+            <table class="tw-w-full tw-text-left tw-border-collapse">
+                <tbody>
+                    {% for variant in product.variants.all %}
+                        {% if variant.name != "Color" and variant.name != "Size" %}
+                            {% for s in variant.variant_items.all %}
+                            <tr class="tw-border-b tw-border-gray-100 hover:tw-bg-gray-50">
+                                <th class="tw-py-3 tw-px-4 tw-font-medium tw-text-gray-700 tw-w-1/3">{{ s.title }}</th>
+                                <td class="tw-py-3 tw-px-4 tw-text-gray-900">{{ s.content }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if not has_specs %}
+                    <tr><td colspan="2" class="tw-py-8 tw-px-4 tw-text-center tw-text-gray-500">Характеристики не указаны.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
 
-{% if related_products %}
-    <section class="middle pt-0">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
-                    <div class="sec_title position-relative text-center">
-                        <h3 class="ft-bold pt-3">Related Products</h3>
+        <div x-show="activeTab === 'reviews'" x-cloak class="tw-space-y-4">
+            {% for r in product.reviews.all %}
+            <div class="tw-bg-white tw-rounded-xl tw-border tw-border-gray-200 tw-p-4">
+                <div class="tw-flex tw-items-start tw-justify-between tw-gap-2 tw-mb-2">
+                    <span class="tw-font-semibold tw-text-gray-900">{{ r.user.username|default:"Гость" }}</span>
+                    <div class="tw-flex tw-text-amber-500 tw-text-sm">
+                        {% with stars=r.rating|default:0 %}
+                        {% for i in "12345" %}<i class="fas fa-star{% if forloop.counter > stars %}-o tw-text-gray-300{% endif %}"></i>{% endfor %}
+                        {% endwith %}
                     </div>
                 </div>
+                <p class="tw-text-sm tw-text-gray-600 tw-mb-1">{{ r.review }}</p>
+                <span class="tw-text-xs tw-text-gray-400">{{ r.date|date:"d.m.Y" }}</span>
+                {% if r.reply %}
+                <div class="tw-mt-3 tw-pl-3 tw-border-l-2 tw-border-gray-200 tw-text-sm tw-text-gray-600">
+                    <span class="tw-font-medium tw-text-gray-700">Ответ магазина:</span> {{ r.reply }}
+                </div>
+                {% endif %}
             </div>
-
-            <div class="row align-items-center rows-products">
-             {% for p in related_products %}
-                <div class="col-6 col-md-4 col-lg-3 mb-3">
-                    <div class="product-card card b-0 rounded-3 shadow p-2">
-                        <div class="product-card__media">
-                            <a class="d-block" href="{% url 'store:product_detail' p.slug %}">
-                                <img src="{{p.image.url}}" alt="{{ p.name }}" class="img-fluid">
-                            </a>
-                        </div>
-                        <div class="product-card__body">
-                            <div class="text-left">
-                                <span class="product-card__category">{{p.category.title}}</span>
-                                <h5 class="product-card__title"><a href="{% url 'store:product_detail' p.slug %}">{{p.name}}</a></h5>
-                                <div class="product-card__rating">
-                                    {% if not p.average_rating %}
-                                        <i class="fas fa-star text-warning"></i>
-                                    {% elif p.average_rating > 0 and p.average_rating < 2 %}
-                                        <i class="fas fa-star text-warning"></i>
-                                    {% elif p.average_rating > 1 and p.average_rating < 3 %}
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                    {% elif p.average_rating > 2 and p.average_rating < 4 %}
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                    {% elif p.average_rating > 3 and p.average_rating < 5 %}
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                    {% elif p.average_rating > 4 %}
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                    {% endif %}
-                                </div>
-                                <div class="product-card__price">{{p.price}} сом</div>
-                            </div>
-                            <div class="product-card__actions">
-                                <button type="button" class="btn btn-primary text-white w-100 add_to_cart" data-id="{{p.id}}">В корзину <i class="fas fa-shopping-cart ms-2"></i></button>
-                                <input type="hidden" class="quantity" value="1">
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            {% empty %}
+            <p class="tw-bg-white tw-rounded-xl tw-border tw-border-gray-200 tw-p-6 tw-text-gray-500 tw-text-center">Пока нет отзывов.</p>
             {% endfor %}
         </div>
-        </div>
-    </section>
+    </div>
+</section>
+
+{% if related_products %}
+<section class="tw-container tw-mx-auto tw-px-4 tw-pb-12">
+    <h2 class="tw-text-xl tw-font-bold tw-text-gray-900 tw-mb-6">Похожие товары</h2>
+    <div class="tw-grid tw-grid-cols-2 md:tw-grid-cols-4 tw-gap-4">
+        {% for p in related_products %}
+        <a href="{% url 'store:product_detail' p.slug %}" class="tw-group tw-block tw-bg-white tw-rounded-xl tw-shadow-md hover:tw-shadow-lg tw-overflow-hidden tw-transition-shadow">
+            <div class="tw-aspect-square tw-bg-gray-100 tw-overflow-hidden">
+                {% if p.image %}
+                <img src="{{ p.image.url }}" alt="{{ p.name }}" class="tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform" />
+                {% else %}
+                <div class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-text-gray-400"><i class="fas fa-image tw-text-4xl"></i></div>
+                {% endif %}
+            </div>
+            <div class="tw-p-3">
+                <span class="tw-text-xs tw-text-gray-500">{{ p.category.title|default:"" }}</span>
+                <h3 class="tw-font-semibold tw-text-gray-900 tw-line-clamp-2 tw-text-sm">{{ p.name }}</h3>
+                <span class="tw-font-bold tw-text-[#EB332C] tw-text-sm">{{ p.price|intcomma }} сом</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
 {% endif %}
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const shareButtons = document.querySelectorAll(".share-btn");
-        const feedback = document.querySelector(".share-feedback");
-        const shareUrl = "{{ request.build_absolute_uri }}";
-        const shareText = "{{ product.name|escapejs }}";
+document.addEventListener('alpine:init', function() {
+    Alpine.data('productDetail', function() {
+        var firstImage = '{% if product.image %}{{ product.image.url }}{% endif %}';
+        if (!firstImage) { {% for image in product.gallery %}{% if forloop.first %}firstImage = '{{ image.image.url }}';{% endif %}{% endfor %} }
+        return {
+            currentImageUrl: firstImage || '',
+            setImage(url) { this.currentImageUrl = url; }
+        };
+    });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var productUrl = "{{ request.build_absolute_uri }}";
+    var productName = "{{ product.name|escapejs }}";
+    var messageText = "Здравствуйте! Интересует товар: " + productName + " " + productUrl;
+    var whatsappUrl = "https://wa.me/996700454578?text=" + encodeURIComponent(messageText);
 
-        function copyToClipboard(text) {
-            if (navigator.clipboard && window.isSecureContext) {
-                return navigator.clipboard.writeText(text);
-            }
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            textArea.style.position = "fixed";
-            textArea.style.top = "-9999px";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            return new Promise((resolve, reject) => {
-                try {
-                    document.execCommand("copy");
-                    resolve();
-                } catch (err) {
-                    reject(err);
-                } finally {
-                    document.body.removeChild(textArea);
-                }
-            });
-        }
-
-        shareButtons.forEach((btn) => {
-            btn.addEventListener("click", function (event) {
-                event.preventDefault();
-                const channel = this.dataset.channel;
-
-                copyToClipboard(shareUrl).then(() => {
-                    if (feedback) {
-                        feedback.classList.remove("d-none");
-                        setTimeout(() => feedback.classList.add("d-none"), 2000);
-                    }
-                }).catch(() => {});
-
-                let targetUrl = shareUrl;
-                if (channel === "telegram") {
-                    targetUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
-                } else if (channel === "whatsapp") {
-                    targetUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText} - ${shareUrl}`)}`;
-                }
-
-                window.open(targetUrl, "_blank");
-            });
+    document.querySelectorAll(".product-whatsapp-btn").forEach(function(btn) {
+        btn.addEventListener("click", function(e) {
+            e.preventDefault();
+            window.open(whatsappUrl, "_blank");
         });
     });
+});
 </script>
-
 {% endblock content %}

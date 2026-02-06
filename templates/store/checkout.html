@@ -1,9 +1,18 @@
 {% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% block content %}
 
 <style>
-    .razorpay-payment-button{
-        display: none;
+    .razorpay-payment-button { display: none; }
+    /* Десктоп: сводка (Summary) справа — липкий блок */
+    @media (min-width: 992px) {
+        .checkout-summary-sticky { position: sticky; top: 1rem; align-self: start; }
     }
+    /* Мобилка: кнопка «Подтвердить заказ» закреплена снизу экрана */
+    .checkout-confirm-fixed {
+        position: fixed; bottom: 0; left: 0; right: 0; z-index: 1020;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+    .checkout-confirm-fixed .btn { background-color: #EB332C !important; border: none; }
+    .checkout-confirm-fixed .btn:hover { background-color: #c12721 !important; }
 </style>
 
 <div class="gray py-3">
@@ -23,7 +32,7 @@
     </div>
 </div>
 
-<section class="middle">
+<section class="middle checkout-section pb-5 pb-lg-0">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
@@ -33,107 +42,79 @@
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-12 col-lg-9 order-2 order-lg-1">
-                <h4 class="fw-bold p-2 p-md-3">Товары в корзине</h4>
-                <div style="overflow-y: scroll; max-height: 650px; overflow-x: hidden" class="p-2 p-md-3">
-                    
-                    {% for item in order.order_items.all %}
-                        <div class="shadow rounded mb-3">
-                            <div class="row d-flex align-items-center p-2 p-md-3">
-                                <div class="col-12 col-md-4 d-flex gap-2 gap-md-3 mb-3 mb-md-0">
-                                    <img src="{{item.product.image.url}}" alt="" class="img-fluid" style="width: 80px; height: 80px; min-width: 80px; object-fit: cover" />
-                                    <div class="p-1 p-md-2">
-                                        <h5 class="fs-6 fs-md-5">{{item.product.name}}</h5>
-                                        <p class="mb-0 mt-0 small">Цена: {{item.price}} сом</p>
-                                        <p class="mb-0 mt-0 small">Продавец: {{item.product.vendor.profile.full_name}}</p>
-                                    </div>
-                                </div>
-                                <div class="col-6 col-md-2 mb-2 mb-md-0">
-                                    <p class="mb-1 small">Цена</p>
-                                    <h4 class="fs-5 fs-md-3">{{item.price}} сом</h4>
-                                </div>
-
-                                <div class="col-6 col-md-2 mb-2 mb-md-0">
-                                    <p class="mb-1 small">Кол-во</p>
-                                    <h4 class="fs-5 fs-md-3 mb-0">{{item.qty}}</h4>
-                                </div>
-                                <div class="col-6 col-md-2 mb-2 mb-md-0">
-                                    <p class="mb-1 small">Итого</p>
-                                    <h4 class="fs-5 fs-md-3 mb-0">{{item.sub_total}} сом</h4>
-                                </div>
-                                <div class="col-6 col-md-2 text-end text-md-start">
-                                    <a href="{% url 'store:cart' %}" class="btn bg-primary text-white btn-sm rounded"><i class="fas fa-edit"></i></a>
-                                </div>
-                            </div>
+        <div class="row align-items-start">
+            {# Десктоп: форма данных слева | сводка (Summary) справа в sticky. Мобилка: данные сверху, сводка снизу #}
+            <div class="col-12 col-lg-5 col-xl-4 order-1 order-lg-1 mb-4 mb-lg-0">
+                <h4 class="fw-bold p-2 p-md-3">Данные доставки</h4>
+                <div class="card-wrap border rounded shadow-sm">
+                    <div class="card-wrap-header px-3 py-2 border-bottom d-flex align-items-center justify-content-between">
+                        <h4 class="fs-md ft-bold mb-0">Адрес доставки</h4>
+                    </div>
+                    <div class="card-wrap-body px-3 py-3">
+                        <p class="mb-1"><span class="fw-bold">Имя: </span>{{ order.address.full_name }}</p>
+                        <p class="mb-1"><span class="fw-bold">Email: </span>{{ order.address.email }}</p>
+                        <div class="mb-2">
+                            <label class="form-label fw-bold mb-0 small">Телефон (Кыргызстан, +996) *</label>
+                            <input type="tel" id="checkout-phone" class="form-control" placeholder="+996 XXX XXX XXX" value="{{ order.address.mobile|default:'' }}" maxlength="16" data-order-id="{{ order.order_id }}">
+                            <div id="checkout-phone-error" class="invalid-feedback"></div>
                         </div>
-                    {% endfor %}
-                        
-                    
-                </div>
-
-                <div class="p-2 p-md-3">
-                     <div class="row">
-                        <div class="col-12 col-md-6 col-xl-4 col-lg-4 mb-3 mb-xl-0">
-                            <div class="card-wrap border rounded mb-4">
-                                <div class="card-wrap-header px-3 py-2 br-bottom d-flex align-items-center justify-content-between">
-                                    <div class="card-heafder-flex">
-                                        <h4 class="fs-md ft-bold mb-1">Адрес доставки</h4>
-                                    </div>
-                                </div>
-                                <div class="card-wrap-body px-3 py-3">
-                                    <p class="mb-0"><span class="fw-bold">Полное имя: </span>{{order.address.full_name}}</p>
-                                    <p class="mb-0"><span class="fw-bold">Email: </span>{{order.address.email}}</p>
-                                    <p class="mb-0"><span class="fw-bold">Мобильный: </span>{{order.address.mobile}}</p>
-                                    <p class="mb-0"><span class="fw-bold">Адрес: </span>{{order.address.address}}</p>
-                                    <p class="mb-0"><span class="fw-bold">Город: </span> {{order.address.city}}</p>
-                                    <p class="mb-0"><span class="fw-bold">Область: </span> {{order.address.state}}</p>
-                                    <p class="mb-3"><span class="fw-bold">Страна: </span> {{order.address.country}}</p>
-                                    <a href="{% url 'store:cart' %}" class="mt-3 text-primary">Изменить адрес доставки <i class="fas fa-edit ms-1"></i></a>
-                                </div>
-                            </div>
-                        </div>
+                        <p class="mb-1"><span class="fw-bold">Адрес: </span>{{ order.address.address }}</p>
+                        {% if order.address.city %}<p class="mb-1"><span class="fw-bold">Город: </span>{{ order.address.city }}</p>{% endif %}
+                        {% if order.address.state %}<p class="mb-1"><span class="fw-bold">Область: </span>{{ order.address.state }}</p>{% endif %}
+                        <p class="mb-3"><span class="fw-bold">Страна: </span>{{ order.address.country }}</p>
+                        <a href="{% url 'store:cart' %}" class="btn btn-outline-primary btn-sm">Изменить адрес <i class="fas fa-edit ms-1"></i></a>
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-lg-3 order-1 order-lg-2 mb-4 mb-lg-0">
-                <h4 class="fw-bold">Итого по заказу</h4>
-                <div class="shadow rounded p-3 mt-3 mt-md-5">
-
-                    <div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <p class="fw-semibold fs-6">Подытог</p>
-                            <p class="fs-6">{{order.sub_total}} сом</p>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <p class="fw-semibold fs-6">Доставка</p>
-                            <p class="fs-6">{{order.shipping}} сом</p>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <p class="fw-semibold fs-6">Налог</p>
-                            <p class="fs-6">{{order.tax}} сом</p>
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <p class="fw-semibold fs-6">Сервисный сбор</p>
-                            <p class="fs-6">{{order.service_fee}} сом</p>
-                        </div>
-                        
-                        {% if order.saved %}
-                            <div class="d-flex justify-content-between align-items-center">
-                                <p class="fw-semibold fs-6">Скидка</p>
-                                <p class="fs-6">{{order.saved}} сом</p>
+            <div class="col-12 col-lg-7 col-xl-8 order-2 order-lg-2 checkout-summary-col">
+                <div class="checkout-summary-sticky">
+                <div class="d-flex justify-content-between align-items-center p-2 p-md-0 mb-2">
+                    <h4 class="fw-bold mb-0">Состав заказа</h4>
+                    <a href="{% url 'store:cart' %}" class="btn btn-outline-primary btn-sm">Редактировать корзину <i class="fas fa-edit ms-1"></i></a>
+                </div>
+                <div class="shadow rounded p-2 p-md-3 mb-3" style="overflow-y: auto; max-height: 400px;">
+                    {% for item in order.order_items.all %}
+                        <div class="d-flex align-items-center border-bottom pb-2 mb-2">
+                            <img src="{{ item.product.image.url }}" alt="" class="img-fluid rounded me-2" style="width: 56px; height: 56px; object-fit: cover" />
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0 fs-6">{{ item.product.name }}</h6>
+                                <small class="text-muted">{{ item.price }} сом × {{ item.qty }}</small>
                             </div>
-                            
-                            {% for coupon in order.coupons.all %}
-                                <small class="text-success fw-bold">{{ coupon.code }} применён</small>
-                            {% endfor %}
-                        {% endif %}
-
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <p class="fw-bold text-dark fs-5">Итого</p>
-                            <p class="fw-bold text-dark fs-5">{{order.total}} сом</p>
+                            <div class="fw-semibold">{{ item.sub_total }} сом</div>
                         </div>
+                    {% endfor %}
+                </div>
+                <div class="shadow rounded p-3">
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <p class="fw-semibold fs-6 mb-1">Подытог</p>
+                        <p class="fs-6 mb-1">{{ order.sub_total }} сом</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <p class="fw-semibold fs-6 mb-1">Доставка</p>
+                        <p class="fs-6 mb-1">{{ order.shipping }} сом</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <p class="fw-semibold fs-6 mb-1">Налог</p>
+                        <p class="fs-6 mb-1">{{ order.tax }} сом</p>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <p class="fw-semibold fs-6 mb-1">Сервисный сбор</p>
+                        <p class="fs-6 mb-1">{{ order.service_fee }} сом</p>
+                    </div>
+                    {% if order.saved %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <p class="fw-semibold fs-6 mb-1">Скидка</p>
+                            <p class="fs-6 mb-1">{{ order.saved }} сом</p>
+                        </div>
+                        {% for coupon in order.coupons.all %}
+                            <small class="text-success fw-bold">{{ coupon.code }} применён</small>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                        <p class="fw-bold text-dark fs-5 mb-0">Итого</p>
+                        <p class="fw-bold text-dark fs-5 mb-0">{{ order.total }} сом</p>
                     </div>
                 </div>
 
@@ -148,7 +129,7 @@
 
 
 
-                <div class="w-100 mt-3">
+                <div class="w-100 mt-3" id="payment-section">
                     <button type="button" id="stripe-payment" class="btn rounded text-primary fw-bold w-100 mb-2 mb-md-3 payment-btn-stripe" style="background-color: #bcb9f2b4;">
                         <img style="width: 100px; max-width: 100%; height: 30px; object-fit: contain;" src="https://hostbillapp.com/appstore/payment_stripe/images/thumbnails/m_logo.png" alt="">
                     </button>
@@ -195,9 +176,13 @@
                     <div id="paypal-button-container"></div>
 
                 </div>
-
-                
+                </div>
             </div>
+        </div>
+
+        {# Мобилка: кнопка «Подтвердить заказ» закреплена снизу #}
+        <div class="checkout-confirm-fixed d-lg-none">
+            <a href="#payment-section" class="btn btn-primary w-100 rounded-0 py-3 fw-bold" id="checkout-confirm-btn">Подтвердить заказ <i class="fas fa-arrow-down ms-2"></i></a>
         </div>
     </div>
 </section>
@@ -215,7 +200,7 @@
         checkoutButton.addEventListener("click", function () {
             var email = "{{order.address.email}}"; 
 
-            checkoutButton.innerHTML = "Processing <i class='fas fa-spinner fa-spin'></i>";
+            checkoutButton.innerHTML = "Обработка… <i class='fas fa-spinner fa-spin'></i>";
 
             fetch("/stripe_payment/{{order.order_id}}/", {
                 method: "POST",
@@ -304,6 +289,92 @@
         });
         handler.openIframe();
     }
+</script>
+
+<script>
+(function() {
+    var phoneEl = document.getElementById('checkout-phone');
+    var phoneError = document.getElementById('checkout-phone-error');
+    var orderId = phoneEl && phoneEl.getAttribute('data-order-id');
+    var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') && document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    function formatKgPhone() {
+        if (!phoneEl) return;
+        var v = phoneEl.value.replace(/\D/g, '');
+        if (v.indexOf('996') === 0) v = v.slice(3);
+        v = v.slice(0, 9);
+        if (v.length === 0) { phoneEl.value = ''; return; }
+        var s = '';
+        for (var i = 0; i < v.length; i++) {
+            if (i > 0 && i % 3 === 0) s += ' ';
+            s += v[i];
+        }
+        phoneEl.value = '+996 ' + s;
+    }
+
+    function getPhoneDigits() {
+        if (!phoneEl) return '';
+        var v = phoneEl.value.replace(/\D/g, '');
+        if (v.indexOf('996') === 0) v = v.slice(3);
+        return v.slice(0, 9);
+    }
+
+    function isValidPhone() { return getPhoneDigits().length === 9; }
+
+    function showPhoneError(msg) {
+        if (!phoneError) return;
+        phoneError.textContent = msg || '';
+        phoneEl.classList.toggle('is-invalid', !!msg);
+    }
+
+    if (phoneEl) {
+        phoneEl.addEventListener('input', formatKgPhone);
+        phoneEl.addEventListener('paste', function() { setTimeout(formatKgPhone, 0); });
+        phoneEl.addEventListener('blur', function() {
+            formatKgPhone();
+            if (isValidPhone() && orderId && csrfToken) {
+                var fd = new FormData();
+                fd.append('phone', phoneEl.value);
+                fd.append('csrfmiddlewaretoken', csrfToken);
+                fetch('/checkout/' + orderId + '/update_phone/', { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) { if (data.ok) showPhoneError(''); })
+                    .catch(function() {});
+            } else if (phoneEl.value && !isValidPhone()) {
+                showPhoneError('Введите 9 цифр номера (+996)');
+            } else {
+                showPhoneError('');
+            }
+        });
+    }
+
+    var confirmBtn = document.getElementById('checkout-confirm-btn');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', function(e) {
+            if (!phoneEl) return;
+            formatKgPhone();
+            if (!isValidPhone()) {
+                e.preventDefault();
+                showPhoneError('Введите корректный номер: +996 и 9 цифр');
+                phoneEl.focus();
+            }
+        });
+    }
+
+    document.querySelectorAll('#payment-section button[type="button"], #payment-section button[type="submit"]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            formatKgPhone();
+            if (!isValidPhone()) {
+                e.preventDefault();
+                e.stopPropagation();
+                showPhoneError('Введите корректный номер: +996 и 9 цифр');
+                phoneEl.focus();
+            } else {
+                showPhoneError('');
+            }
+        });
+    });
+})();
 </script>
 
 {% endblock content %}

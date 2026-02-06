@@ -1,0 +1,26 @@
+{% load static %}
+{# Нижнее меню: только мобильные и планшеты (flex md:hidden), фиксировано внизу, safe-area для iPhone #}
+<nav
+    class="tw-fixed tw-bottom-0 tw-left-0 tw-right-0 tw-z-50 tw-bg-white tw-flex md:tw-hidden tw-justify-around tw-items-stretch tw-border-t tw-border-gray-100"
+    style="box-shadow: 0 -2px 10px rgba(0,0,0,0.1); padding-bottom: env(safe-area-inset-bottom, 0);"
+    aria-label="Нижнее меню"
+>
+    <a href="{% url 'store:index' %}" class="tw-flex-1 tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-2 tw-px-1 tw-text-gray-500 hover:tw-text-[#EB332C] tw-transition-colors {% if request.resolver_match.namespace == 'store' and request.resolver_match.url_name == 'index' %}tw-text-[#EB332C]{% endif %}">
+        <i class="fas fa-home tw-text-lg tw-mb-0.5"></i>
+        <span class="tw-text-[10px] sm:tw-text-xs tw-font-medium">Главная</span>
+    </a>
+    <a href="{% url 'store:shop' %}" class="tw-flex-1 tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-2 tw-px-1 tw-text-gray-500 hover:tw-text-[#EB332C] tw-transition-colors {% if request.resolver_match.url_name == 'shop' or request.resolver_match.url_name == 'category' %}tw-text-[#EB332C]{% endif %}">
+        <i class="fas fa-th-large tw-text-lg tw-mb-0.5"></i>
+        <span class="tw-text-[10px] sm:tw-text-xs tw-font-medium">Каталог</span>
+    </a>
+    <a href="{% url 'customer:wishlist' %}" class="tw-flex-1 tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-2 tw-px-1 tw-text-gray-500 hover:tw-text-[#EB332C] tw-transition-colors tw-relative {% if request.resolver_match.namespace == 'customer' and request.resolver_match.url_name == 'wishlist' %}tw-text-[#EB332C]{% endif %}">
+        <i class="fas fa-heart tw-text-lg tw-mb-0.5"></i>
+        <span class="tw-text-[10px] sm:tw-text-xs tw-font-medium">Избранное</span>
+        <span id="wishlist-count-mobile" class="wishlist-count-badge tw-absolute tw-top-1 tw-right-1/4 tw-flex tw-items-center tw-justify-center tw-min-w-[1rem] tw-h-4 tw-px-0.5 tw-rounded-full tw-bg-[#EB332C] tw-text-white tw-text-[10px] tw-font-semibold {% if not wishlist_count or wishlist_count == 0 %}tw-hidden{% endif %}">{{ wishlist_count|default:0 }}</span>
+    </a>
+    <a href="{% url 'store:cart' %}" class="tw-flex-1 tw-flex tw-flex-col tw-items-center tw-justify-center tw-py-2 tw-px-1 tw-text-gray-500 hover:tw-text-[#EB332C] tw-transition-colors tw-relative {% if request.resolver_match.url_name == 'cart' %}tw-text-[#EB332C]{% endif %}">
+        <i class="fas fa-shopping-basket tw-text-lg tw-mb-0.5"></i>
+        <span class="tw-text-[10px] sm:tw-text-xs tw-font-medium">Корзина</span>
+        <span id="cart-count-mobile" class="cart-count-badge-mobile tw-absolute tw-top-1 tw-right-1/4 tw-flex tw-items-center tw-justify-center tw-min-w-[1rem] tw-h-4 tw-px-0.5 tw-rounded-full tw-bg-[#EB332C] tw-text-white tw-text-[10px] tw-font-semibold total_cart_items {% if not total_cart_items or total_cart_items == 0 %}tw-hidden{% endif %}">{{ total_cart_items|default:0 }}</span>
+    </a>
+</nav>

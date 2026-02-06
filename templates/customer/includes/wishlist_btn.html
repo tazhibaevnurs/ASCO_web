@@ -1,0 +1,20 @@
+{% comment %}
+Кнопка «Избранное» для карточки товара. Переменные: product, is_in_wishlist (bool).
+Используется и при первой отрисовке, и в HTMX-ответе (после toggle).
+{% endcomment %}
+<button
+    type="button"
+    class="wishlist-btn tw-p-2 tw-rounded-lg tw-text-gray-400 hover:tw-text-[#EB332C] tw-transition-transform active:tw-scale-125 focus:tw-outline-none focus:tw-ring-0"
+    aria-label="{% if is_in_wishlist %}Удалить из избранного{% else %}Добавить в избранное{% endif %}"
+    hx-post="{% url 'customer:toggle_wishlist' product.id %}"
+    hx-trigger="click"
+    hx-swap="outerHTML"
+    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+    onclick="event.preventDefault(); event.stopPropagation();"
+>
+    {% if is_in_wishlist %}
+        <i class="fas fa-heart tw-text-[#EB332C]"></i>
+    {% else %}
+        <i class="far fa-heart"></i>
+    {% endif %}
+</button>

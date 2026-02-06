@@ -11,6 +11,25 @@
         <link href="{% static 'assets/css/styles.css' %}?v=4" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                prefix: 'tw-',
+                corePlugins: { preflight: false }
+            };
+        </script>
+        <style>
+            [x-cloak] { display: none !important; }
+            .add_to_cart,
+            .add_to_cart:focus,
+            .add_to_cart:hover,
+            button.add_to_cart.btn-primary,
+            button.add_to_cart.bg-primary {
+                outline: none !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+        </style>
         <style>
             @media (min-width: 993px) {
                 .nav-menu li {
@@ -335,120 +354,111 @@
         </style>
     </head>
 
-    <body>
+    <body data-user-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}" data-sync-wishlist-url="{% url 'customer:sync_wishlist_from_storage' %}">
         <div id="main-wrapper">
-            <div class="header header-dark dark-text">
-                <div class="container">
-                    <nav id="navigation" class="navigation navigation-landscape">
-                        <div class="nav-header">
-                            <a class="nav-brand" href="{% url 'store:index' %}">
-                                <img style="width: 170px; object-fit: contain;" src="{% static 'assets/img/asco_logo_white.svg' %}" class="logo logo-desktop" alt="" />
-                                <img style="width: 170px; object-fit: contain;" src="{% static 'assets/img/asco_logo_black.svg' %}" class="logo logo-mobile" alt="" />
-                            </a>
-                            <div class="nav-toggle"></div>
-                            <div class="mobile_nav">
-                                <ul>
-                                    <li>
-                                        <a href="#"><i class="fas fa-search-alt"></i></a>
-                                    </li>
-                                    <li>
-                                        <a href="#"><i class="fas fa-user"></i></a>
-                                    </li>
-                                    <li>
-                                        <a href="{% url 'store:cart' %}"> <i class="fas fa-shopping-basket"></i><span class="dn-counter total_cart_items">{{total_cart_items}}</span> </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="nav-menus-wrapper">
-                            <!-- Мобильный заголовок с логотипом (только для мобильных) -->
-                            <div class="mobile-menu-header">
-                                <a class="mobile-menu-logo" href="{% url 'store:index' %}">
-                                    <img src="{% static 'assets/img/asco_logo_black.svg' %}" alt="ASCO.KG" />
-                                </a>
-                            </div>
-                            
-                            <ul class="nav-menu">
-                                <li><a href="/">Главная</a></li>
-                                <li>
-                                    <a href="{% url 'store:shop' %}">Магазин</a>
-                                </li>
-                                <li class="mobile-dropdown-item">
-                                    <a href="javascript:void(0);" class="mobile-dropdown-link">Категории <i class="fas fa-chevron-down mobile-arrow-icon"></i></a>
-                                    <ul class="nav-dropdown nav-submenu mobile-submenu-list">
-                                        {% for c in category_ %}
-                                            <li><a href="{% url 'store:category' c.id %}">{{ c.title }}</a></li>
-                                        {% endfor %}
-                                    </ul>
-                                </li>
-                                <li class="mobile-dropdown-item">
-                                    <a href="javascript:void(0);" class="mobile-dropdown-link">Страницы <i class="fas fa-chevron-down mobile-arrow-icon"></i></a>
-                                    <ul class="nav-dropdown nav-submenu mobile-submenu-list">
-                                        <li><a href="{% url 'blog:blog_list' %}">Блог</a></li>
-                                        <li><a href="{% url 'store:about' %}">О нас</a></li>
-                                        <li><a href="{% url 'store:contact' %}">Контакты</a></li>
-                                        <li><a href="{% url 'store:faqs' %}">Часто задаваемые вопросы</a></li>
-                                        <li><a href="{% url 'store:privacy_policy' %}">Политика конфиденциальности</a></li>
-                                    </ul>
-                                </li>
-                                <li>
-                                    <a href="{% url 'store:contact' %}">Контакты</a>
-                                </li>
-                                {% if request.user.is_authenticated %}
-                                    {% if request.user.role == 'manager' or request.user.role == 'superadmin' or request.user.is_staff or request.user.is_superuser %}
-                                        <li class="mobile-dropdown-item">
-                                            <a href="javascript:void(0);" class="mobile-dropdown-link">Управление <i class="fas fa-chevron-down mobile-arrow-icon"></i></a>
-                                            <ul class="nav-dropdown nav-submenu mobile-submenu-list">
-                                                <li><a href="{% url 'vendor:dashboard' %}">Панель</a></li>
-                                                <li><a href="{% url 'vendor:products' %}">Товары</a></li>
-                                                <li><a href="{% url 'vendor:orders' %}">Заказы</a></li>
-                                                <li><a href="{% url 'vendor:categories' %}">Категории</a></li>
-                                            </ul>
-                                        </li>
-                                    {% endif %}
-                                {% endif %}
-                            </ul>
-                            
-                            <!-- Контактные данные внизу (только для мобильных) -->
-                            <div class="mobile-menu-footer">
-                                <div class="mobile-menu-contacts">
-                                    <h5>Контакты</h5>
-                                    <p><i class="fas fa-map-marker-alt"></i> Кыргызстан, г. Бишкек, ул. Бейшена Егимбаева 145/1</p>
-                                    <p><i class="fas fa-phone"></i> <a href="tel:+996509005005">+996 509 005 005</a></p>
-                                    <p><i class="fas fa-envelope"></i> <a href="mailto:info@asco.com">info@asco.com</a></p>
-                                </div>
-                            </div>
+            {% include 'partials/header.html' %}
 
-                            <ul class="nav-menu nav-menu-social align-to-right">
-                                <li>
-                                    <a href="{% url 'store:cart' %}"><i class="fas fa-shopping-basket text-white"></i><span class="dn-counter total_cart_items">{{ total_cart_items }}</span></a>
-                                </li>
-                                {% if request.user.is_authenticated %}
-                                    {% if request.user.role == 'manager' or request.user.role == 'superadmin' or request.user.is_staff or request.user.is_superuser %}
-                                        <li>
-                                            <a href="{% url 'vendor:profile' %}"><i class="fas fa-user text-white"></i></a>
-                                        </li>
-                                        <li>
-                                            <a href="{% url 'userauths:sign-out' %}" class="btn bg-primary py-2 px-4 rounded text-white"><i class="fas fa-sign-out-alt me-1"></i> Выйти</a>
-                                        </li>
-                                    {% endif %}
-                                {% endif %}
-                            </ul>
-                        </div>
-                    </nav>
+            {# Уведомления Django: десктоп — правый верхний угол, мобилка — низ экрана (выше нижней панели) #}
+            <div id="django-toasts" class="tw-fixed tw-z-[110] tw-flex tw-flex-col tw-gap-3 tw-pointer-events-none tw-p-4 max-md:tw-hidden" style="top: 1rem; right: 1rem; left: auto; bottom: auto;"></div>
+            <div id="django-toasts-mobile" class="tw-fixed tw-z-[110] tw-flex tw-flex-col-reverse tw-gap-3 tw-pointer-events-none tw-p-4 tw-pb-24 md:tw-hidden" style="bottom: 0; left: 0; right: 0; top: auto;"></div>
+            <script>
+            (function() {
+                var messages = [
+                    {% for message in messages %}
+                    { text: "{{ message|escapejs }}", tag: "{{ message.tags|default:'info' }}" }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ];
+                if (messages.length > 0) {
+                    var icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', danger: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+                    var colors = { success: 'tw-bg-green-50 tw-border-green-200 tw-text-green-800', error: 'tw-bg-red-50 tw-border-red-200 tw-text-red-800', danger: 'tw-bg-red-50 tw-border-red-200 tw-text-red-800', warning: 'tw-bg-amber-50 tw-border-amber-200 tw-text-amber-800', info: 'tw-bg-blue-50 tw-border-blue-200 tw-text-blue-800' };
+                    var iconColors = { success: 'tw-text-green-500', error: 'tw-text-red-500', danger: 'tw-text-red-500', warning: 'tw-text-amber-500', info: 'tw-text-blue-500' };
+                    var container = document.getElementById('django-toasts');
+                    var containerMobile = document.getElementById('django-toasts-mobile');
+                    messages.forEach(function(m) {
+                        var tag = (m.tag === 'error' || m.tag === 'danger') ? 'error' : (m.tag || 'info');
+                        var icon = icons[tag] || icons.info;
+                        var color = colors[tag] || colors.info;
+                        var iconColor = iconColors[tag] || iconColors.info;
+                        var text = (m.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                        var div = document.createElement('div');
+                        div.className = 'django-toast tw-pointer-events-auto tw-flex tw-items-start tw-gap-3 tw-p-4 tw-rounded-xl tw-shadow-lg tw-border tw-max-w-sm tw-w-full tw-bg-white ' + color;
+                        div.setAttribute('role', 'alert');
+                        div.innerHTML = '<span class="tw-flex-shrink-0 ' + iconColor + '"><i class="fas ' + icon + ' tw-text-xl"></i></span><p class="tw-flex-1 tw-m-0 tw-text-sm tw-font-medium">' + text + '</p><button type="button" class="django-toast-close tw-flex-shrink-0 tw-p-1 tw-rounded tw-text-gray-400 hover:tw-text-gray-600" aria-label="Закрыть">&times;</button>';
+                        container.appendChild(div);
+                        var divMobile = div.cloneNode(true);
+                        containerMobile.appendChild(divMobile);
+                        var closeToast = function() { [div, divMobile].forEach(function(t) { if (t.parentNode) t.parentNode.removeChild(t); }); };
+                        div.querySelector('.django-toast-close').addEventListener('click', closeToast);
+                        divMobile.querySelector('.django-toast-close').addEventListener('click', closeToast);
+                        setTimeout(closeToast, 5000);
+                    });
+                }
+                window.showToast = function(text, tag) {
+                    var icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', danger: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+                    var colors = { success: 'tw-bg-green-50 tw-border-green-200 tw-text-green-800', error: 'tw-bg-red-50 tw-border-red-200 tw-text-red-800', danger: 'tw-bg-red-50 tw-border-red-200 tw-text-red-800', warning: 'tw-bg-amber-50 tw-border-amber-200 tw-text-amber-800', info: 'tw-bg-blue-50 tw-border-blue-200 tw-text-blue-800' };
+                    var iconColors = { success: 'tw-text-green-500', error: 'tw-text-red-500', danger: 'tw-text-red-500', warning: 'tw-text-amber-500', info: 'tw-text-blue-500' };
+                    var container = document.getElementById('django-toasts');
+                    var containerMobile = document.getElementById('django-toasts-mobile');
+                    if (!container || !containerMobile) return;
+                    tag = (tag === 'error' || tag === 'danger') ? 'error' : (tag || 'info');
+                    var icon = icons[tag] || icons.info;
+                    var color = colors[tag] || colors.info;
+                    var iconColor = iconColors[tag] || iconColors.info;
+                    var safeText = (text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                    var div = document.createElement('div');
+                    div.className = 'django-toast tw-pointer-events-auto tw-flex tw-items-start tw-gap-3 tw-p-4 tw-rounded-xl tw-shadow-lg tw-border tw-max-w-sm tw-w-full tw-bg-white ' + color;
+                    div.setAttribute('role', 'alert');
+                    div.innerHTML = '<span class="tw-flex-shrink-0 ' + iconColor + '"><i class="fas ' + icon + ' tw-text-xl"></i></span><p class="tw-flex-1 tw-mt-0 tw-mb-0 tw-text-sm tw-font-medium">' + safeText + '</p><button type="button" class="django-toast-close tw-flex-shrink-0 tw-p-1 tw-rounded tw-text-gray-400 hover:tw-text-gray-600" aria-label="Закрыть">&times;</button>';
+                    container.appendChild(div);
+                    var divMobile = div.cloneNode(true);
+                    containerMobile.appendChild(divMobile);
+                    var closeToast = function() { [div, divMobile].forEach(function(t) { if (t.parentNode) t.parentNode.removeChild(t); }); };
+                    div.querySelector('.django-toast-close').addEventListener('click', closeToast);
+                    divMobile.querySelector('.django-toast-close').addEventListener('click', closeToast);
+                    setTimeout(closeToast, 5000);
+                };
+                document.body.addEventListener('showWishlistToast', function(e) {
+                    var d = e.detail;
+                    if (d && d.text) window.showToast(d.text, d.tag || 'success');
+                });
+                document.body.addEventListener('wishlistIds', function(e) {
+                    if (e.detail && Array.isArray(e.detail)) try { localStorage.setItem('wishlist_ids', JSON.stringify(e.detail)); } catch (err) {}
+                });
+                if (document.body.getAttribute('data-user-authenticated') !== 'true') {
+                    try {
+                        var stored = localStorage.getItem('wishlist_ids');
+                        if (stored) {
+                            var arr = JSON.parse(stored);
+                            if (Array.isArray(arr) && arr.length > 0) {
+                                var idsParam = arr.join(',');
+                                var syncUrl = document.body.getAttribute('data-sync-wishlist-url');
+                                if (syncUrl) fetch(syncUrl + '?ids=' + encodeURIComponent(idsParam), { credentials: 'same-origin' }).then(function(r) { return r.json(); }).then(function(data) { if (data.reload) location.reload(); });
+                            }
+                        }
+                    } catch (err) {}
+                }
+            })();
+            </script>
+
+            {# Mini-cart popup (desktop): показывается при добавлении товара #}
+            <div id="mini-cart-popup" class="tw-fixed tw-top-20 tw-right-4 tw-z-[100] tw-w-full tw-max-w-sm tw-bg-white tw-rounded-xl tw-shadow-xl tw-border tw-border-gray-200 tw-p-4 tw-hidden md:tw-block" style="display: none;" aria-hidden="true">
+                <div class="tw-flex tw-items-start tw-justify-between tw-mb-3">
+                    <span class="tw-font-semibold tw-text-gray-900"><i class="fas fa-check-circle tw-text-green-500 tw-mr-2"></i>Товар добавлен в корзину</span>
+                    <button type="button" class="mini-cart-close tw-text-gray-400 hover:tw-text-gray-600 tw-p-1" aria-label="Закрыть">&times;</button>
+                </div>
+                <p class="tw-text-sm tw-text-gray-600 tw-mb-2"><span id="mini-cart-count">0</span> т. в корзине · <span id="mini-cart-total">0</span> сом</p>
+                <div class="tw-flex tw-gap-2">
+                    <button type="button" class="mini-cart-close tw-flex-1 tw-py-2 tw-px-3 tw-rounded-lg tw-border tw-border-gray-300 tw-text-gray-700 tw-text-sm tw-font-medium hover:tw-bg-gray-50">Продолжить</button>
+                    <a href="{% url 'store:cart' %}" class="tw-flex-1 tw-py-2 tw-px-3 tw-rounded-lg tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-text-sm tw-font-medium tw-text-center">В корзину</a>
                 </div>
             </div>
+            <div id="mini-cart-backdrop" class="tw-fixed tw-inset-0 tw-z-[99] tw-bg-black/20 tw-hidden" style="display: none;" aria-hidden="true"></div>
 
-           
-           {% for message in messages %}
-                <div class="alert alert-{{message.tags}} alert-dismissible fade show text-center" role="alert">
-                    <strong>{{message}}</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-           {% endfor %}
-            
+            <div class="tw-pb-16 md:tw-pb-0">
+                {% block content %} {% endblock content %}
+            </div>
 
-            {% block content %} {% endblock content %}
+            {% include 'includes/bottom_nav.html' %}
 
             <footer class="dark-footer skin-dark-footer" style="margin-top: 500px">
                 <div class="footer-middle">
@@ -456,10 +466,10 @@
                         <div class="row justify-content-center">
                             <div class="col-12 col-md-6 col-xl-4 col-lg-4 mb-4 mb-md-0">
                                 <div class="footer_widget text-center">
-                                    <img src="{% static 'assets/img/logo-light.png' %}" class="img-footer small mb-2" alt="" />
+                                    <img src="{% static 'assets/img/asco_logo_white.svg' %}" class="img-footer small mb-2" alt="ASCO" />
 
-                                    <div class="address mt-3">Адрес магазина: Кыргызстан, г. Бишкек, ул. Бейшена Егимбаева 145/1</div>
-                                    <div class="address mt-3">+996 509 005 005<br />info@asco.com</div>
+                                    <div class="address mt-3">Адрес магазина: ТК Табылга, Жибек-Жолу 150, Бишкек, Кыргызстан</div>
+                                    <div class="address mt-3">+996 700 454 578<br>+996 705 640 165<br />info@asco.kg</div>
                                     <div class="address mt-3">
                                         <ul class="list-inline">
                                             <li class="list-inline-item">
@@ -504,6 +514,16 @@
             </footer>
         </div>
 
+        <script src="https://unpkg.com/htmx.org@1.9.10" crossorigin="anonymous"></script>
+        <script>
+            document.body.addEventListener('htmx:responseError', function(evt) {
+                var xhr = evt.detail.xhr;
+                var status = xhr ? xhr.status : 'unknown';
+                if (status === 403 || status === 404 || status >= 500) {
+                    console.error('[HTMX] Ошибка запроса:', { status: status, url: evt.detail.requestConfig.pathInfo.requestPath, response: xhr ? xhr.responseText : '' });
+                }
+            });
+        </script>
         <script src="{% static 'assets/js/jquery.min.js' %}"></script>
         <script src="{% static 'assets/js/popper.min.js' %}"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
@@ -518,6 +538,7 @@
         <script src="{% static 'assets/js/custom.js' %}"></script>
         <script src="{% static 'assets/js/function.js' %}?v=3"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
         
         <script>
             // Обработка мобильного меню
@@ -543,7 +564,25 @@
                 $('.mobile-dropdown-item').removeClass('active');
                 $('.mobile-submenu-list').hide();
             });
+
+            // Mini-cart popup (desktop): показ при добавлении товара
+            function showMiniCart(count, total) {
+                if (window.innerWidth < 768) return;
+                $('#mini-cart-count').text(count);
+                $('#mini-cart-total').text(total);
+                $('#mini-cart-popup').css('display', 'block').attr('aria-hidden', 'false');
+                $('#mini-cart-backdrop').css('display', 'block').attr('aria-hidden', 'false');
+            }
+            function hideMiniCart() {
+                $('#mini-cart-popup').css('display', 'none').attr('aria-hidden', 'true');
+                $('#mini-cart-backdrop').css('display', 'none').attr('aria-hidden', 'true');
+            }
+            $(document).on('click', '.mini-cart-close, #mini-cart-backdrop', hideMiniCart);
+            window.addEventListener('show-mini-cart', function(e) {
+                showMiniCart(e.detail.total_cart_items, e.detail.cart_sub_total);
+            });
         </script>
+        {% block extra_js %}{% endblock %}
 
     </body>
 </html>

@@ -160,3 +160,6 @@ __MACOSX/
 *.png
 erd.png
 erd.dot
+DNS_SETUP.md
+check_dns.sh
+DOCKER_UPDATE_PLAN.md

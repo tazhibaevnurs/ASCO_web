@@ -1,115 +1,100 @@
-{% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% block content %}
-<div class="gray py-3">
-    <div class="container">
-        <div class="row">
-            <div class="colxl-12 col-lg-12 col-md-12">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/">Home</a></li>
-                        <li class="breadcrumb-item"><a href="#">Customer</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Wishlists</li>
-                    </ol>
-                </nav>
-            </div>
-        </div>
-    </div>
-</div>
+{% extends 'partials/base.html' %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+<style>
+	.shop-product-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+	.add_to_cart:focus { outline: none !important; box-shadow: none !important; border: none !important; }
+</style>
 
-<section class="middle">
-    <div class="container">
-        <div class="row align-items-start justify-content-between">
-            {% include 'customer/sidebar.html' %}
+<section class="tw-min-h-screen tw-bg-gray-50">
+	<div class="tw-container tw-mx-auto tw-px-4 tw-py-4 md:tw-py-6">
+		{# Заголовок в том же стиле, что и на странице магазина #}
+		<div class="tw-flex tw-flex-col sm:tw-flex-row sm:tw-items-center sm:tw-justify-between tw-gap-3 tw-mb-4">
+			<h1 class="tw-text-xl md:tw-text-2xl tw-font-bold tw-text-gray-900">Избранное (<span id="wishlist-page-heading-count">{{ wishlist_count }}</span>)</h1>
+		</div>
 
+		{# Строка «В списке: N товаров» #}
+		<div class="tw-flex tw-flex-wrap tw-items-center tw-gap-2 tw-mb-4 tw-min-h-[2.5rem]">
+			<span class="tw-text-sm tw-text-gray-500">В списке: <strong id="wishlist-page-items-count" class="tw-text-gray-900">{{ wishlist_count }}</strong> товаров</span>
+		</div>
 
-            <div class="col-12 col-md-12 col-lg-8 col-xl-8">
-                <div class="row mb-4">
-                    <h4 class="mb-0 mb-2 fw-bold">Wishlist ({{wishlist_count}})</h4>
-                </div>
+		{# Сетка карточек (при пустом списке заменяется OOB на сообщение) #}
+		<div id="wishlist-grid-wrapper" class="tw-grid tw-grid-cols-2 lg:tw-grid-cols-3 xl:tw-grid-cols-4 tw-gap-3 md:tw-gap-4 lg:tw-gap-6">
+			{% for w in wishlist %}
+				<div id="wishlist-item-{{ w.id }}" class="wishlist-card-item tw-flex tw-flex-col">
+					<div class="tw-bg-white tw-rounded-2xl tw-shadow-sm hover:tw-shadow-md tw-overflow-hidden tw-transition-shadow tw-group tw-flex tw-flex-col tw-flex-1">
+						<div class="tw-relative tw-aspect-square tw-bg-gray-100 tw-overflow-hidden tw-flex-shrink-0">
+							<a href="{% url 'store:product_detail' w.product.slug %}" class="tw-block tw-absolute tw-inset-0 tw-z-0">
+								{% if w.product.image %}
+									<img src="{{ w.product.image.url }}" alt="{{ w.product.name }}" class="tw-absolute tw-inset-0 tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-300" />
+								{% else %}
+									<div class="tw-absolute tw-inset-0 tw-flex tw-items-center tw-justify-center tw-text-gray-400">
+										<i class="fas fa-image tw-text-4xl md:tw-text-5xl"></i>
+									</div>
+								{% endif %}
+							</a>
+							<div class="tw-absolute tw-top-1.5 tw-right-1.5 tw-z-10">
+								<a href="{% url 'customer:remove_from_wishlist' w.id %}"
+								   class="tw-inline-flex tw-items-center tw-justify-center tw-w-9 tw-h-9 tw-rounded-lg tw-bg-white/90 hover:tw-bg-red-50 tw-text-gray-500 hover:tw-text-red-600 tw-shadow-sm tw-transition-colors"
+								   hx-get="{% url 'customer:remove_from_wishlist' w.id %}"
+								   hx-target="#wishlist-item-{{ w.id }}"
+								   hx-swap="outerHTML"
+								   hx-trigger="click"
+								   title="Удалить из избранного"
+								   aria-label="Удалить из избранного">
+									<i class="fas fa-heart tw-text-sm tw-text-[#EB332C]"></i>
+								</a>
+							</div>
+							<div class="tw-absolute tw-bottom-1.5 tw-right-1.5 tw-z-10 md:tw-hidden">
+								<button type="button" class="add_to_cart tw-w-9 tw-h-9 tw-rounded-lg tw-flex tw-items-center tw-justify-center tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-shadow-md" data-id="{{ w.product.id }}" aria-label="В корзину">
+									<i class="fas fa-shopping-cart tw-text-sm"></i>
+								</button>
+							</div>
+						</div>
+						<div class="tw-p-2 md:tw-p-4 tw-flex tw-flex-col tw-flex-1 tw-min-h-0">
+							<span class="tw-text-xs tw-text-gray-500 tw-font-medium tw-truncate">{{ w.product.category.title|default:"" }}</span>
+							<h3 class="shop-product-title tw-font-semibold tw-text-gray-900 tw-mt-0.5 tw-text-sm md:tw-text-base tw-line-clamp-2 tw-flex-1">
+								<a href="{% url 'store:product_detail' w.product.slug %}" class="hover:tw-text-[#EB332C] tw-transition-colors">{{ w.product.name }}</a>
+							</h3>
+							<div class="tw-mt-2 tw-flex tw-items-center tw-justify-between tw-gap-2">
+								<span class="tw-font-bold tw-text-[#EB332C] tw-text-sm md:tw-text-base">{{ w.product.price|intcomma }} сом</span>
+								<button type="button" class="add_to_cart tw-hidden md:tw-inline-flex tw-p-2 tw-rounded-lg tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-transition-colors focus:tw-outline-none focus:tw-ring-0" data-id="{{ w.product.id }}" aria-label="В корзину">
+									<i class="fas fa-shopping-cart"></i>
+								</button>
+							</div>
+							<input type="hidden" class="quantity" value="1">
+						</div>
+					</div>
+				</div>
+			{% empty %}
+				<div class="tw-col-span-full tw-bg-white tw-rounded-2xl tw-shadow-sm tw-border tw-border-gray-100 tw-p-8 tw-text-center">
+					<p class="tw-text-gray-500 tw-mb-4">В избранном нет товаров.</p>
+					<a href="{% url 'store:shop' %}" class="tw-inline-flex tw-items-center tw-gap-2 tw-px-4 tw-py-2 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-medium tw-transition-colors">Перейти в магазин <i class="fas fa-arrow-right"></i></a>
+				</div>
+			{% endfor %}
+		</div>
 
-                <div class="row align-items-center rows-products">
-                    {% for w in wishlist %}
-                        <div class="col-lg-4 mb-3">
-                    <div class="product_grid card b-0  rounded-3 shadow m-2 p-2">
-                        <div class="card-body p-0">
-                            <div class="shop_thumb position-relative">
-                                <a class="card-img-top d-block overflow-hidden" href="{% url 'store:product_detail' w.product.slug %}"><img class="card-img-top" style="width: 100%; height: 230px; object-fit: cover;" src="{{w.product.image.url}}" alt="..." /></a>
-                            </div>
-                        </div>
-                        <div class="card-footer b-0 p-0 pt-2 bg-white d-flex align-items-start justify-content-between">
-                            <div class="text-left">
-                                <div class="text-left">
-                                    <div class="elso_titl"><span class="small"><a href="{% url 'store:category' w.product.category.id %}">{{w.product.category.title}}</a></span></div>
-                                    <h5 class="fs-md mb-0 lh-1 mb-1"><a href="{% url 'store:product_detail' w.product.slug %}">{{w.product.name}}</a></h5>
-                                        <div class="star-rating align-items-center d-flex justify-content-left mb-2 p-0 mt-3">
-                                        {% if not w.product.average_rating  %}
-                                        <i class="fas fa-star text-warning"></i>
-                                        {% elif w.product.average_rating > 0 and w.product.average_rating < 2 %}
-                                        <i class="fas fa-star text-warning"></i>
-                                        {% elif w.product.average_rating > 1 and w.product.average_rating < 3 %}
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        {% elif w.product.average_rating > 2 and w.product.average_rating < 4 %}
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        {% elif w.product.average_rating > 3 and w.product.average_rating < 5 %}
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        {% elif w.product.average_rating > 4 %}
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        <i class="fas fa-star text-warning"></i>
-                                        {% endif %}
-                                    </div>
-                                    <div class="elis_rty"><span class="ft-bold text-dark fs-sm">{{w.product.price}} сом</span></div>
-                                </div>
-                                <div class="d-flex align-items-center gap-3">
-                                        <button type="button" class="btn btn-sm bg-primary text-white rounded add_to_cart" data-id="{{w.product.id}}">Добавить в корзину <i class="fas fa-shopping-cart ms-2"></i></button>
-                                        <input type="hidden" class="quantity" value="1" name="" id="">
-                                        <a href="{% url 'customer:remove_from_wishlist' w.id %}" class=""><i class="fas fa-trash fs-4 text-danger"></i></a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                        {% empty %}
-                        <p>No item in wishlist</p>
-                    {% endfor %}
-                </div>
-
-                <ul class="pagination">
-            {% if wishlist.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ wishlist.previous_page_number }}">Previous</a>
-                </li>
-            {% else %}
-                <li class="page-item disabled">
-                    <span class="page-link">Previous</span>
-                </li>
-            {% endif %}
-
-            {% for num in wishlist.paginator.page_range %}
-                <li class="page-item {% if wishlist.number == num %}active{% endif %}">
-                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                </li>
-            {% endfor %}
-
-            {% if wishlist.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ wishlist.next_page_number }}">Next</a>
-                </li>
-            {% else %}
-                <li class="page-item disabled">
-                    <span class="page-link">Next</span>
-                </li>
-            {% endif %}
-        </ul>
-            </div>
-        </div>
-    </div>
+		{# Пагинация — в том же стиле, что и в магазине #}
+		{% if wishlist.has_other_pages %}
+		<nav class="tw-mt-8 tw-flex tw-justify-center" aria-label="Пагинация">
+			<ul class="pagination tw-mb-0">
+				{% if wishlist.has_previous %}
+				<li class="page-item"><a class="page-link" href="?page={{ wishlist.previous_page_number }}">Назад</a></li>
+				{% endif %}
+				{% for num in wishlist.paginator.page_range %}
+					{% if wishlist.number == num %}
+					<li class="page-item active"><span class="page-link">{{ num }}</span></li>
+					{% else %}
+					<li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+					{% endif %}
+				{% endfor %}
+				{% if wishlist.has_next %}
+				<li class="page-item"><a class="page-link" href="?page={{ wishlist.next_page_number }}">Вперед</a></li>
+				{% endif %}
+			</ul>
+		</nav>
+		{% endif %}
+	</div>
 </section>
 {% endblock content %}

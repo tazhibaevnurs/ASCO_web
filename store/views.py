@@ -24,6 +24,32 @@ from plugin.tax_calculation import tax_calculation
 from plugin.exchange_rate import convert_usd_to_inr, convert_usd_to_kobo, convert_usd_to_ngn, get_usd_to_ngn_rate
 
 
+def _apply_search(queryset, query):
+    """Применяет поиск по названию товара (подстрока, без учёта регистра)."""
+    if not query or not query.strip():
+        return queryset
+    return queryset.filter(name__icontains=query.strip())
+
+
+def search_suggestions(request):
+    """JSON-ответ для подсказок поиска: превью, название, цена, ссылка на товар."""
+    q = (request.GET.get("q") or "").strip()
+    if not q:
+        return JsonResponse({"results": []})
+    products = store_models.Product.objects.filter(status="Published")
+    products = _apply_search(products, q)[:8]
+    results = []
+    for p in products:
+        results.append({
+            "name": p.name,
+            "url": reverse("store:product_detail", args=[p.slug]),
+            "image": request.build_absolute_uri(p.image.url) if p.image else None,
+            "price": str(p.price),
+            "category": p.category.title if p.category else "",
+        })
+    return JsonResponse({"results": results})
+
+
 # stripe.api_key = settings.STRIPE_SECRET_KEY
 # razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
@@ -36,17 +62,70 @@ def clear_cart_items(request):
     return
 
 def index(request):
+    # Если в URL есть поисковый запрос — показываем результаты на странице магазина
+    if request.GET.get("q"):
+        from urllib.parse import urlencode
+        return redirect("{}?{}".format(reverse("store:search"), urlencode({"q": request.GET.get("q")})))
     products = store_models.Product.objects.filter(status="Published")
     categories = store_models.Category.objects.all()
-    
+    hero_slides = store_models.HeroSlide.objects.filter(is_active=True).order_by("order")
     context = {
         "products": products,
         "categories": categories,
+        "hero_slides": hero_slides,
     }
     return render(request, "store/index.html", context)
 
+def _shop_queryset(request):
+    """Единая база запроса для магазина: q, category, min_price, max_price, sort."""
+    qs = store_models.Product.objects.filter(status="Published")
+
+    q = request.GET.get("q", "").strip()
+    if q:
+        qs = qs.filter(name__icontains=q)
+
+    category = request.GET.get("category")  # slug категории
+    if category:
+        qs = qs.filter(category__slug=category)
+    categories_ids = request.GET.getlist("categories[]")  # для совместимости с filter_products
+    if categories_ids:
+        qs = qs.filter(category__id__in=categories_ids)
+
+    try:
+        min_price = request.GET.get("min_price")
+        if min_price is not None and min_price != "":
+            qs = qs.filter(price__gte=Decimal(min_price))
+    except (TypeError, ValueError):
+        pass
+    try:
+        max_price = request.GET.get("max_price")
+        if max_price is not None and max_price != "":
+            qs = qs.filter(price__lte=Decimal(max_price))
+    except (TypeError, ValueError):
+        pass
+
+    sort = request.GET.get("sort", "")
+    if sort == "price_asc":
+        qs = qs.order_by("price")
+    elif sort == "price_desc":
+        qs = qs.order_by("-price")
+    elif sort == "newest":
+        qs = qs.order_by("-date")
+    elif sort == "name":
+        qs = qs.order_by("name")
+    else:
+        # legacy: prices=lowest / highest
+        price_order = request.GET.get("prices")
+        if price_order == "lowest":
+            qs = qs.order_by("-price")
+        elif price_order == "highest":
+            qs = qs.order_by("price")
+
+    return qs
+
+
 def shop(request):
-    products_list = store_models.Product.objects.filter(status="Published")
+    products_list = _shop_queryset(request)
     categories = store_models.Category.objects.all()
     colors = store_models.VariantItem.objects.filter(variant__name='Color').values('title', 'content').distinct()
     sizes = store_models.VariantItem.objects.filter(variant__name='Size').values('title', 'content').distinct()
@@ -58,7 +137,6 @@ def shop(request):
         {"id": "50", "value": 50},
         {"id": "100", "value": 100},
     ]
-
     ratings = [
         {"id": "1", "value": "★☆☆☆☆"},
         {"id": "2", "value": "★★☆☆☆"},
@@ -66,39 +144,68 @@ def shop(request):
         {"id": "4", "value": "★★★★☆"},
         {"id": "5", "value": "★★★★★"},
     ]
-
     prices = [
         {"id": "lowest", "value": "От высокой к низкой"},
         {"id": "highest", "value": "От низкой к высокой"},
     ]
 
-    # Handle search query from GET parameter
-    query = request.GET.get("q")
-    if query:
-        products_list = products_list.filter(name__icontains=query)
-
     products = paginate_queryset(request, products_list, 9)
+
+    # HTMX: вернуть только фрагмент со списком товаров
+    if request.headers.get("HX-Request"):
+        from store.context import default as store_default
+        wishlist_context = store_default(request) if hasattr(request, "user") else {}
+        context = {
+            "products": products,
+            "wishlist_product_ids": wishlist_context.get("wishlist_product_ids", set()),
+            "product_count": products_list.count(),
+        }
+        return render(request, "store/product_list_partial.html", context)
+
+    # Чипсы активных фильтров (для снятия по клику)
+    from urllib.parse import urlencode
+    filter_chips = []
+    get = request.GET.copy()
+    if get.get("q"):
+        g = get.copy()
+        g.pop("q", None)
+        filter_chips.append({"type": "q", "label": get.get("q"), "remove_url": request.path + ("?" + g.urlencode() if g else "")})
+    for cat_id in get.getlist("categories[]"):
+        cat = store_models.Category.objects.filter(id=cat_id).first()
+        if cat:
+            g = get.copy()
+            g.setlist("categories[]", [x for x in g.getlist("categories[]") if x != cat_id])
+            filter_chips.append({"type": "category", "label": cat.title, "remove_url": request.path + ("?" + g.urlencode() if g else "")})
+    if get.get("prices"):
+        p_label = next((x["value"] for x in prices if str(x["id"]) == str(get.get("prices"))), None)
+        if p_label:
+            g = get.copy()
+            g.pop("prices", None)
+            filter_chips.append({"type": "price", "label": p_label, "remove_url": request.path + ("?" + g.urlencode() if g else "")})
+    sort_labels = {"newest": "Сначала новинки", "price_asc": "Сначала дешевые", "price_desc": "Сначала дорогие", "name": "По названию"}
+    if get.get("sort") and get.get("sort") in sort_labels:
+        g = get.copy()
+        g.pop("sort", None)
+        filter_chips.append({"type": "sort", "label": sort_labels[get.get("sort")], "remove_url": request.path + ("?" + g.urlencode() if g else "")})
 
     context = {
         "products": products,
         "products_list": products_list,
         "categories": categories,
-         'colors': colors,
-        'sizes': sizes,
-        'item_display': item_display,
-        'ratings': ratings,
-        'prices': prices,
+        "colors": colors,
+        "sizes": sizes,
+        "item_display": item_display,
+        "ratings": ratings,
+        "prices": prices,
+        "filter_chips": filter_chips,
     }
     return render(request, "store/shop.html", context)
 
 def category(request, id):
     category = store_models.Category.objects.get(id=id)
     products_list = store_models.Product.objects.filter(status="Published", category=category)
-
     query = request.GET.get("q")
-    if query:
-        products_list = products_list.filter(name__icontains=query)
-
+    products_list = _apply_search(products_list, query)
     products = paginate_queryset(request, products_list, 9)
 
     context = {
@@ -118,14 +225,17 @@ def vendors(request):
 
 def product_detail(request, slug):
     product = store_models.Product.objects.get(status="Published", slug=slug)
-    product_stock_range = range(1, product.stock + 1)
-
+    product_stock_range = range(1, max(1, product.stock) + 1)
     related_products = store_models.Product.objects.filter(category=product.category).exclude(id=product.id)
-
+    has_specs = any(
+        v.name not in ("Color", "Size") and v.variant_items.exists()
+        for v in product.variants()
+    )
     context = {
         "product": product,
         "product_stock_range": product_stock_range,
         "related_products": related_products,
+        "has_specs": has_specs,
     }
     return render(request, "store/product_detail.html", context)
 
@@ -206,12 +316,8 @@ def cart(request):
         cart_id = None
 
     items = store_models.Cart.objects.filter(cart_id=cart_id)
-    cart_sub_total = store_models.Cart.objects.filter(cart_id=cart_id).aggregate(sub_total = models.Sum("sub_total"))['sub_total']
+    cart_sub_total = store_models.Cart.objects.filter(cart_id=cart_id).aggregate(sub_total=models.Sum("sub_total"))['sub_total']
     cart_sub_total = cart_sub_total or Decimal("0.00")
-    
-    if not items:
-        messages.warning(request, "В корзине нет товаров")
-        return redirect("store:index")
 
     context = {
         "items": items,
@@ -266,6 +372,10 @@ def delivery_request(request):
         cancel_comment="",
     )
 
+    # Чтобы в Telegram ушло одно сообщение с товарами, отправляем из view после создания позиций
+    import orders.services as orders_services
+    orders_services.TELEGRAM_SKIP_ORDER_IDS.add(order.pk)
+
     for cart_item in items:
         store_models.OrderItem.objects.create(
             order=order,
@@ -283,6 +393,13 @@ def delivery_request(request):
             status="new",
         )
         order.vendors.add(cart_item.product.vendor)
+
+    # Одно сообщение в Telegram с полным списком товаров (сигнал для этого заказа пропустим)
+    try:
+        from orders.services import send_order_to_telegram
+        send_order_to_telegram(order.pk)
+    except Exception:
+        pass
 
     from_email = getattr(settings, "DEFAULT_FROM_EMAIL", getattr(settings, "EMAIL_HOST_USER", "noreply@asco.kg"))
 
@@ -341,7 +458,7 @@ def delete_cart_item(request):
     cart_sub_total = store_models.Cart.objects.filter(cart_id=cart_id).aggregate(sub_total = models.Sum("sub_total"))['sub_total']
 
     return JsonResponse({
-        "message": "Item deleted",
+        "message": "Товар удалён из корзины",
         "total_cart_items": total_cart_items.count(),
         "cart_sub_total": "{:,.2f}".format(cart_sub_total) if cart_sub_total else 0.00
     })
@@ -480,6 +597,30 @@ def checkout(request, order_id):
     }
 
     return render(request, "store/checkout.html", context)
+
+
+def update_checkout_phone(request, order_id):
+    """Обновление телефона на странице checkout (нормализация +996 для Telegram)."""
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "POST only"}, status=405)
+    try:
+        order = store_models.Order.objects.get(order_id=order_id)
+    except store_models.Order.DoesNotExist:
+        return JsonResponse({"ok": False, "error": "Order not found"}, status=404)
+    if not order.address:
+        return JsonResponse({"ok": False, "error": "No address"}, status=400)
+    raw = (request.POST.get("phone") or "").strip()
+    digits = "".join(c for c in raw if c.isdigit())
+    if digits.startswith("996"):
+        digits = digits[3:]
+    digits = digits[:9]
+    if len(digits) < 9:
+        return JsonResponse({"ok": False, "error": "Введите 9 цифр номера Кыргызстана (+996)"})
+    normalized = f"+996 {digits[:3]} {digits[3:6]} {digits[6:]}"
+    order.address.mobile = normalized
+    order.address.save(update_fields=["mobile"])
+    return JsonResponse({"ok": True, "phone": normalized})
+
 
 @csrf_exempt
 def stripe_payment(request, order_id):
@@ -709,7 +850,7 @@ def payment_status(request, order_id):
     return render(request, "store/payment_status.html", context)
 
 def filter_products(request):
-    products = store_models.Product.objects.all()
+    products = store_models.Product.objects.filter(status="Published")
 
     # Get filters from the AJAX request
     categories = request.GET.getlist('categories[]')
@@ -720,15 +861,6 @@ def filter_products(request):
     search_filter = request.GET.get('searchFilter')
     display = request.GET.get('display')
 
-    print("categories =======", categories)
-    print("rating =======", rating)
-    print("sizes =======", sizes)
-    print("colors =======", colors)
-    print("price_order =======", price_order)
-    print("search_filter =======", search_filter)
-    print("display =======", display)
-
-   
     # Apply category filtering
     if categories:
         products = products.filter(category__id__in=categories)
@@ -753,16 +885,17 @@ def filter_products(request):
     elif price_order == 'highest':
         products = products.order_by('price')
 
-    # Apply search filter
-    if search_filter:
-        products = products.filter(name__icontains=search_filter)
+    products = _apply_search(products, search_filter)
 
     if display:
         products = products.filter()[:int(display)]
 
 
-    # Render the filtered products as HTML using render_to_string
-    html = render_to_string('partials/_store.html', {'products': products})
+    # Wishlist IDs for heart icons in partial
+    from store.context import default as store_default
+    wishlist_context = store_default(request) if hasattr(request, 'user') else {}
+    context = {'products': products, 'wishlist_product_ids': wishlist_context.get('wishlist_product_ids', set())}
+    html = render_to_string('partials/_store.html', context)
 
     return JsonResponse({'html': html, 'product_count': products.count()})
 

@@ -55,12 +55,22 @@ $(document).ready(function () {
             },
             success: function (response) {
                 console.log(response);
-                Toast.fire({
-                    icon: "success",
-                    title: response.message,
-                });
+                if (typeof window.showToast === 'function') {
+                    window.showToast(response.message || 'Добавлено в корзину', 'success');
+                } else {
+                    Toast.fire({ icon: 'success', title: response.message });
+                }
                 button_el.html('Добавлено в корзину <i class="fas fa-check-circle ms-2"></i>');
                 $(".total_cart_items").text(response.total_cart_items);
+                $(".cart-count-badge-mobile").toggle(response.total_cart_items > 0);
+                if (window.innerWidth >= 768 && response.total_cart_items !== undefined) {
+                    window.dispatchEvent(new CustomEvent("show-mini-cart", {
+                        detail: {
+                            total_cart_items: response.total_cart_items,
+                            cart_sub_total: response.cart_sub_total || "0.00",
+                        },
+                    }));
+                }
             },
             error: function (xhr, status, error) {
                 button_el.html('Добавить в корзину <i class="fas fa-shopping-cart ms-2"></i>');
@@ -159,16 +169,27 @@ $(document).ready(function () {
                 cart_id: cart_id,
             },
             beforeSend: function () {
-                button_el.html('<i class="fas fa-spinner fa-spin"></i>');
+                button_el.prop("disabled", true).html('<i class="fas fa-spinner fa-spin tw-text-sm"></i>');
             },
             success: function (response) {
-                Toast.fire({
-                    icon: "success",
-                    title: response.message,
-                });
+                if (typeof window.showToast === 'function') {
+                    window.showToast(response.message || 'Товар удалён из корзины', 'success');
+                } else {
+                    Toast.fire({ icon: 'success', title: response.message });
+                }
                 $(".total_cart_items").text(response.total_cart_items);
-                $(".cart_sub_total").text(response.cart_sub_total + " сом");
-                $(".item_div_" + item_id).addClass("d-none");
+                $(".cart-count-badge-mobile, #cart-count-mobile").toggle(response.total_cart_items > 0);
+                $("#cart-heading-count, #cart-items-count").text(response.total_cart_items);
+                $(".cart_sub_total").text(response.cart_sub_total);
+                $(".item_div_" + item_id).remove();
+                if (response.total_cart_items === 0) {
+                    window.location.href = "/cart/";
+                    return;
+                }
+                button_el.prop("disabled", false).html('<i class="fas fa-trash tw-text-sm"></i>');
+            },
+            complete: function () {
+                button_el.prop("disabled", false).html('<i class="fas fa-trash tw-text-sm"></i>');
             },
             error: function (xhr, status, error) {
                 console.log("Error Status: " + xhr.status);
@@ -196,7 +217,8 @@ $(document).ready(function () {
     };
     fetchCountry();
 
-    $(document).on("change", ".search-filter, .category-filter, .rating-filter, input[name='price-filter'], input[name='items-display'], .size-filter, .colors-filter", function () {
+    $(document).on("change", ".search-filter, .category-filter, .rating-filter, input[name='price-filter'], input[name='prices'], input[name='items-display'], .size-filter, .colors-filter", function () {
+        if ($("#shop-filters-form").length && $("#shop-filters-form").attr("hx-get")) return;
         let filters = {
             categories: [],
             rating: [],
@@ -234,8 +256,8 @@ $(document).ready(function () {
             method: "GET",
             data: filters,
             success: function (response) {
-                // Replace product list with the filtered products
-                $("#products-list").html(response.html);
+                var target = $("#product-grid").length ? "#product-grid" : "#products-list";
+                $(target).html(response.html);
                 $(".product_count").html(response.product_count);
             },
             error: function (error) {
@@ -275,21 +297,32 @@ $(document).ready(function () {
             $(this).prop("checked", false);
         });
 
-        $("input[name='price-filter']").each(function () {
+        $("input[name='price-filter'], input[name='prices']").each(function () {
             $(this).prop("checked", false);
         });
 
-        $("input[name='search-filter']").val("");
+        $("input[name='search-filter'], input[name='q']").val("");
 
-        Toast.fire({ icon: "success", title: "Filter Reset Successfully" });
+        if ($("#shop-filters-form").length && $("#shop-filters-form").attr("hx-get") && window.htmx) {
+            Toast.fire({ icon: "success", title: "Фильтр успешно сброшен" });
+            var url = $("#shop-filters-form").attr("action") || "/shop/";
+            var sk = document.getElementById("product-grid-skeleton");
+            if (sk) sk.classList.remove("tw-hidden");
+            htmx.ajax("GET", url, { target: "#product-grid", swap: "innerHTML", headers: { "HX-Request": "true" } }).then(function () {
+                if (sk) sk.classList.add("tw-hidden");
+            });
+            return;
+        }
+
+        Toast.fire({ icon: "success", title: "Фильтр успешно сброшен" });
 
         $.ajax({
             url: "/filter_products/",
             method: "GET",
             data: filters,
             success: function (response) {
-                // Replace product list with the filtered products
-                $("#products-list").html(response.html);
+                var target = $("#product-grid").length ? "#product-grid" : "#products-list";
+                $(target).html(response.html);
                 $(".product_count").html(response.product_count);
             },
             error: function (error) {

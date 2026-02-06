@@ -6,11 +6,10 @@
             <div class="colxl-12 col-lg-12 col-md-12">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/">Home</a></li>
-                        <li class="breadcrumb-item"><a href="/shop.html">Shop</a></li>
-                        <li class="breadcrumb-item"><a href="{% url 'store:cart' %}">Cart</a></li>
-                        <li class="breadcrumb-item"><a href="/checkout.html">Checkout</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Payment Status</li>
+                        <li class="breadcrumb-item"><a href="/">Главная</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'store:shop' %}">Магазин</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'store:cart' %}">Корзина</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Статус оплаты</li>
                     </ol>
                 </nav>
             </div>
@@ -18,39 +17,40 @@
     </div>
 </div>
 
-<section class="middle" style="margin-bottom: 600px;">
+<style>
+    .payment-success-checkmark {
+        width: 88px; height: 88px; margin: 0 auto 1.5rem; border-radius: 50%;
+        background: #198754; color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        animation: payment-scale-in 0.45s ease-out;
+    }
+    .payment-success-checkmark i { font-size: 2.5rem; animation: payment-pop 0.35s ease-out 0.2s both; }
+    @keyframes payment-scale-in { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes payment-pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+</style>
+
+<section class="middle pb-5">
     <div class="container">
         <div class="row justify-content-center">
-            
-        </div>
-        <div class="row justify-content-center">
-            
-            <div class="col-12 col-md-10 col-lg-12 col-xl-12 text-center">
+            <div class="col-12 col-md-10 col-lg-8 col-xl-6 text-center">
                 {% if payment_status == "paid" %}
-                    <!-- Icon -->
-                    <div class="p-4 d-inline-flex align-items-center justify-content-center circle bg-light-primary text-success mx-auto mb-4"><i class="fas fa-heart fs-lg"></i></div>
-                    <!-- Heading -->
-                    <h2 class="mb-2 ft-bold">Order Completed!</h2>
-                    <!-- Text -->
-                    <p class="ft-regular fs-md mb-5">Your order <span class="text-body text-dark fw-bold">#{{order.order_id}}</span> has been completed. <br> we have sent the order details to your email.</p>
-                    <!-- Button -->
-                    <a href="{% url 'customer:order_detail' order.order_id %}" class="btn btn-sm rounded text-white bg-success">View Orders</a>
+                    <div class="payment-success-checkmark">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h2 class="mb-2 ft-bold">Заказ оформлен!</h2>
+                    <p class="ft-regular fs-md mb-4">Заказ <span class="text-body text-dark fw-bold">#{{ order.order_id }}</span> успешно оплачен. Детали отправлены на вашу почту.</p>
+                    <a href="/" class="btn btn-lg rounded text-white px-4" style="background-color: #EB332C;">Вернуться на главную</a>
+                    <a href="{% url 'customer:order_detail' order.order_id %}" class="btn btn-outline-secondary btn-lg rounded ms-2">Мои заказы</a>
+                {% endif %}
+
+                {% if payment_status == "failed" %}
+                    <div class="p-4 d-inline-flex align-items-center justify-content-center circle bg-light-danger text-danger mx-auto mb-4"><i class="fas fa-times fs-1"></i></div>
+                    <h2 class="mb-2 ft-bold">Оплата не прошла</h2>
+                    <p class="ft-regular fs-md mb-4">Заказ не был оплачен. Попробуйте ещё раз или выберите другой способ оплаты.</p>
+                    <a href="{% url 'store:checkout' order.order_id %}" class="btn btn-lg rounded text-white bg-danger">Повторить <i class="fas fa-rotate ms-2"></i></a>
+                    <a href="/" class="btn btn-outline-secondary btn-lg rounded ms-2">На главную</a>
                 {% endif %}
             </div>
-
-            <div class="col-12 col-md-10 col-lg-8 col-xl-6 text-center">
-                    {% if payment_status == "failed" %}
-                        <!-- Icon -->
-                        <div class="p-4 d-inline-flex align-items-center justify-content-center circle bg-light-danger text-danger mx-auto mb-4"><i class="fas fa-ban fs-lg"></i></div>
-                        <!-- Heading -->
-                        <h2 class="mb-2 ft-bold">Order Payment Failed!</h2>
-                        <!-- Text -->
-                        <p class="ft-regular fs-md mb-5">Your order couldn't be completed, try again later.</p>
-                        <!-- Button -->
-                        <a href="" class="btn btn-sm rounded text-white bg-danger">Try Again <i class="fas fa-rotate ms-2"></i></a>
-                    {% endif %}
-            </div>
-                
         </div>
     </div>
 </section>

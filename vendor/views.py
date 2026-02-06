@@ -254,9 +254,6 @@ def reviews(request):
     rating = request.GET.get("rating")
     date = request.GET.get("date")
 
-    print("rating ==========", rating)
-    print("date ==========", date)
-
     # Apply filtering and ordering to reviews_list
     if rating:
         reviews_list = reviews_list.filter(rating=rating)  # Apply filter to the reviews_list

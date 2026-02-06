@@ -57,7 +57,13 @@ RATING = (
 
 class Category(models.Model):
     title = models.CharField(max_length=100)
-    image = models.ImageField(upload_to="images", default="category.jpg", null=True, blank=True)
+    image = models.ImageField(
+        upload_to="images",
+        default="category.jpg",
+        null=True,
+        blank=True,
+        help_text="Отображается в блоке «Популярные категории» на главной.",
+    )
     slug = models.SlugField(unique=True)
 
     class Meta:
@@ -68,6 +74,25 @@ class Category(models.Model):
 
     def products(self):
         return Product.objects.filter(category=self)
+
+
+class HeroSlide(models.Model):
+    """Слайд для Hero-баннера на главной. Редактируется в админке."""
+    image = models.ImageField(upload_to="hero", verbose_name="Изображение", blank=True, null=True)
+    title = models.CharField(max_length=200, verbose_name="Заголовок", default="Техника и гаджеты")
+    subtitle = models.CharField(max_length=300, verbose_name="Подзаголовок", default="Лучшие цены и бесплатная доставка", blank=True)
+    button_text = models.CharField(max_length=100, verbose_name="Текст кнопки", default="В магазин", blank=True)
+    button_url = models.CharField(max_length=255, verbose_name="Ссылка кнопки", default="/shop/", blank=True)
+    order = models.PositiveIntegerField(default=0, verbose_name="Порядок")
+    is_active = models.BooleanField(default=True, verbose_name="Показывать")
+
+    class Meta:
+        ordering = ["order"]
+        verbose_name = "Слайд Hero"
+        verbose_name_plural = "Слайды Hero"
+
+    def __str__(self):
+        return self.title or f"Слайд #{self.order}"
 
 
 class Product(models.Model):

@@ -1,175 +1,364 @@
-{% extends 'partials/base.html' %} 
-{% load static %} 
-{% load humanize %} 
+{% extends 'partials/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load wishlist_tags %}
 {% block content %}
-	
-	<section class="middle">
-		<div class="container">
-			<h2 class="fw-bold mb-3 mb-md-5">Все товары (<span class="product_count">{{ products_list.count }}</span>)</h2>
-			<div class="mb-3 mb-md-5 d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-2">
-				<input type="text" class="form-control rounded search-filter" placeholder="Поиск товаров..." name="search-filter" id="" value="{{ request.GET.q }}">
-				<button class="btn bg-primary text-white rounded"><i class="fas fa-search"></i></button>
-			</div>
-			<div class="row">
-				
-				<div class="col-12 col-md-4 col-lg-3 mb-4 mb-lg-0">
-					<div class="border rounded p-3 mb-3">
-						<div>
-							<h4>Категории</h4>
-							<div>
-								{% for c in categories %}
-									<div class="mb-1 form-check d-flex justify-content-between align-items-center">
-										<div>
-											<input type="checkbox" class="form-check-input category-filter" value="{{c.id}}" id="category{{c.id}}">
-											<label class="form-check-label fs-6" for="category{{c.id}}">{{c.title}}</label>
-										</div>
-										<div>
-											<p class="mb-0">{{c.products.all.count}}</p>
-										</div>
-									</div>
-								{% endfor %}
-							</div>
-						</div>
-					</div>
+<style>
+	.shop-product-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+	.add_to_cart:focus { outline: none !important; box-shadow: none !important; border: none !important; }
+	#product-grid-skeleton { display: none; }
+	#product-grid-skeleton.htmx-request { display: grid !important; }
+	#product-grid.htmx-request { opacity: 0.4; pointer-events: none; }
+</style>
 
-					
-
-					<div class="border rounded p-3 mb-3">
-						<div>
-							<h4>Цена</h4>
-							<div  style="margin-left: -18px;">
-								{% for p in prices %}
-									<div class="mb-1 form-check">
-										<input type="radio" name="price-filter" value="{{p.id}}" class="form-check-input " id="{{p.id}}">
-										<label class="form-check-label fs-6" for="{{p.id}}">{{p.value}}</label>
-									</div>
-								{% endfor %}
-							</div>
-						</div>
-					</div>
-
-					<div class="border rounded p-3 mb-3">
-						<div>
-							<h4>Отображение</h4>
-							<div  style="margin-left: -18px;">
-								{% for i in item_display %}
-									<div class="mb-1 form-check">
-										<input type="radio" name="items-display" value="{{i.id}}" class="form-check-input items-display" id="display{{i.id}}">
-										<label class="form-check-label fs-6" for="display{{i.id}}">{{i.value}} Товаров</label>
-									</div>
-								{% endfor %}
-							</div>
-						</div>
-					</div>
-
-					<div class="border rounded p-3 mb-3">
-						<div>
-							<h4>Рейтинг</h4>
-							<div>
-								
-								{% for r in ratings %}
-									<div class="mb-1 form-check d-flex justify-content-between align-items-center">
-										<div>
-											<input type="checkbox" class="form-check-input rating-filter" value="{{r.id}}" id="rating{{r.id}}">
-											<label class="form-check-label fs-6" for="rating{{r.id}}">{{r.value}}</label>
-										</div>
-									</div>
-								{% endfor %}
-									
-								
-							</div>
-						</div>
-					</div>
-
-					<div class="border rounded p-3 mb-3">
-						<div>
-							<h4>Размеры</h4>
-							<div>
-								
-								{% for s in sizes %}
-									<div class="mb-1 form-check d-flex justify-content-between align-items-center">
-										<div>
-											<input type="checkbox" class="form-check-input size-filter" value="{{s.content}}" id="{{s.content}}">
-											<label class="form-check-label fs-6" for="{{s.content}}">{{s.title}}</label>
-										</div>
-									</div>
-								{% endfor %}
-							</div>
-						</div>
-					</div>
-
-
-					<div class="border rounded p-3 mb-3">
-						<div>
-							<h4>Цвета</h4>
-							<div>
-								{% for c in colors %}
-									<div class="mb-1 form-check d-flex justify-content-between align-items-center">
-										<div class="d-flex align-items-center gap-2">
-											<input type="checkbox" class="form-check-input colors-filter" value="{{c.content}}" id="{{c.content}}" >
-											<label class="form-check-label fs-6 p-3 colors-filter" for="{{c.content}}" style="background-color: {{c.content}}; color: white; border-radius: 50%;"></label>
-										</div>
-									</div>
-								{% endfor %}
-							</div>
-						</div>
-					</div>
-
-					<button class="btn bg-primary btn-sm rounded reset_shop_filter_btn w-100 w-md-auto">Сбросить фильтр <i class="fas fa-rotate ms-2"></i></button>
-				</div>				
-				<div class="col-12 col-md-8 col-lg-9"> 
-					<div class="products-grid" id="products-list">
-						{% for p in products %}
-							<div class="product-card card b-0 rounded-3 shadow p-2 mb-3">
-								<div class="product-card__media">
-									<a class="d-block" href="{% url 'store:product_detail' p.slug %}">
-										<img src="{{p.image.url}}" alt="{{ p.name }}" class="img-fluid">
-									</a>
-								</div>
-								<div class="product-card__body">
-									<div class="text-left">
-										<span class="product-card__category">{{p.category.title}}</span>
-										<h5 class="product-card__title"><a href="{% url 'store:product_detail' p.slug %}">{{p.name}}</a></h5>
-										<div class="product-card__rating">
-											{% if not p.average_rating %}
-												<i class="fas fa-star text-warning"></i>
-											{% elif p.average_rating > 0 and p.average_rating < 2 %}
-												<i class="fas fa-star text-warning"></i>
-											{% elif p.average_rating > 1 and p.average_rating < 3 %}
-												<i class="fas fa-star text-warning"></i>
-												<i class="fas fa-star text-warning"></i>
-											{% elif p.average_rating > 2 and p.average_rating < 4 %}
-												<i class="fas fa-star text-warning"></i>
-												<i class="fas fa-star text-warning"></i>
-												<i class="fas fa-star text-warning"></i>
-											{% elif p.average_rating > 3 and p.average_rating < 5 %}
-												<i class="fas fa-star text-warning"></i>
-												<i class="fas fa-star text-warning"></i>
-												<i class="fas fa-star text-warning"></i>
-												<i class="fas fa-star text-warning"></i>
-											{% elif p.average_rating > 4 %}
-												<i class="fas fa-star text-warning"></i>
-												<i class="fas fa-star text-warning"></i>
-												<i class="fas fa-star text-warning"></i>
-												<i class="fas fa-star text-warning"></i>
-												<i class="fas fa-star text-warning"></i>
-											{% endif %}
-										</div>
-										<div class="product-card__price">{{p.price}} сом</div>
-									</div>
-									<div class="product-card__actions">
-										<button type="button" class="btn btn-primary text-white w-100 add_to_cart" data-id="{{p.id}}">В корзину <i class="fas fa-shopping-cart ms-2"></i></button>
-										<input type="hidden" class="quantity" value="1">
-									</div>
-								</div>
-							</div>
-						{% empty %}
-							<p class="text-muted">Нет товаров для отображения.</p>
-						{% endfor %}
-					</div>
-				</div>                
+<section class="tw-min-h-screen tw-bg-gray-50" x-data="shopCatalog()" x-init="init()">
+	<div class="tw-container tw-mx-auto tw-px-4 tw-py-4 md:tw-py-6">
+		<form id="shop-filters-form" action="{% url 'store:shop' %}" method="get"
+		      hx-get="{% url 'store:shop' %}"
+		      hx-target="#product-grid"
+		      hx-trigger="change delay:300ms from:input, change delay:300ms from:select, keyup delay:500ms from:input[name='q']"
+		      hx-include="this"
+		      hx-swap="innerHTML"
+		      hx-indicator="#product-grid-skeleton, #product-grid"
+		      class="tw-contents">
+		{# Заголовок и поиск #}
+		<div class="tw-flex tw-flex-col sm:tw-flex-row sm:tw-items-center sm:tw-justify-between tw-gap-3 tw-mb-4">
+			<h1 class="tw-text-xl md:tw-text-2xl tw-font-bold tw-text-gray-900">Все товары (<span id="shop-product-count" class="product_count">{{ products_list.count }}</span>)</h1>
+			<div class="tw-flex tw-gap-2 tw-w-full sm:tw-w-auto">
+				<input type="text" name="q" class="form-control rounded search-filter tw-flex-1 sm:tw-max-w-sm md:tw-max-w-2xl" placeholder="Поиск товаров..." value="{{ request.GET.q }}" aria-label="Поиск">
+				<button type="submit" class="btn rounded text-white tw-shrink-0" style="background-color: #EB332C;"><i class="fas fa-search"></i></button>
 			</div>
 		</div>
-	</section>
 
+		{# Сортировка: скрытый select в форме (HTMX срабатывает на change) #}
+		<select x-ref="sortSelect" name="sort" id="shop-sort-select" class="tw-sr-only" aria-label="Сортировка">
+			<option value="">По умолчанию</option>
+			<option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Сначала новинки</option>
+			<option value="price_asc" {% if request.GET.sort == 'price_asc' %}selected{% endif %}>По цене: сначала дешевые</option>
+			<option value="price_desc" {% if request.GET.sort == 'price_desc' %}selected{% endif %}>По цене: сначала дорогие</option>
+			<option value="name" {% if request.GET.sort == 'name' %}selected{% endif %}>По названию</option>
+		</select>
+
+		{# Мобильная плашка: Фильтры + Сортировка (только на мобилке) #}
+		<div class="tw-flex tw-gap-2 tw-mb-4 md:tw-hidden tw-relative" x-cloak>
+			<button type="button" @click="filtersOpen = true" class="tw-flex-1 tw-flex tw-items-center tw-justify-center tw-gap-2 tw-py-3 tw-px-4 tw-rounded-xl tw-bg-white tw-shadow-sm tw-border tw-border-gray-200 tw-text-gray-700 tw-font-medium">
+				<i class="fas fa-sliders-h"></i> Фильтры
+			</button>
+			<div class="tw-flex-1 tw-relative">
+				<button type="button" @click="sortOpen = !sortOpen" class="tw-w-full tw-flex tw-items-center tw-justify-center tw-gap-2 tw-py-3 tw-px-4 tw-rounded-xl tw-bg-white tw-shadow-sm tw-border tw-border-gray-200 tw-text-gray-700 tw-font-medium" :aria-expanded="sortOpen">
+					<i class="fas fa-sort-amount-down"></i> Сортировка
+				</button>
+				{# Выпадающее меню сортировки #}
+				<div x-show="sortOpen" x-transition:enter="tw-transition tw-duration-150 tw-ease-out" x-transition:enter-start="tw-opacity-0 tw-scale-95" x-transition:enter-end="tw-opacity-100 tw-scale-100"
+				     x-transition:leave="tw-transition tw-duration-100" x-transition:leave-start="tw-opacity-100" x-transition:leave-end="tw-opacity-0"
+				     @click.outside="sortOpen = false"
+				     class="tw-absolute tw-left-0 tw-right-0 tw-top-full tw-mt-1 tw-z-30 tw-bg-white tw-rounded-xl tw-shadow-lg tw-border tw-border-gray-200 tw-py-1 tw-overflow-hidden">
+					<button type="button" @click="$refs.sortSelect.value=''; $refs.sortSelect.dispatchEvent(new Event('change', {bubbles: true})); sortOpen = false" class="tw-w-full tw-text-left tw-px-4 tw-py-2.5 tw-text-sm tw-text-gray-700 hover:tw-bg-gray-50">По умолчанию</button>
+					<button type="button" @click="$refs.sortSelect.value='newest'; $refs.sortSelect.dispatchEvent(new Event('change', {bubbles: true})); sortOpen = false" class="tw-w-full tw-text-left tw-px-4 tw-py-2.5 tw-text-sm tw-text-gray-700 hover:tw-bg-gray-50">Сначала новинки</button>
+					<button type="button" @click="$refs.sortSelect.value='price_asc'; $refs.sortSelect.dispatchEvent(new Event('change', {bubbles: true})); sortOpen = false" class="tw-w-full tw-text-left tw-px-4 tw-py-2.5 tw-text-sm tw-text-gray-700 hover:tw-bg-gray-50">По цене: сначала дешевые</button>
+					<button type="button" @click="$refs.sortSelect.value='price_desc'; $refs.sortSelect.dispatchEvent(new Event('change', {bubbles: true})); sortOpen = false" class="tw-w-full tw-text-left tw-px-4 tw-py-2.5 tw-text-sm tw-text-gray-700 hover:tw-bg-gray-50">По цене: сначала дорогие</button>
+					<button type="button" @click="$refs.sortSelect.value='name'; $refs.sortSelect.dispatchEvent(new Event('change', {bubbles: true})); sortOpen = false" class="tw-w-full tw-text-left tw-px-4 tw-py-2.5 tw-text-sm tw-text-gray-700 hover:tw-bg-gray-50">По названию</button>
+				</div>
+			</div>
+		</div>
+
+		<div class="tw-flex tw-gap-6 tw-relative">
+			{# Боковая панель фильтров: на мобилке — drawer, на десктопе — липкая колонка #}
+			<aside id="shop-filters" class="shop-filters-sidebar tw-w-full md:tw-w-64 lg:tw-w-72 tw-flex-shrink-0 tw-hidden md:tw-block md:tw-self-start md:tw-sticky tw-top-24 tw-max-h-[calc(100vh-6rem)] tw-overflow-y-auto">
+				<div class="tw-bg-white tw-rounded-2xl tw-shadow-sm tw-border tw-border-gray-100 tw-p-4 tw-space-y-2">
+					{# Категории (аккордеон) #}
+					<div class="tw-border-b tw-border-gray-100 tw-pb-3" x-data="{ open: true }">
+						<button type="button" @click="open = !open" class="tw-w-full tw-flex tw-items-center tw-justify-between tw-py-2 tw-text-left tw-font-semibold tw-text-gray-900">
+							Категории
+							<i class="fas tw-text-gray-400" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+						</button>
+						<div x-show="open" class="tw-pt-1">
+							{% for c in categories %}
+								{% if c.products.all.count > 0 %}
+								<div class="tw-py-1.5">
+									<label class="tw-flex tw-items-center tw-justify-between tw-gap-2 tw-cursor-pointer tw-text-sm">
+										<input type="checkbox" name="categories[]" class="form-check-input category-filter tw-rounded tw-border-gray-300" value="{{ c.id }}" id="cat{{ c.id }}">
+										<span class="tw-flex-1 tw-text-gray-700">{{ c.title }}</span>
+										<span class="tw-text-gray-400 tw-text-xs">{{ c.products.all.count }}</span>
+									</label>
+								</div>
+								{% endif %}
+							{% endfor %}
+						</div>
+					</div>
+
+					{# Цена (аккордеон) #}
+					<div class="tw-border-b tw-border-gray-100 tw-pb-3" x-data="{ open: true }">
+						<button type="button" @click="open = !open" class="tw-w-full tw-flex tw-items-center tw-justify-between tw-py-2 tw-text-left tw-font-semibold tw-text-gray-900">
+							Цена
+							<i class="fas tw-text-gray-400" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+						</button>
+						<div x-show="open" class="tw-pt-1">
+							{% for p in prices %}
+							<div class="tw-py-1.5">
+								<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer tw-text-sm">
+									<input type="radio" name="prices" value="{{ p.id }}" class="form-check-input price-filter" id="price{{ p.id }}">
+									<span class="tw-text-gray-700">{{ p.value }}</span>
+								</label>
+							</div>
+							{% endfor %}
+						</div>
+					</div>
+
+					{# Цвета #}
+					{% if colors %}
+					<div class="tw-border-b tw-border-gray-100 tw-pb-3" x-data="{ open: false }">
+						<button type="button" @click="open = !open" class="tw-w-full tw-flex tw-items-center tw-justify-between tw-py-2 tw-text-left tw-font-semibold tw-text-gray-900">
+							Цвета
+							<i class="fas tw-text-gray-400" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+						</button>
+						<div x-show="open" class="tw-pt-2 tw-flex tw-flex-wrap tw-gap-2">
+							{% for c in colors %}
+							<label class="tw-cursor-pointer tw-w-8 tw-h-8 tw-rounded-full tw-border-2 tw-border-gray-200 tw-shadow-inner tw-flex-shrink-0" style="background-color: {{ c.content }};" title="{{ c.title }}">
+								<input type="checkbox" class="colors-filter tw-sr-only" value="{{ c.content }}" id="color{{ c.content }}">
+							</label>
+							{% endfor %}
+						</div>
+					</div>
+					{% endif %}
+
+					{# Размеры #}
+					{% if sizes %}
+					<div class="tw-border-b tw-border-gray-100 tw-pb-3" x-data="{ open: false }">
+						<button type="button" @click="open = !open" class="tw-w-full tw-flex tw-items-center tw-justify-between tw-py-2 tw-text-left tw-font-semibold tw-text-gray-900">
+							Размеры
+							<i class="fas tw-text-gray-400" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+						</button>
+						<div x-show="open" class="tw-pt-1">
+							{% for s in sizes %}
+							<div class="tw-py-1">
+								<label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer tw-text-sm">
+									<input type="checkbox" class="form-check-input size-filter" value="{{ s.content }}" id="size{{ s.content }}">
+									<span class="tw-text-gray-700">{{ s.title }}</span>
+								</label>
+							</div>
+							{% endfor %}
+						</div>
+					</div>
+					{% endif %}
+
+					<button type="button" class="reset_shop_filter_btn tw-w-full tw-py-2 tw-px-3 tw-rounded-lg tw-text-sm tw-font-medium tw-bg-gray-100 tw-text-gray-700 hover:tw-bg-gray-200 tw-transition-colors">
+						<i class="fas fa-rotate tw-mr-2"></i> Сбросить фильтр
+					</button>
+				</div>
+			</aside>
+
+			{# Контент: чипы + сетка товаров #}
+			<div class="tw-flex-1 tw-min-w-0">
+				{# Чипы активных фильтров + кол-во #}
+				<div id="shop-chips" class="tw-flex tw-flex-wrap tw-items-center tw-gap-2 tw-mb-4 tw-min-h-[2.5rem]">
+					<span class="tw-text-sm tw-text-gray-500">Найдено: <strong id="shop-product-count-inline" class="product_count tw-text-gray-900">{{ products_list.count }}</strong> товаров</span>
+					{% for chip in filter_chips %}
+					<a href="{{ chip.remove_url }}" class="tw-inline-flex tw-items-center tw-gap-1 tw-px-2 tw-py-1 tw-rounded-lg tw-bg-gray-200 tw-text-gray-700 tw-text-xs tw-font-medium hover:tw-bg-gray-300">
+						<span>{% if chip.type == 'q' %}«{{ chip.label }}»{% else %}{{ chip.label }}{% endif %}</span>
+						<i class="fas fa-times tw-text-[10px]"></i>
+					</a>
+					{% endfor %}
+				</div>
+
+				{# Скелетон при загрузке HTMX #}
+				<div id="product-grid-skeleton" class="tw-hidden tw-grid tw-grid-cols-2 lg:tw-grid-cols-3 xl:tw-grid-cols-4 tw-gap-3 md:tw-gap-4 lg:tw-gap-6">
+					{% for i in "123456789" %}
+					<div class="tw-bg-white tw-rounded-2xl tw-overflow-hidden tw-animate-pulse">
+						<div class="tw-aspect-square tw-bg-gray-200"></div>
+						<div class="tw-p-4 tw-space-y-2">
+							<div class="tw-h-3 tw-bg-gray-200 tw-rounded tw-w-1/3"></div>
+							<div class="tw-h-4 tw-bg-gray-200 tw-rounded tw-w-full"></div>
+							<div class="tw-h-4 tw-bg-gray-200 tw-rounded tw-w-2/3"></div>
+						</div>
+					</div>
+					{% endfor %}
+				</div>
+
+				<div id="product-grid" class="products-grid tw-grid tw-grid-cols-2 lg:tw-grid-cols-3 xl:tw-grid-cols-4 tw-gap-3 md:tw-gap-4 lg:tw-gap-6">
+					{% for p in products %}
+					<div class="tw-bg-white tw-rounded-2xl tw-shadow-sm hover:tw-shadow-md tw-overflow-hidden tw-transition-shadow tw-group tw-flex tw-flex-col">
+						<div class="tw-relative tw-aspect-square tw-bg-gray-100 tw-overflow-hidden tw-flex-shrink-0">
+							<a href="{% url 'store:product_detail' p.slug %}" class="tw-block tw-absolute tw-inset-0 tw-z-0">
+								{% if p.image %}
+									<img src="{{ p.image.url }}" alt="{{ p.name }}" class="tw-absolute tw-inset-0 tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-300" />
+								{% else %}
+									<div class="tw-absolute tw-inset-0 tw-flex tw-items-center tw-justify-center tw-text-gray-400">
+										<i class="fas fa-image tw-text-4xl md:tw-text-5xl"></i>
+									</div>
+								{% endif %}
+							</a>
+							<div class="tw-absolute tw-top-1.5 tw-right-1.5 tw-z-10">
+								{% with is_in_wishlist=p.id|in_wishlist:wishlist_product_ids %}
+									{% include "customer/includes/wishlist_btn.html" with product=p is_in_wishlist=is_in_wishlist %}
+								{% endwith %}
+							</div>
+							{# На мобилке — иконка корзины в углу карточки (на изображении) #}
+							<div class="tw-absolute tw-bottom-1.5 tw-right-1.5 tw-z-10 md:tw-hidden">
+								<button type="button" class="add_to_cart tw-w-9 tw-h-9 tw-rounded-lg tw-flex tw-items-center tw-justify-center tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-shadow-md" data-id="{{ p.id }}" aria-label="В корзину">
+									<i class="fas fa-shopping-cart tw-text-sm"></i>
+								</button>
+							</div>
+						</div>
+						<div class="tw-p-2 md:tw-p-4 tw-flex tw-flex-col tw-flex-1 tw-min-h-0">
+							<span class="tw-text-xs tw-text-gray-500 tw-font-medium tw-truncate">{{ p.category.title|default:"" }}</span>
+							<h3 class="shop-product-title tw-font-semibold tw-text-gray-900 tw-mt-0.5 tw-text-sm md:tw-text-base tw-line-clamp-2 tw-flex-1">
+								<a href="{% url 'store:product_detail' p.slug %}" class="hover:tw-text-[#EB332C] tw-transition-colors">{{ p.name }}</a>
+							</h3>
+							<div class="tw-mt-2 tw-flex tw-items-center tw-justify-between tw-gap-2">
+								<span class="tw-font-bold tw-text-[#EB332C] tw-text-sm md:tw-text-base">{{ p.price|intcomma }} сом</span>
+								{# На десктопе — кнопка «В корзину» как на главной #}
+								<button type="button" class="add_to_cart tw-hidden md:tw-inline-flex tw-p-2 tw-rounded-lg tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-transition-colors focus:tw-outline-none focus:tw-ring-0" data-id="{{ p.id }}" aria-label="В корзину">
+									<i class="fas fa-shopping-cart"></i>
+								</button>
+							</div>
+							<input type="hidden" class="quantity" value="1">
+						</div>
+					</div>
+					{% empty %}
+						<p class="tw-col-span-full tw-text-center tw-text-gray-500 tw-py-12">Нет товаров для отображения.</p>
+					{% endfor %}
+				</div>
+			</div>
+		</div>
+
+		{# Пагинация (если есть) #}
+		{% if products.has_other_pages %}
+		<nav class="tw-mt-8 tw-flex tw-justify-center" aria-label="Пагинация">
+			<ul class="pagination tw-mb-0">
+				{% if products.has_previous %}
+				<li class="page-item"><a class="page-link" href="?page={{ products.previous_page_number }}">Назад</a></li>
+				{% endif %}
+				{% for num in products.paginator.page_range %}
+					{% if products.number == num %}
+					<li class="page-item active"><span class="page-link">{{ num }}</span></li>
+					{% else %}
+					<li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+					{% endif %}
+				{% endfor %}
+				{% if products.has_next %}
+				<li class="page-item"><a class="page-link" href="?page={{ products.next_page_number }}">Вперед</a></li>
+				{% endif %}
+			</ul>
+		</nav>
+		{% endif %}
+	</div>
+		</form>
+
+	{# Мобильный drawer фильтров #}
+	<div x-show="filtersOpen" x-cloak
+	     class="tw-fixed tw-inset-0 tw-z-[100] md:tw-hidden"
+	     x-transition:enter="tw-transition tw-duration-200"
+	     x-transition:enter-start="tw-opacity-0"
+	     x-transition:enter-end="tw-opacity-100"
+	     x-transition:leave="tw-transition tw-duration-150"
+	     x-transition:leave-start="tw-opacity-100"
+	     x-transition:leave-end="tw-opacity-0">
+		<div class="tw-absolute tw-inset-0 tw-bg-black/50" @click="filtersOpen = false" aria-hidden="true"></div>
+		<div class="tw-absolute tw-top-0 tw-right-0 tw-bottom-0 tw-w-full tw-max-w-sm tw-bg-white tw-shadow-xl tw-overflow-y-auto"
+		     x-transition:enter="tw-transition tw-duration-200"
+		     x-transition:enter-start="tw-translate-x-full"
+		     x-transition:enter-end="tw-translate-x-0"
+		     x-transition:leave="tw-transition tw-duration-150"
+		     x-transition:leave-start="tw-translate-x-0"
+		     x-transition:leave-end="tw-translate-x-full">
+			<div class="tw-p-4 tw-sticky tw-top-0 tw-bg-white tw-flex tw-items-center tw-justify-between tw-border-b tw-border-gray-200 tw-z-10">
+				<h2 class="tw-text-lg tw-font-bold tw-text-gray-900">Фильтры</h2>
+				<button type="button" @click="filtersOpen = false" class="tw-p-2 tw-rounded-lg tw-text-gray-500 hover:tw-bg-gray-100" aria-label="Закрыть">
+					<i class="fas fa-times"></i>
+				</button>
+			</div>
+			<div class="tw-p-4">
+				{# Копия блоков фильтров для drawer — те же классы для .category-filter и т.д. #}
+				<div class="tw-space-y-4">
+					<div>
+						<h3 class="tw-font-semibold tw-text-gray-900 tw-mb-2">Категории</h3>
+						{% for c in categories %}
+							{% if c.products.all.count > 0 %}
+							<label class="tw-flex tw-items-center tw-justify-between tw-py-2 tw-cursor-pointer">
+								<input type="checkbox" name="categories[]" class="form-check-input category-filter tw-rounded" value="{{ c.id }}" id="catdrawer{{ c.id }}">
+								<span class="tw-text-gray-700">{{ c.title }}</span>
+								<span class="tw-text-gray-400 tw-text-sm">{{ c.products.all.count }}</span>
+							</label>
+							{% endif %}
+						{% endfor %}
+					</div>
+					<div>
+						<h3 class="tw-font-semibold tw-text-gray-900 tw-mb-2">Цена</h3>
+						{% for p in prices %}
+						<label class="tw-flex tw-items-center tw-gap-2 tw-py-2 tw-cursor-pointer">
+							<input type="radio" name="prices" value="{{ p.id }}" class="form-check-input" id="pricedrawer{{ p.id }}">
+							<span class="tw-text-gray-700">{{ p.value }}</span>
+						</label>
+						{% endfor %}
+					</div>
+					{% if colors %}
+					<div>
+						<h3 class="tw-font-semibold tw-text-gray-900 tw-mb-2">Цвета</h3>
+						<div class="tw-flex tw-flex-wrap tw-gap-2">
+							{% for c in colors %}
+							<label class="tw-w-8 tw-h-8 tw-rounded-full tw-border-2 tw-border-gray-200 tw-cursor-pointer tw-flex-shrink-0" style="background-color: {{ c.content }};" title="{{ c.title }}">
+								<input type="checkbox" class="colors-filter tw-sr-only" value="{{ c.content }}">
+							</label>
+							{% endfor %}
+						</div>
+					</div>
+					{% endif %}
+					{% if sizes %}
+					<div>
+						<h3 class="tw-font-semibold tw-text-gray-900 tw-mb-2">Размеры</h3>
+						{% for s in sizes %}
+						<label class="tw-flex tw-items-center tw-gap-2 tw-py-1 tw-cursor-pointer">
+							<input type="checkbox" class="form-check-input size-filter" value="{{ s.content }}">
+							<span class="tw-text-gray-700">{{ s.title }}</span>
+						</label>
+						{% endfor %}
+					</div>
+					{% endif %}
+					<button type="button" class="reset_shop_filter_btn tw-w-full tw-py-3 tw-rounded-xl tw-bg-gray-100 tw-text-gray-700 tw-font-medium">
+						<i class="fas fa-rotate tw-mr-2"></i> Сбросить фильтр
+					</button>
+					<button type="button" @click="filtersOpen = false; applyFiltersFromDrawer()" class="tw-w-full tw-py-3 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-medium">
+						Показать товары
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<script>
+document.addEventListener('alpine:init', function() {
+	Alpine.data('shopCatalog', function() {
+		return {
+			filtersOpen: false,
+			sortOpen: false,
+			init() {},
+			applyFiltersFromDrawer: function() {
+				this.filtersOpen = false;
+				var form = document.getElementById('shop-filters-form');
+				if (!form) return;
+				// Синхронизация drawer -> sidebar (чтобы форма содержала актуальные значения)
+				form.querySelectorAll('.category-filter').forEach(function(sb) {
+					var drawerEl = document.getElementById('catdrawer' + sb.value);
+					if (drawerEl) sb.checked = drawerEl.checked;
+				});
+				form.querySelectorAll('input[name="prices"]').forEach(function(sb) {
+					var drawerEl = document.getElementById('pricedrawer' + sb.value);
+					if (drawerEl) sb.checked = drawerEl.checked;
+				});
+				var params = new URLSearchParams(new FormData(form));
+				var url = form.getAttribute('action') + (params.toString() ? '?' + params.toString() : '');
+				if (window.htmx) {
+					var sk = document.getElementById('product-grid-skeleton');
+					if (sk) sk.classList.remove('tw-hidden');
+					htmx.ajax('GET', url, {target: '#product-grid', swap: 'innerHTML', headers: {'HX-Request': 'true'}}).then(function() {
+						if (sk) sk.classList.add('tw-hidden');
+					});
+				}
+			}
+		};
+	});
+});
+</script>
 {% endblock content %}

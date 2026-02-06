@@ -1,8 +1,12 @@
 <div class="col-12 col-md-12 col-lg-4 col-xl-4 miliods">
     <div class="d-block border p-2 rounded">
         <div class="dashboard_author px-2 py-5">
-            <div class="dash_auth_thumb circle p-1 border d-inline-flex mx-auto mb-2">
-                <img src="{{request.user.profile.image.url}}" class="img-fluid circle" style="width: 100px; height: 100px; object-fit: cover;" alt="" />
+            <div class="dash_auth_thumb circle p-1 border d-inline-flex mx-auto mb-2" style="width: 100px; height: 100px;">
+                {% if request.user.profile.image %}
+                    <img src="{{ request.user.profile.image.url }}" class="img-fluid circle" style="width: 100px; height: 100px; object-fit: cover;" alt="" />
+                {% else %}
+                    <div class="d-flex align-items-center justify-content-center w-100 h-100 rounded-circle bg-light text-muted" style="width: 100px; height: 100px; font-size: 2.5rem;"><i class="fas fa-user"></i></div>
+                {% endif %}
             </div>
             <div class="dash_caption">
                 <h4 class="fs-md ft-medium mb-0 lh-1">{{request.user.profile.full_name}}</h4>
@@ -24,6 +28,9 @@
                 </li>
                 <li>
                     <a href="{% url 'customer:addresses' %}" class="{% if '/customer/addresses/' in request.path or '/customer/address_detail/' in request.path or '/customer/address_create/' in request.path %} active {% endif %}"><i class="fas fa-map-marker me-2"></i>Адреса</a>
+                </li>
+                <li>
+                    <a href="{% url 'customer:wishlist' %}" class="{% if '/customer/wishlist/' in request.path %} active{% endif %}"><i class="fas fa-heart me-2"></i>Избранное</a>
                 </li>
                 <li>
                     <a href="{% url 'userauths:sign-out' %}"><i class="fas fa-power-off me-2"></i>Выйти</a>
