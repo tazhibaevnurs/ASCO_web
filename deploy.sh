@@ -42,7 +42,7 @@ mkdir -p nginx/ssl
 mkdir -p certbot/conf
 mkdir -p certbot/www
 
-# Stop existing containers
+# Stop existing containers (БЕЗ -v: тома postgres_data, media, static НЕ удаляются)
 echo "🛑 Stopping existing containers..."
 docker-compose down || true
 

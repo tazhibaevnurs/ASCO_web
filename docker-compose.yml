@@ -40,7 +40,9 @@ services:
       - .env
     restart: unless-stopped
 
+# Именованные тома: данные сохраняются при docker-compose down (без -v).
+# НЕ используйте "docker-compose down -v" на продакшене — это удалит БД и медиафайлы.
 volumes:
   static_volume:
   media_volume:
-  postgres_data:
+  postgres_data:   # данные PostgreSQL (товары, заказы, пользователи)
