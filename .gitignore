@@ -163,3 +163,6 @@ erd.dot
 DNS_SETUP.md
 check_dns.sh
 DOCKER_UPDATE_PLAN.md
+ОБНОВЛЕНИЕ_ПОСЛЕ_PUSH.md
+ПЛАН_РАЗВЕРТЫВАНИЯ_ИТОГ.md
+ПЛАН_РАЗВЕРТЫВАНИЯ_ПОДРОБНО.md

@@ -8,16 +8,22 @@
     .product-gallery-thumb { aspect-ratio: 1; }
     .product-carousel { scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
     .product-carousel img { scroll-snap-align: start; }
+    .product-gallery-main img { cursor: zoom-in; }
 </style>
 
-<section class="tw-bg-white tw-py-4 md:tw-py-8" x-data="productDetail()">
+<section class="tw-bg-white tw-py-4 md:tw-py-8" x-data="productDetail()" @keydown.escape.window="closeModal()" @keydown.arrow-left.window="if (modalOpen) prev()" @keydown.arrow-right.window="if (modalOpen) next()">
     <div class="tw-container tw-mx-auto tw-px-4">
         <div class="tw-grid tw-grid-cols-1 lg:tw-grid-cols-2 tw-gap-6 lg:tw-gap-10">
             {# ========== ГАЛЕРЕЯ: слева ========== #}
             <div class="tw-order-2 lg:tw-order-1">
                 {# Десктоп: основное фото + миниатюры снизу #}
                 <div class="tw-hidden md:tw-block">
-                    <div class="tw-relative tw-rounded-2xl tw-overflow-hidden tw-bg-gray-100 tw-mb-3 product-gallery-main">
+                    <div class="tw-relative tw-rounded-2xl tw-overflow-hidden tw-bg-gray-100 tw-mb-3 product-gallery-main"
+                         @click="allImageUrls.length && openModal(currentIndex)"
+                         role="button"
+                         tabindex="0"
+                         @keydown.enter.prevent="allImageUrls.length && openModal(currentIndex)"
+                         aria-label="Открыть галерею">
                         <img
                             x-ref="mainImage"
                             :src="currentImageUrl"
@@ -27,6 +33,24 @@
                         />
                         <div x-show="!currentImageUrl" class="tw-absolute tw-inset-0 tw-flex tw-items-center tw-justify-center tw-text-gray-400">
                             <i class="fas fa-image tw-text-5xl"></i>
+                        </div>
+                        {# Кнопки переключения фото (без модалки) #}
+                        <template x-if="allImageUrls.length > 1">
+                            <div class="tw-absolute tw-inset-y-0 tw-left-0 tw-flex tw-items-center tw-pl-2">
+                                <button type="button" @click.stop="prev()" class="tw-w-10 tw-h-10 tw-rounded-full tw-bg-white/90 hover:tw-bg-white tw-shadow-md tw-flex tw-items-center tw-justify-center tw-text-gray-700 hover:tw-text-gray-900 tw-transition-colors" aria-label="Предыдущее фото">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                            </div>
+                        </template>
+                        <template x-if="allImageUrls.length > 1">
+                            <div class="tw-absolute tw-inset-y-0 tw-right-0 tw-flex tw-items-center tw-pr-2">
+                                <button type="button" @click.stop="next()" class="tw-w-10 tw-h-10 tw-rounded-full tw-bg-white/90 hover:tw-bg-white tw-shadow-md tw-flex tw-items-center tw-justify-center tw-text-gray-700 hover:tw-text-gray-900 tw-transition-colors" aria-label="Следующее фото">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </template>
+                        <div x-show="currentImageUrl" class="tw-absolute tw-bottom-3 tw-right-3 tw-bg-black/50 tw-text-white tw-px-2 tw-py-1 tw-rounded tw-text-xs">
+                            <i class="fas fa-expand tw-mr-1"></i> Увеличить
                         </div>
                     </div>
                     <div class="tw-flex tw-gap-2 tw-overflow-x-auto tw-pb-1">
@@ -44,23 +68,28 @@
                         {% endfor %}
                     </div>
                 </div>
-                {# Мобилка: горизонтальный свайп (carousel) #}
-                <div class="tw-block md:tw-hidden tw-flex tw-overflow-x-auto tw-gap-0 product-carousel tw-rounded-2xl tw-bg-gray-100 tw-snap-x">
-                    {% if product.image %}
-                    <div class="tw-flex-shrink-0 tw-w-full tw-snap-center">
-                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="tw-w-full tw-aspect-square tw-object-cover" />
+                {# Мобилка: одно фото + кнопки переключения, по клику на фото — модалка #}
+                <div class="tw-block md:tw-hidden tw-relative tw-rounded-2xl tw-overflow-hidden tw-bg-gray-100" style="aspect-ratio: 1;">
+                    <div class="tw-absolute tw-inset-0 tw-flex tw-items-center tw-justify-center" @click="allImageUrls.length && openModal(currentIndex)" role="button" tabindex="0">
+                        <img :src="currentImageUrl" alt="{{ product.name }}" class="tw-w-full tw-h-full tw-object-cover" x-show="currentImageUrl" />
+                        <div x-show="!currentImageUrl" class="tw-absolute tw-inset-0 tw-flex tw-items-center tw-justify-center tw-text-gray-400">
+                            <i class="fas fa-image tw-text-5xl"></i>
+                        </div>
                     </div>
-                    {% endif %}
-                    {% for image in product.gallery %}
-                    <div class="tw-flex-shrink-0 tw-w-full tw-snap-center">
-                        <img src="{{ image.image.url }}" alt="{{ product.name }}" class="tw-w-full tw-aspect-square tw-object-cover" />
-                    </div>
-                    {% endfor %}
-                    {% if not product.image and not product.gallery %}
-                    <div class="tw-flex-shrink-0 tw-w-full tw-aspect-square tw-flex tw-items-center tw-justify-center tw-text-gray-400">
-                        <i class="fas fa-image tw-text-5xl"></i>
-                    </div>
-                    {% endif %}
+                    <template x-if="allImageUrls.length > 1">
+                        <div class="tw-absolute tw-inset-y-0 tw-left-0 tw-flex tw-items-center tw-pl-2 tw-z-10">
+                            <button type="button" @click.stop="prev()" class="tw-w-10 tw-h-10 tw-rounded-full tw-bg-white/90 hover:tw-bg-white tw-shadow tw-flex tw-items-center tw-justify-center tw-text-gray-700" aria-label="Предыдущее фото">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                        </div>
+                    </template>
+                    <template x-if="allImageUrls.length > 1">
+                        <div class="tw-absolute tw-inset-y-0 tw-right-0 tw-flex tw-items-center tw-pr-2 tw-z-10">
+                            <button type="button" @click.stop="next()" class="tw-w-10 tw-h-10 tw-rounded-full tw-bg-white/90 hover:tw-bg-white tw-shadow tw-flex tw-items-center tw-justify-center tw-text-gray-700" aria-label="Следующее фото">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </template>
                 </div>
             </div>
 
@@ -145,6 +174,42 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    {# Modal просмотра фото с кнопками переключения #}
+    <div x-show="modalOpen"
+         x-cloak
+         x-transition:enter="tw-transition tw-duration-200"
+         x-transition:enter-start="tw-opacity-0"
+         x-transition:enter-end="tw-opacity-100"
+         x-transition:leave="tw-transition tw-duration-150"
+         x-transition:leave-start="tw-opacity-100"
+         x-transition:leave-end="tw-opacity-0"
+         class="tw-fixed tw-inset-0 tw-z-[200] tw-flex tw-items-center tw-justify-center tw-p-4 tw-bg-black/90"
+         @click.self="closeModal()"
+         role="dialog"
+         aria-modal="true"
+         aria-label="Просмотр фото товара">
+        <button type="button" @click="closeModal()" class="tw-absolute tw-top-4 tw-right-4 tw-z-10 tw-w-10 tw-h-10 tw-rounded-full tw-bg-white/10 hover:tw-bg-white/20 tw-text-white tw-flex tw-items-center tw-justify-center tw-transition-colors" aria-label="Закрыть">
+            <i class="fas fa-times tw-text-xl"></i>
+        </button>
+        <template x-if="allImageUrls.length > 1">
+            <button type="button" @click.stop="prev()" class="tw-absolute tw-left-2 md:tw-left-4 tw-z-10 tw-w-12 tw-h-12 tw-rounded-full tw-bg-white/10 hover:tw-bg-white/25 tw-text-white tw-flex tw-items-center tw-justify-center tw-transition-colors" aria-label="Предыдущее фото">
+                <i class="fas fa-chevron-left tw-text-2xl"></i>
+            </button>
+        </template>
+        <div class="tw-relative tw-max-w-4xl tw-max-h-[85vh] tw-w-full tw-flex tw-items-center tw-justify-center">
+            <img :src="allImageUrls[currentIndex]"
+                 :alt="'{{ product.name|escapejs }} — фото ' + (currentIndex + 1)"
+                 class="tw-max-w-full tw-max-h-[85vh] tw-w-auto tw-h-auto tw-object-contain tw-select-none"
+                 @click.stop />
+        </div>
+        <template x-if="allImageUrls.length > 1">
+            <button type="button" @click.stop="next()" class="tw-absolute tw-right-2 md:tw-right-4 tw-z-10 tw-w-12 tw-h-12 tw-rounded-full tw-bg-white/10 hover:tw-bg-white/25 tw-text-white tw-flex tw-items-center tw-justify-center tw-transition-colors" aria-label="Следующее фото">
+                <i class="fas fa-chevron-right tw-text-2xl"></i>
+            </button>
+        </template>
+        <div x-show="allImageUrls.length > 1" class="tw-absolute tw-bottom-4 tw-left-1/2 -tw-translate-x-1/2 tw-text-white tw-text-sm tw-bg-black/40 tw-px-3 tw-py-1.5 tw-rounded-full" x-text="(currentIndex + 1) + ' / ' + allImageUrls.length"></div>
     </div>
 
     {# Мобильный sticky-блок: цена + кнопка покупки (прилипает к низу при скролле) #}
@@ -255,13 +320,47 @@
 {% endif %}
 
 <script>
+window.__productImageUrls = [];
+{% if product.image %}window.__productImageUrls.push("{{ product.image.url|escapejs }}");{% endif %}
+{% for image in product.gallery %}window.__productImageUrls.push("{{ image.image.url|escapejs }}");{% endfor %}
+</script>
+<script>
 document.addEventListener('alpine:init', function() {
     Alpine.data('productDetail', function() {
-        var firstImage = '{% if product.image %}{{ product.image.url }}{% endif %}';
-        if (!firstImage) { {% for image in product.gallery %}{% if forloop.first %}firstImage = '{{ image.image.url }}';{% endif %}{% endfor %} }
+        var urls = window.__productImageUrls || [];
+        var firstImage = urls[0] || '';
         return {
-            currentImageUrl: firstImage || '',
-            setImage(url) { this.currentImageUrl = url; }
+            allImageUrls: urls,
+            currentImageUrl: firstImage,
+            currentIndex: 0,
+            modalOpen: false,
+            setImage(url) {
+                this.currentImageUrl = url;
+                var idx = this.allImageUrls.indexOf(url);
+                if (idx >= 0) this.currentIndex = idx;
+            },
+            openModal(index) {
+                if (this.allImageUrls.length === 0) return;
+                if (typeof index === 'number') this.currentIndex = index;
+                else this.currentIndex = this.allImageUrls.indexOf(this.currentImageUrl) >= 0 ? this.allImageUrls.indexOf(this.currentImageUrl) : 0;
+                this.currentImageUrl = this.allImageUrls[this.currentIndex];
+                this.modalOpen = true;
+                document.body.style.overflow = 'hidden';
+            },
+            closeModal() {
+                this.modalOpen = false;
+                document.body.style.overflow = '';
+            },
+            next() {
+                if (this.allImageUrls.length <= 1) return;
+                this.currentIndex = (this.currentIndex + 1) % this.allImageUrls.length;
+                this.currentImageUrl = this.allImageUrls[this.currentIndex];
+            },
+            prev() {
+                if (this.allImageUrls.length <= 1) return;
+                this.currentIndex = (this.currentIndex - 1 + this.allImageUrls.length) % this.allImageUrls.length;
+                this.currentImageUrl = this.allImageUrls[this.currentIndex];
+            }
         };
     });
 });
