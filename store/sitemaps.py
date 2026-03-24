@@ -30,6 +30,9 @@ class ProductSitemap(Sitemap):
     def items(self):
         return Product.objects.filter(status="Published").order_by("-date")
 
+    def location(self, obj):
+        return reverse("store:product_detail", args=[obj.slug])
+
     def lastmod(self, obj):
         return obj.date
 
@@ -40,6 +43,9 @@ class BlogSitemap(Sitemap):
 
     def items(self):
         return Blog.objects.filter(status="Published").order_by("-date")
+
+    def location(self, obj):
+        return reverse("blog:blog_detail", args=[obj.slug])
 
     def lastmod(self, obj):
         return obj.date
