@@ -1,4 +1,8 @@
-{% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% block content %}
+{% extends 'partials/base.html' %} {% load static %} {% load humanize %}
+{% block title %}{{ blog.title }} | Блог ASCO.KG{% endblock %}
+{% block meta_description %}{{ blog.title }} - статья от ASCO.KG о бытовой технике. Полезные рекомендации для покупателей в Бишкеке.{% endblock %}
+{% block meta_keywords %}{{ blog.title }}, блог asco, бытовая техника советы, техника бишкек{% endblock %}
+{% block content %}
 
 <main class="container">
   <div class="p-4 p-md-5 mb-4 rounded text-body-emphasis bg-body-secondary">
