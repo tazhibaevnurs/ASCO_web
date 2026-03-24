@@ -20,7 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 from django.contrib.sitemaps.views import sitemap
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, RedirectView
 from userauths import views as userauths_views
 from store.sitemaps import StaticViewSitemap, ProductSitemap, BlogSitemap
 
@@ -50,6 +50,7 @@ urlpatterns = [
     path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="django.contrib.sitemaps.views.sitemap"),
     path("robots.txt", TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
     path("google34daf5010f2256e5.html", TemplateView.as_view(template_name="google34daf5010f2256e5.html", content_type="text/html")),
+    path("favicon.ico", RedirectView.as_view(url="/static/assets/img/favicon.svg?v=20260324", permanent=True)),
 
 ]
 
