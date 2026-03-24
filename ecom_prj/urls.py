@@ -50,7 +50,7 @@ urlpatterns = [
     path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="django.contrib.sitemaps.views.sitemap"),
     path("robots.txt", TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
     path("google34daf5010f2256e5.html", TemplateView.as_view(template_name="google34daf5010f2256e5.html", content_type="text/html")),
-    path("favicon.ico", RedirectView.as_view(url="/static/assets/img/favicon-v2.png", permanent=True)),
+    path("favicon.ico", RedirectView.as_view(url="/static/assets/img/favicon-v3.svg", permanent=True)),
 
 ]
 
