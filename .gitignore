@@ -158,6 +158,7 @@ $RECYCLE.BIN/
 __MACOSX/
 *.dot
 *.png
+!static/assets/img/favicon-v2.png
 erd.png
 erd.dot
 DNS_SETUP.md
