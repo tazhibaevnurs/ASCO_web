@@ -2,7 +2,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
 from django.urls import reverse
 from django.template.loader import render_to_string
@@ -10,6 +10,7 @@ from django.core.mail import EmailMultiAlternatives, send_mail
 from django.utils import timezone
 
 from decimal import Decimal
+import logging
 import requests
 import stripe
 from plugin.service_fee import calculate_service_fee
@@ -22,6 +23,8 @@ from vendor import models as vendor_models
 from userauths import models as userauths_models
 from plugin.tax_calculation import tax_calculation
 from plugin.exchange_rate import convert_usd_to_inr, convert_usd_to_kobo, convert_usd_to_ngn, get_usd_to_ngn_rate
+
+logger = logging.getLogger(__name__)
 
 
 def _apply_search(queryset, query):
@@ -349,88 +352,117 @@ def delivery_request(request):
     cart_sub_total = items.aggregate(total=models.Sum("sub_total"))['total'] or Decimal("0.00")
     cart_shipping_total = items.aggregate(total=models.Sum("shipping"))['total'] or Decimal("0.00")
 
-    # Создаём адрес заявки (может быть без авторизации)
-    address_obj = customer_models.Address.objects.create(
-        user=request.user if request.user.is_authenticated else None,
-        full_name=full_name,
-        mobile=phone,
-        address=address,
+    # Снимок корзины до удаления (для писем после commit). select_related — меньше запросов к БД.
+    cart_rows = list(
+        items.select_related("product", "product__vendor", "product__vendor__user")
     )
 
-    order = store_models.Order.objects.create(
-        customer=request.user if request.user.is_authenticated else None,
-        address=address_obj,
-        sub_total=cart_sub_total,
-        shipping=cart_shipping_total,
-        tax=Decimal("0.00"),
-        service_fee=Decimal("0.00"),
-        total=cart_sub_total + cart_shipping_total,
-        payment_status="Processing",
-        status="new",
-        status_changed_by=request.user if request.user.is_authenticated else None,
-        status_changed_at=timezone.now(),
-        cancel_comment="",
-    )
+    def _d(v):
+        """PostgreSQL не принимает NULL в DecimalField без null=True — в корзине иногда бывают пустые суммы."""
+        return v if v is not None else Decimal("0.00")
 
-    # Чтобы в Telegram ушло одно сообщение с товарами, отправляем из view после создания позиций
-    import orders.services as orders_services
-    orders_services.TELEGRAM_SKIP_ORDER_IDS.add(order.pk)
-
-    for cart_item in items:
-        store_models.OrderItem.objects.create(
-            order=order,
-            product=cart_item.product,
-            qty=cart_item.qty,
-            color=cart_item.color,
-            size=cart_item.size,
-            price=cart_item.price,
-            sub_total=cart_item.sub_total,
-            shipping=cart_item.shipping,
-            tax=Decimal("0.00"),
-            total=cart_item.total,
-            initial_total=cart_item.total,
-            vendor=cart_item.product.vendor,
-            status="new",
-        )
-        order.vendors.add(cart_item.product.vendor)
-
-    # Одно сообщение в Telegram с полным списком товаров (сигнал для этого заказа пропустим)
+    order_pk_for_telegram = None
+    order_for_email = None
     try:
-        from orders.services import send_order_to_telegram
-        send_order_to_telegram(order.pk)
+        with transaction.atomic():
+            # Создаём адрес заявки (может быть без авторизации)
+            address_obj = customer_models.Address.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                full_name=full_name,
+                mobile=phone,
+                address=address,
+            )
+
+            order = store_models.Order.objects.create(
+                customer=request.user if request.user.is_authenticated else None,
+                address=address_obj,
+                sub_total=cart_sub_total,
+                shipping=cart_shipping_total,
+                tax=Decimal("0.00"),
+                service_fee=Decimal("0.00"),
+                total=cart_sub_total + cart_shipping_total,
+                payment_status="Processing",
+                status="new",
+                status_changed_by=request.user if request.user.is_authenticated else None,
+                status_changed_at=timezone.now(),
+                cancel_comment="",
+            )
+
+            # Чтобы в Telegram ушло одно сообщение с товарами, отправляем из view после создания позиций
+            import orders.services as orders_services
+            orders_services.TELEGRAM_SKIP_ORDER_IDS.add(order.pk)
+            order_pk_for_telegram = order.pk
+            order_for_email = order
+
+            for cart_item in cart_rows:
+                line_total = _d(cart_item.total)
+                store_models.OrderItem.objects.create(
+                    order=order,
+                    product=cart_item.product,
+                    qty=int(cart_item.qty or 0),
+                    color=cart_item.color,
+                    size=cart_item.size,
+                    price=_d(cart_item.price),
+                    sub_total=_d(cart_item.sub_total),
+                    shipping=_d(cart_item.shipping),
+                    tax=Decimal("0.00"),
+                    total=line_total,
+                    initial_total=line_total,
+                    vendor=cart_item.product.vendor,
+                    status="new",
+                )
+                # ManyToMany нельзя вызывать с None — у части товаров vendor не задан
+                v_user = cart_item.product.vendor
+                if v_user is not None:
+                    order.vendors.add(v_user)
+
+            clear_cart_items(request)
     except Exception:
-        pass
+        logger.exception("delivery_request: ошибка при создании заказа")
+        messages.error(
+            request,
+            "Не удалось оформить заявку. Попробуйте ещё раз или свяжитесь с нами по телефону.",
+        )
+        return redirect("store:cart")
 
+    # Письма после успешного commit: сбой шаблона/SMTP не должен откатывать заказ
     from_email = getattr(settings, "DEFAULT_FROM_EMAIL", getattr(settings, "EMAIL_HOST_USER", "noreply@asco.kg"))
-
     vendor_items_map = {}
-    for item in items:
-        vendor = getattr(item.product, "vendor", None)
-        vendor_items_map.setdefault(vendor, []).append(item)
+    for row in cart_rows:
+        vendor = getattr(row.product, "vendor", None)
+        vendor_items_map.setdefault(vendor, []).append(row)
 
     for vendor, vendor_items in vendor_items_map.items():
         if not vendor or not getattr(vendor, "user", None) or not vendor.user.email:
             continue
+        try:
+            context = {
+                "vendor": vendor,
+                "items": vendor_items,
+                "full_name": full_name,
+                "phone": phone,
+                "address": address,
+                "cart_total": cart_sub_total,
+                "order": order_for_email,
+            }
+            subject = "Новая заявка на доставку"
+            text_body = render_to_string("email/order/vendor/delivery_request.txt", context)
+            html_body = render_to_string("email/order/vendor/delivery_request.html", context)
+            email = EmailMultiAlternatives(subject=subject, body=text_body, from_email=from_email, to=[vendor.user.email])
+            email.attach_alternative(html_body, "text/html")
+            email.send(fail_silently=True)
+        except Exception:
+            logger.exception("delivery_request: ошибка письма продавцу %s", getattr(vendor, "pk", vendor))
 
-        context = {
-            "vendor": vendor,
-            "items": vendor_items,
-            "full_name": full_name,
-            "phone": phone,
-            "address": address,
-            "cart_total": cart_sub_total,
-            "order": order,
-        }
+    # После коммита — Telegram (сеть не держит блокировку БД)
+    if order_pk_for_telegram:
+        try:
+            from orders.services import send_order_to_telegram
 
-        subject = "Новая заявка на доставку"
-        text_body = render_to_string("email/order/vendor/delivery_request.txt", context)
-        html_body = render_to_string("email/order/vendor/delivery_request.html", context)
+            send_order_to_telegram(order_pk_for_telegram)
+        except Exception:
+            logger.exception("delivery_request: ошибка отправки в Telegram")
 
-        email = EmailMultiAlternatives(subject=subject, body=text_body, from_email=from_email, to=[vendor.user.email])
-        email.attach_alternative(html_body, "text/html")
-        email.send(fail_silently=True)
-
-    clear_cart_items(request)
     messages.success(request, "Заявка успешно отправлена. Мы свяжемся с вами в ближайшее время!")
     return redirect("store:shop")
 
@@ -513,7 +545,9 @@ def create_order(request):
                 status="new",
             )
 
-            order.vendors.add(i.product.vendor)
+            v_user = i.product.vendor
+            if v_user is not None:
+                order.vendors.add(v_user)
         
     
     return redirect("store:checkout", order.order_id)
