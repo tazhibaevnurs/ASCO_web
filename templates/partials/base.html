@@ -46,6 +46,20 @@
                 box-shadow: none !important;
                 border: none !important;
             }
+            /* Кнопки закрытия уведомлений: без чёрной обводки (focus / default button) */
+            button.django-toast-close,
+            button.mini-cart-close {
+                outline: none !important;
+                box-shadow: none !important;
+                -webkit-tap-highlight-color: transparent;
+            }
+            button.django-toast-close:focus,
+            button.django-toast-close:focus-visible,
+            button.mini-cart-close:focus,
+            button.mini-cart-close:focus-visible {
+                outline: none !important;
+                box-shadow: none !important;
+            }
         </style>
         <style>
             @media (min-width: 993px) {
@@ -400,7 +414,7 @@
                         var div = document.createElement('div');
                         div.className = 'django-toast tw-pointer-events-auto tw-flex tw-items-start tw-gap-3 tw-p-4 tw-rounded-xl tw-shadow-lg tw-border tw-max-w-sm tw-w-full tw-bg-white ' + color;
                         div.setAttribute('role', 'alert');
-                        div.innerHTML = '<span class="tw-flex-shrink-0 ' + iconColor + '"><i class="fas ' + icon + ' tw-text-xl"></i></span><p class="tw-flex-1 tw-m-0 tw-text-sm tw-font-medium">' + text + '</p><button type="button" class="django-toast-close tw-flex-shrink-0 tw-p-1 tw-rounded tw-text-gray-400 hover:tw-text-gray-600" aria-label="Закрыть">&times;</button>';
+                        div.innerHTML = '<span class="tw-flex-shrink-0 ' + iconColor + '"><i class="fas ' + icon + ' tw-text-xl"></i></span><p class="tw-flex-1 tw-m-0 tw-text-sm tw-font-medium">' + text + '</p><button type="button" class="django-toast-close tw-flex-shrink-0 tw-p-1 tw-rounded tw-text-gray-400 hover:tw-text-gray-600 tw-bg-transparent tw-border-0 tw-outline-none focus:tw-outline-none focus:tw-ring-0" aria-label="Закрыть">&times;</button>';
                         container.appendChild(div);
                         var divMobile = div.cloneNode(true);
                         containerMobile.appendChild(divMobile);
@@ -425,7 +439,7 @@
                     var div = document.createElement('div');
                     div.className = 'django-toast tw-pointer-events-auto tw-flex tw-items-start tw-gap-3 tw-p-4 tw-rounded-xl tw-shadow-lg tw-border tw-max-w-sm tw-w-full tw-bg-white ' + color;
                     div.setAttribute('role', 'alert');
-                    div.innerHTML = '<span class="tw-flex-shrink-0 ' + iconColor + '"><i class="fas ' + icon + ' tw-text-xl"></i></span><p class="tw-flex-1 tw-mt-0 tw-mb-0 tw-text-sm tw-font-medium">' + safeText + '</p><button type="button" class="django-toast-close tw-flex-shrink-0 tw-p-1 tw-rounded tw-text-gray-400 hover:tw-text-gray-600" aria-label="Закрыть">&times;</button>';
+                    div.innerHTML = '<span class="tw-flex-shrink-0 ' + iconColor + '"><i class="fas ' + icon + ' tw-text-xl"></i></span><p class="tw-flex-1 tw-mt-0 tw-mb-0 tw-text-sm tw-font-medium">' + safeText + '</p><button type="button" class="django-toast-close tw-flex-shrink-0 tw-p-1 tw-rounded tw-text-gray-400 hover:tw-text-gray-600 tw-bg-transparent tw-border-0 tw-outline-none focus:tw-outline-none focus:tw-ring-0" aria-label="Закрыть">&times;</button>';
                     container.appendChild(div);
                     var divMobile = div.cloneNode(true);
                     containerMobile.appendChild(divMobile);
@@ -461,7 +475,7 @@
             <div id="mini-cart-popup" class="tw-fixed tw-top-20 tw-right-4 tw-z-[100] tw-w-full tw-max-w-sm tw-bg-white tw-rounded-xl tw-shadow-xl tw-border tw-border-gray-200 tw-p-4 tw-hidden md:tw-block" style="display: none;" aria-hidden="true">
                 <div class="tw-flex tw-items-start tw-justify-between tw-mb-3">
                     <span class="tw-font-semibold tw-text-gray-900"><i class="fas fa-check-circle tw-text-green-500 tw-mr-2"></i>Товар добавлен в корзину</span>
-                    <button type="button" class="mini-cart-close tw-text-gray-400 hover:tw-text-gray-600 tw-p-1" aria-label="Закрыть">&times;</button>
+                    <button type="button" class="mini-cart-close tw-text-gray-400 hover:tw-text-gray-600 tw-p-1 tw-bg-transparent tw-border-0 tw-outline-none focus:tw-outline-none focus:tw-ring-0 tw-rounded" aria-label="Закрыть">&times;</button>
                 </div>
                 <p class="tw-text-sm tw-text-gray-600 tw-mb-2"><span id="mini-cart-count">0</span> т. в корзине · <span id="mini-cart-total">0</span> сом</p>
                 <div class="tw-flex tw-gap-2">

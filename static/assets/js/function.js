@@ -58,11 +58,7 @@ $(document).ready(function () {
                     localStorage.setItem("cartId", response.cart_id);
                 }
                 console.log(response);
-                if (typeof window.showToast === 'function') {
-                    window.showToast(response.message || 'Добавлено в корзину', 'success');
-                } else {
-                    Toast.fire({ icon: 'success', title: response.message });
-                }
+                /* Десктоп: только белый mini-cart — без дублирующего зелёного django-toast / Swal сверху */
                 button_el.html('Добавлено в корзину <i class="fas fa-check-circle ms-2"></i>');
                 $(".total_cart_items").text(response.total_cart_items);
                 $(".cart-count-badge-mobile").toggle(response.total_cart_items > 0);
