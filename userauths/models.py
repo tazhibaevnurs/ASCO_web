@@ -10,6 +10,11 @@ USER_ROLES = (
     ("superadmin", "Суперадмин"),
 )
 
+SUBSCRIPTION_PLANS = (
+    ("free", "Free"),
+    ("pro", "Pro"),
+)
+
 class User(AbstractUser):
     username = models.CharField(max_length=255, null=True, blank=True)
     email = models.EmailField(unique=True)
@@ -63,6 +68,12 @@ class Profile(models.Model):
     full_name = models.CharField(max_length=255, null=True, blank=True)
     mobile = models.CharField(max_length=255, null=True, blank=True)
     user_type = models.CharField(max_length=50, choices=USER_ROLES, default="guest", null=True, blank=True)
+    subscription_plan = models.CharField(
+        max_length=16,
+        choices=SUBSCRIPTION_PLANS,
+        default="free",
+        help_text="Лимиты AI и т.п. (free / pro).",
+    )
 
     class Meta:
         ordering = ['-id']

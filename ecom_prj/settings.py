@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 from environs import Env
-import os
 from django.contrib import messages
 
 env = Env()
@@ -37,6 +36,21 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['asco.kg', 'www.asco.kg'])
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=['https://asco.kg', 'https://www.asco.kg'])
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
 
+# Referrer / Permissions / CSP — задаются для всех режимов; CSP можно оставить пустым до настройки фронта.
+SECURE_REFERRER_POLICY = env(
+    "SECURE_REFERRER_POLICY", default="strict-origin-when-cross-origin"
+)
+PERMISSIONS_POLICY = env(
+    "PERMISSIONS_POLICY",
+    default="geolocation=(), microphone=(), camera=(), payment=()",
+)
+SECURE_CONTENT_SECURITY_POLICY = (
+    env("SECURE_CONTENT_SECURITY_POLICY", default="") or ""
+).strip()
+SECURE_CONTENT_SECURITY_POLICY_REPORT_ONLY = env.bool(
+    "SECURE_CONTENT_SECURITY_POLICY_REPORT_ONLY", default=False
+)
+
 # Application definition
 INSTALLED_APPS = [
     'jazzmin',
@@ -50,7 +64,8 @@ INSTALLED_APPS = [
     'django.contrib.sitemaps',
     'django.contrib.staticfiles',
 
-    'userauths',
+    'corsheaders',
+    'userauths.apps.UserauthsConfig',
     'store',
     'orders',
     'vendor',
@@ -66,12 +81,18 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'ecom_prj.abuse_middleware.ApiRequestBodySizeLimitMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'ecom_prj.abuse_middleware.ApiUserRateLimitMiddleware',
+    'userauths.middleware.RequireLoginForAppPrefixesMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'ecom_prj.security_audit_middleware.SecurityAuditMiddleware',
+    'ecom_prj.security_headers_middleware.ExtraSecurityHeadersMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -98,6 +119,8 @@ WSGI_APPLICATION = 'ecom_prj.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+# В production: хост БД только в private network / VPC; не открывайте PostgreSQL в интернет.
+# Managed-PostgreSQL (Supabase/RDS и т.д.): включите автобэкапы в панели провайдера; секреты — из env хостинга.
 
 if env.bool('USE_SQLITE', default=False):
     DATABASES = {
@@ -122,6 +145,43 @@ else:
         }
     }
 
+# Preview / CI: не подключать продакшн-БД (Vercel preview, Railway preview и т.д.).
+# Секреты только из переменных окружения хостинга (Vercel Env, Railway Variables, Vault и т.д.), не из кода.
+_PREVIEW_DEPLOY = (
+    env.bool("PREVIEW_DEPLOYMENT", default=False)
+    or (env("VERCEL_ENV", default="").strip() == "preview")
+    or (env("RAILWAY_ENVIRONMENT", default="").strip().lower() == "preview")
+)
+if (
+    _PREVIEW_DEPLOY
+    and not DEBUG
+    and not env.bool("USE_SQLITE", default=False)
+    and env.bool("BLOCK_PREVIEW_PRODUCTION_DB", default=True)
+):
+    from django.core.exceptions import ImproperlyConfigured
+
+    _prod_marker = env("PRODUCTION_DATABASE_NAME", default="ascodb")
+    _current_name = str(DATABASES["default"].get("NAME") or "")
+    if _current_name == str(_prod_marker) and not env.bool(
+        "ALLOW_PREVIEW_USE_PRODUCTION_DB", default=False
+    ):
+        raise ImproperlyConfigured(
+            "Preview-деплой не должен использовать продакшн-имя БД. "
+            "Задайте отдельный DB_NAME / DATABASE_URL для preview или ALLOW_PREVIEW_USE_PRODUCTION_DB=1 (не рекомендуется)."
+        )
+
+# CORS: только явные origin из окружения; wildcard запрещён (см. deploy-check asco.security.W002).
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    x.strip()
+    for x in env.list("CORS_ALLOWED_ORIGINS", default=[])
+    if x.strip()
+]
+CORS_ALLOW_CREDENTIALS = env.bool("CORS_ALLOW_CREDENTIALS", default=True)
+
+# Разрешить хост БД в публичной сети (осознанно; иначе deploy-check предупредит)
+DATABASE_ALLOW_PUBLIC_HOST = env.bool("DATABASE_ALLOW_PUBLIC_HOST", default=False)
+
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -139,6 +199,53 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+# Argon2 — основной алгоритм для новых паролей; PBKDF2/BCrypt — для уже сохранённых хешей (апгрейд при логине).
+# MD5/SHA1 как хранение паролей не используются.
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+]
+
+# Срок жизни ссылки сброса пароля и токенов на базе PasswordResetTokenGenerator (в т.ч. verify-email), сек.
+# После успешной смены пароля токен становится недействителен (в хеш входит password field).
+PASSWORD_RESET_TIMEOUT = 3600
+
+# Session lifetime (explicit); logout() flushes the session server-side.
+SESSION_COOKIE_AGE = env.int('SESSION_COOKIE_AGE', default=60 * 60 * 24 * 14)  # 14 days
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_SAVE_EVERY_REQUEST = False
+
+# django-ratelimit считает попытки входа в этом кэше. В production с несколькими
+# воркерами gunicorn используйте общий Redis (REDIS_URL), иначе лимит «5/мин» действует отдельно на каждый процесс.
+_redis_url = (env('REDIS_URL', default='') or '').strip()
+if _redis_url:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': _redis_url,
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'asco-auth-ratelimit',
+        }
+    }
+
+# Public self-registration: requires working email (see register_view). New users stay inactive until email is verified.
+REGISTRATION_ENABLED = env.bool('REGISTRATION_ENABLED', default=False)
+
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='webmaster@localhost')
+SERVER_EMAIL = env('SERVER_EMAIL', default=DEFAULT_FROM_EMAIL)
+EMAIL_BACKEND = env(
+    'EMAIL_BACKEND',
+    default='django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend',
+)
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
@@ -162,39 +269,43 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Загрузки: до 10 МБ на запрос (поля multipart + тело). Для JSON API см. middleware (1 МБ).
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+
 AUTH_USER_MODEL = 'userauths.User'
 
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
-# Stripe API Keys 
-# STRIPE_PUBLIC_KEY = env("STRIPE_PUBLIC_KEY")
-# STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
 
-# Paypal API Keys 
-# PAYPAL_CLIENT_ID = env('PAYPAL_CLIENT_ID')
-# PAYPAL_SECRET_ID = env('PAYPAL_SECRET_ID')
+# Платежи: только переменные окружения (см. .env.example). Секреты не в клиентских шаблонах.
+STRIPE_PUBLIC_KEY = (env("STRIPE_PUBLIC_KEY", default="") or "").strip()
+STRIPE_SECRET_KEY = (env("STRIPE_SECRET_KEY", default="") or "").strip()
+PAYPAL_CLIENT_ID = (env("PAYPAL_CLIENT_ID", default="") or "").strip()
+PAYPAL_SECRET_ID = (env("PAYPAL_SECRET_ID", default="") or "").strip()
+FLUTTERWAVE_PUBLIC_KEY = (env("FLUTTERWAVE_PUBLIC_KEY", default="") or "").strip()
+FLUTTERWAVE_PRIVATE_KEY = (env("FLUTTERWAVE_PRIVATE_KEY", default="") or "").strip()
+PAYSTACK_PUBLIC_KEY = (env("PAYSTACK_PUBLIC_KEY", default="") or "").strip()
+PAYSTACK_PRIVATE_KEY = (env("PAYSTACK_PRIVATE_KEY", default="") or "").strip()
+RAZORPAY_KEY_ID = (env("RAZORPAY_KEY_ID", default="") or "").strip()
+RAZORPAY_KEY_SECRET = (env("RAZORPAY_KEY_SECRET", default="") or "").strip()
+# Secret hash из кабинета Flutterwave (вебхуки / redirect с заголовком Verif-Hash), опционально
+FLUTTERWAVE_SECRET_HASH = (env("FLUTTERWAVE_SECRET_HASH", default="") or "").strip()
 
-# Flutterwave Keys
-# FLUTTERWAVE_PUBLIC_KEY=env("FLUTTERWAVE_PUBLIC_KEY")
-# FLUTTERWAVE_PRIVATE_KEY=env("FLUTTERWAVE_PRIVATE_KEY")
-
-# Paystack Keys
-# PAYSTACK_PUBLIC_KEY=env("PAYSTACK_PUBLIC_KEY")
-# PAYSTACK_PRIVATE_KEY=env("PAYSTACK_PRIVATE_KEY")
-
-# Razorpay keys
-# RAZORPAY_KEY_ID=env("RAZORPAY_KEY_ID")
-# RAZORPAY_KEY_SECRET=env("RAZORPAY_KEY_SECRET")
+# Вебхуки (подпись / проверка через API)
+STRIPE_WEBHOOK_SECRET = (env("STRIPE_WEBHOOK_SECRET", default="") or "").strip()
+# ЮKassa: проверка уведомления запросом GET /v3/payments/{id} (shopId + секретный ключ API)
+YOOKASSA_SHOP_ID = (env("YOOKASSA_SHOP_ID", default="") or "").strip()
+YOOKASSA_SECRET_KEY = (env("YOOKASSA_SECRET_KEY", default="") or "").strip()
+TELEGRAM_WEBHOOK_SECRET = (env("TELEGRAM_WEBHOOK_SECRET", default="") or "").strip()
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# FROM_EMAIL=env("FROM_EMAIL")
-# EMAIL_BACKEND=env("EMAIL_BACKEND")
-# DEFAULT_FROM_EMAIL=env("DEFAULT_FROM_EMAIL")
-# SERVER_EMAIL=env("SERVER_EMAIL")
+# Обратная совместимость с кодом, ожидающим settings.FROM_EMAIL
+FROM_EMAIL = (env("FROM_EMAIL", default="") or "").strip() or DEFAULT_FROM_EMAIL
 
 ANYMAIL = {
-    "MAILGUN_API_KEY": os.environ.get("MAILGUN_API_KEY"),
-    "MAILGUN_SENDER_DOMAIN": os.environ.get("MAILGUN_SENDER_DOMAIN"),
+    "MAILGUN_API_KEY": (env("MAILGUN_API_KEY", default="") or "").strip(),
+    "MAILGUN_SENDER_DOMAIN": (env("MAILGUN_SENDER_DOMAIN", default="") or "").strip(),
 }
 
 # Telegram Bot: уведомления о новых заказах
@@ -206,6 +317,35 @@ TELEGRAM_CHAT_ID = (
     if _raw_tg_chat is None or _raw_tg_chat == ""
     else str(_raw_tg_chat).strip()
 )
+
+# Лимиты API (django-ratelimit + кэш; при нескольких воркерах задайте REDIS_URL).
+API_RATE_LIMIT = env("API_RATE_LIMIT", default="100/m")
+API_MAX_REQUEST_BODY_BYTES = env.int("API_MAX_REQUEST_BODY_BYTES", default=1024 * 1024)
+API_RATE_LIMIT_PATH_PREFIXES = (
+    "/api/",
+    "/filter_products/",
+    "/search_suggestions/",
+    "/add_to_cart/",
+    "/delete_cart_item/",
+    "/customer/sync_wishlist_from_storage/",
+    "/customer/toggle_wishlist/",
+    "/customer/add_to_wishlist/",
+    "/customer/remove_from_wishlist/",
+    "/customer/mark_noti_seen/",
+    "/vendor/delete_variants/",
+    "/vendor/delete_variants_items/",
+    "/vendor/delete_product_image/",
+)
+API_RATE_LIMIT_PATH_REGEXES = (
+    r"^/checkout/[^/]+/update_phone/$",
+    r"^/stripe_payment/[^/]+/$",
+    r"^/vendor/delete_product/\d+/$",
+)
+
+# AI (см. store/api_views.ai_generate)
+AI_GENERATION_LIMIT_FREE_PER_DAY = env.int("AI_GENERATION_LIMIT_FREE_PER_DAY", default=5)
+AI_GENERATION_LIMIT_PRO_PER_DAY = env.int("AI_GENERATION_LIMIT_PRO_PER_DAY", default=50)
+AI_QUOTA_CACHE_TTL = env.int("AI_QUOTA_CACHE_TTL", default=86400)
 
 MESSAGE_TAGS = {
     messages.ERROR: 'danger',
@@ -236,6 +376,42 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+# Пороги аудита (middleware)
+SECURITY_DENIED_PER_IP_THRESHOLD = env.int("SECURITY_DENIED_PER_IP_THRESHOLD", default=30)
+SECURITY_DENIED_WINDOW_SEC = env.int("SECURITY_DENIED_WINDOW_SEC", default=300)
+SECURITY_REQUESTS_PER_MINUTE_ANOMALY = env.int(
+    "SECURITY_REQUESTS_PER_MINUTE_ANOMALY", default=500
+)
+
+# Локальный файл логов; LOG_TO_FILE=false — только stdout (удобно для Docker / read-only FS).
+_LOG_HANDLERS = ["console", "file"]
+if not env.bool("LOG_TO_FILE", default=True):
+    _LOG_HANDLERS = ["console"]
+else:
+    try:
+        (BASE_DIR / "logs").mkdir(parents=True, exist_ok=True)
+    except OSError:
+        _LOG_HANDLERS = ["console"]
+
+_LOG_HANDLER_DEFS = {
+    'console': {
+        'class': 'logging.StreamHandler',
+        'formatter': 'verbose',
+    },
+    'security_stream': {
+        'class': 'logging.StreamHandler',
+        'formatter': 'asco_json',
+    },
+}
+if 'file' in _LOG_HANDLERS:
+    _LOG_HANDLER_DEFS['file'] = {
+        'class': 'logging.handlers.RotatingFileHandler',
+        'filename': BASE_DIR / 'logs' / 'django.log',
+        'maxBytes': 1024 * 1024 * 10,  # 10 MB
+        'backupCount': 5,
+        'formatter': 'verbose',
+    }
+
 # Logging Configuration
 LOGGING = {
     'version': 1,
@@ -249,33 +425,30 @@ LOGGING = {
             'format': '{levelname} {message}',
             'style': '{',
         },
-    },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
-        },
-        'file': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
-            'maxBytes': 1024 * 1024 * 10,  # 10 MB
-            'backupCount': 5,
-            'formatter': 'verbose',
+        'asco_json': {
+            '()': 'ecom_prj.structured_security.AscoJsonFormatter',
+            'format': '%(level)s %(name)s %(message)s',
         },
     },
+    'handlers': _LOG_HANDLER_DEFS,
     'root': {
-        'handlers': ['console', 'file'],
+        'handlers': _LOG_HANDLERS,
         'level': 'INFO',
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': _LOG_HANDLERS,
             'level': env('DJANGO_LOG_LEVEL', default='INFO'),
             'propagate': False,
         },
         'django.security': {
-            'handlers': ['console', 'file'],
+            'handlers': _LOG_HANDLERS,
             'level': 'WARNING',
+            'propagate': False,
+        },
+        'asco.security': {
+            'handlers': ['security_stream'],
+            'level': 'INFO',
             'propagate': False,
         },
     },

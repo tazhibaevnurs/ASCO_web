@@ -310,6 +310,21 @@ class OrderItem(models.Model):
         verbose_name_plural = "Заказы продукта"
 
 
+class StripeWebhookEvent(models.Model):
+    """Идемпотентность обработки вебхуков Stripe (event.id уникален)."""
+
+    event_id = models.CharField(max_length=255, unique=True, db_index=True)
+    event_type = models.CharField(max_length=120, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Stripe webhook event"
+        verbose_name_plural = "Stripe webhook events"
+
+    def __str__(self):
+        return self.event_id
+
+
 class Review(models.Model):
     user = models.ForeignKey(user_models.User, on_delete=models.SET_NULL, blank=True, null=True)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, blank=True, null=True, related_name="reviews")

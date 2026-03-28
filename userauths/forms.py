@@ -8,26 +8,31 @@ from userauths.models import User
 
 class UserRegisterForm(UserCreationForm):
     full_name = forms.CharField(
+        max_length=255,
         widget=forms.TextInput(attrs={'class': 'form-control rounded', 'placeholder': 'Полное имя'}),
         required=True,
         error_messages={'required': 'Обязательное поле.'},
     )
     mobile = forms.CharField(
+        max_length=64,
         widget=forms.TextInput(attrs={'class': 'form-control rounded', 'placeholder': 'Мобильный телефон'}),
         required=True,
         error_messages={'required': 'Обязательное поле.', 'invalid': 'Введите корректный номер телефона.'},
     )
     email = forms.EmailField(
+        max_length=254,
         widget=forms.TextInput(attrs={'class': 'form-control rounded', 'placeholder': 'Адрес электронной почты'}),
         required=True,
         error_messages={'required': 'Обязательное поле.', 'invalid': 'Введите корректный email.'},
     )
     password1 = forms.CharField(
+        max_length=128,
         widget=forms.PasswordInput(attrs={'class': 'form-control rounded', 'placeholder': 'Пароль'}),
         required=True,
         error_messages={'required': 'Обязательное поле.'},
     )
     password2 = forms.CharField(
+        max_length=128,
         widget=forms.PasswordInput(attrs={'class': 'form-control rounded', 'placeholder': 'Подтвердите пароль'}),
         required=True,
         error_messages={'required': 'Обязательное поле.'},
@@ -42,11 +47,13 @@ class UserRegisterForm(UserCreationForm):
        
 class LoginForm(forms.Form):
     email = forms.EmailField(
+        max_length=254,
         widget=forms.TextInput(attrs={'class': 'form-control rounded', 'name': 'email', 'placeholder': 'Адрес электронной почты'}),
         required=False,
         error_messages={'invalid': 'Введите корректный email.'},
     )
     password = forms.CharField(
+        max_length=128,
         widget=forms.PasswordInput(attrs={'class': 'form-control rounded', 'name': 'password', 'placeholder': 'Пароль'}),
         required=False,
     )
@@ -55,12 +62,15 @@ class LoginForm(forms.Form):
 
 class ManagerLoginForm(forms.Form):
     email = forms.EmailField(
+        max_length=254,
         widget=forms.TextInput(attrs={'class': 'form-control rounded', 'placeholder': 'Адрес электронной почты'}),
         required=True,
         error_messages={'required': 'Обязательное поле.', 'invalid': 'Введите корректный email.'},
     )
     password = forms.CharField(
+        max_length=128,
         widget=forms.PasswordInput(attrs={'class': 'form-control rounded', 'placeholder': 'Пароль'}),
         required=True,
         error_messages={'required': 'Обязательное поле.'},
     )
+    captcha = ReCaptchaField(widget=ReCaptchaV2Checkbox())

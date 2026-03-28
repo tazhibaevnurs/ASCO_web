@@ -78,6 +78,13 @@ class ReviewAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'product__name']
     list_filter = ['active', 'rating']
 
+
+class StripeWebhookEventAdmin(admin.ModelAdmin):
+    list_display = ["event_id", "event_type", "created_at"]
+    readonly_fields = ["event_id", "event_type", "created_at"]
+    search_fields = ["event_id", "event_type"]
+
+
 admin.site.register(store_models.Category, CategoryAdmin)
 admin.site.register(store_models.HeroSlide, HeroSlideAdmin)
 admin.site.register(store_models.Product, ProductAdmin)
@@ -89,3 +96,4 @@ admin.site.register(store_models.Coupon, CouponAdmin)
 admin.site.register(store_models.Order, OrderAdmin)
 admin.site.register(store_models.OrderItem, OrderItemAdmin)
 admin.site.register(store_models.Review, ReviewAdmin)
+admin.site.register(store_models.StripeWebhookEvent, StripeWebhookEventAdmin)

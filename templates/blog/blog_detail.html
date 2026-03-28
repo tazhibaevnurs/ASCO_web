@@ -1,4 +1,4 @@
-{% extends 'partials/base.html' %} {% load static %} {% load humanize %}
+{% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% load sanitize_html %}
 {% block title %}{{ blog.title }} | Блог ASCO.KG{% endblock %}
 {% block meta_description %}{{ blog.title }} - статья от ASCO.KG о бытовой технике. Полезные рекомендации для покупателей в Бишкеке.{% endblock %}
 {% block meta_keywords %}{{ blog.title }}, блог asco, бытовая техника советы, техника бишкек{% endblock %}
@@ -22,7 +22,8 @@
         <p class="blog-post-meta mb-1 fs-6"><b>Автор:</b> {{blog.author.profile.full_name|default:blog.author.username}}</p>
         <p class="blog-post-meta mb-1 fs-6"><b>Лайков:</b> {{total_likes}}</p>
         <hr>
-        <div class="fs-4 blog-content">{{blog.content|safe}}</div>
+        {# Контент статьи из CKEditor в админке; комментарии ниже выводятся без |safe #}
+        <div class="fs-4 blog-content">{{ blog.content|sanitize_html }}</div>
       </article>
       <hr>
       <br>

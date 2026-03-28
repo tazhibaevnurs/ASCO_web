@@ -11,7 +11,7 @@
 <section class="tw-min-h-screen tw-bg-gray-50">
 	<div class="tw-container tw-mx-auto tw-px-4 tw-py-4 md:tw-py-6">
 		{# Заголовок и поиск — как на странице магазина #}
-		<form action="{% url 'store:category' category.id %}" method="get" class="tw-mb-4">
+		<form action="{% url 'store:category' category.slug %}" method="get" class="tw-mb-4">
 			<div class="tw-flex tw-flex-col sm:tw-flex-row sm:tw-items-center sm:tw-justify-between tw-gap-3 tw-mb-4">
 				<h1 class="tw-text-xl md:tw-text-2xl tw-font-bold tw-text-gray-900">{{ category.title }} (<span class="product_count">{{ products_list.count }}</span>)</h1>
 				<div class="tw-flex tw-gap-2 tw-w-full sm:tw-w-auto">

@@ -23,6 +23,7 @@ from django.contrib.sitemaps.views import sitemap
 from django.views.generic import TemplateView, RedirectView
 from userauths import views as userauths_views
 from store.sitemaps import StaticViewSitemap, ProductSitemap, BlogSitemap
+from store import webhooks as store_webhooks
 
 
 sitemaps = {
@@ -34,6 +35,22 @@ sitemaps = {
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('manager-login/', userauths_views.ManagerLoginView.as_view(), name='manager-login'),
+    path("api/", include("store.api_urls")),
+    path(
+        "webhooks/stripe/",
+        store_webhooks.stripe_webhook,
+        name="webhooks_stripe",
+    ),
+    path(
+        "webhooks/yookassa/",
+        store_webhooks.yookassa_webhook,
+        name="webhooks_yookassa",
+    ),
+    path(
+        "webhooks/telegram/",
+        store_webhooks.telegram_webhook,
+        name="webhooks_telegram",
+    ),
     path('', include("store.urls")),
     path('auth/', include("userauths.urls")),
     path('customer/', include("customer.urls")),

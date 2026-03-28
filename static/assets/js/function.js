@@ -54,6 +54,9 @@ $(document).ready(function () {
                 button_el.html('Добавление... <i class="fas fa-spinner fa-spin ms-2"></i>');
             },
             success: function (response) {
+                if (response.cart_id) {
+                    localStorage.setItem("cartId", response.cart_id);
+                }
                 console.log(response);
                 if (typeof window.showToast === 'function') {
                     window.showToast(response.message || 'Добавлено в корзину', 'success');
@@ -128,6 +131,9 @@ $(document).ready(function () {
                 button_el.html('<i class="fas fa-spinner fa-spin"></i>');
             },
             success: function (response) {
+                if (response.cart_id) {
+                    localStorage.setItem("cartId", response.cart_id);
+                }
                 Toast.fire({
                     icon: "success",
                     title: response.message,

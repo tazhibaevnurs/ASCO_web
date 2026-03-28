@@ -7,6 +7,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import check_password
 
 from plugin.paginate_queryset import paginate_queryset
+from plugin.input_validation import (
+    MAX_WISHLIST_SYNC_IDS,
+    validate_uploaded_image,
+)
 from store import models as store_models
 from store.context import WISHLIST_SESSION_KEY
 from customer import models as customer_models
@@ -37,7 +41,9 @@ def orders(request):
 
 @login_required
 def order_detail(request, order_id):
-    order = store_models.Order.objects.get(customer=request.user, order_id=order_id)
+    order = get_object_or_404(
+        store_models.Order, customer=request.user, order_id=order_id
+    )
 
     context = {
         "order": order,
@@ -47,8 +53,10 @@ def order_detail(request, order_id):
 
 @login_required
 def order_item_detail(request, order_id, item_id):
-    order = store_models.Order.objects.get(customer=request.user, order_id=order_id)
-    item = store_models.OrderItem.objects.get(order=order, item_id=item_id)
+    order = get_object_or_404(
+        store_models.Order, customer=request.user, order_id=order_id
+    )
+    item = get_object_or_404(store_models.OrderItem, order=order, item_id=item_id)
     
     context = {
         "order": order,
@@ -96,11 +104,18 @@ def sync_wishlist_from_storage(request):
     """Для гостей: принимает ids из LocalStorage (GET ids=1,2,3) и записывает в сессию. reload=True только если сессия была пуста и мы что-то записали."""
     if request.user.is_authenticated:
         return JsonResponse({"ok": True, "reload": False})
-    ids_str = request.GET.get("ids", "")
+    ids_str = request.GET.get("ids", "")[:8000]
     if not ids_str:
         return JsonResponse({"ok": True, "reload": False})
     try:
-        ids = [int(x.strip()) for x in ids_str.split(",") if x.strip()]
+        parts = [x.strip() for x in ids_str.split(",") if x.strip()][
+            :MAX_WISHLIST_SYNC_IDS
+        ]
+        ids = []
+        for x in parts:
+            v = int(x)
+            if v > 0:
+                ids.append(v)
     except ValueError:
         ids = []
     current = list(request.session.get(WISHLIST_SESSION_KEY) or [])
@@ -188,7 +203,9 @@ def notis(request):
 
 @login_required
 def mark_noti_seen(request, id):
-    noti = customer_models.Notifications.objects.get(user=request.user, id=id)
+    noti = get_object_or_404(
+        customer_models.Notifications, user=request.user, id=id
+    )
     noti.seen = True
     noti.save()
 
@@ -267,8 +284,9 @@ def address_create(request):
     
     return render(request, "customer/address_create.html")
 
+@login_required
 def delete_address(request, id):
-    address = customer_models.Address.objects.get(user=request.user, id=id)
+    address = get_object_or_404(customer_models.Address, user=request.user, id=id)
     address.delete()
     messages.success(request, "Адрес удалён")
     return redirect("customer:addresses")
@@ -281,8 +299,12 @@ def profile(request):
         image = request.FILES.get("image")
         full_name = request.POST.get("full_name")
         mobile = request.POST.get("mobile")
-    
-        if image != None:
+
+        if image is not None:
+            err = validate_uploaded_image(image, field_name="Фото")
+            if err:
+                messages.error(request, err)
+                return redirect("customer:profile")
             profile.image = image
 
         profile.full_name = full_name

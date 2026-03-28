@@ -13,11 +13,18 @@ import uuid
 import json
 
 from plugin.paginate_queryset import paginate_queryset
+from plugin.input_validation import (
+    clamp_text,
+    parse_positive_int,
+    validate_uploaded_image,
+)
 from store import models as store_models
+from store import order_access
 from vendor import models as vendor_models
 from permissions import (
     ManagerPermission,
     OwnerOrReadOnlyPermission,
+    SuperAdminPermission,
     permission_required,
     check_object_permission,
 )
@@ -40,35 +47,35 @@ def _generate_unique_category_slug(title: str, exclude_id: int | None = None) ->
 
     return slug
 
-def get_monthly_sales():
-    monthly_sales = (
-        store_models.OrderItem.objects
-        .annotate(month=TruncMonth('date'))  # Group by month
-        .values('month')  # Select the month field
-        .annotate(order_count=Count('id'))  # Count the number of orders per month
-        .order_by('month')  # Order the results by month
+def get_monthly_sales(user):
+    qs = store_models.OrderItem.objects.all()
+    if not (user.is_superuser or getattr(user, "role", None) == "superadmin"):
+        qs = qs.filter(vendor=user)
+    return (
+        qs.annotate(month=TruncMonth("date"))
+        .values("month")
+        .annotate(order_count=Count("id"))
+        .order_by("month")
     )
-    return monthly_sales
 
 @login_required
 @permission_required(ManagerPermission)
 def dashboard(request):
-    if request.user.role == "superadmin":
+    if request.user.role == "superadmin" or request.user.is_superuser:
         products = store_models.Product.objects.all()
-        orders = store_models.Order.objects.all()
         revenue = store_models.OrderItem.objects.filter(order__payment_status="Paid").aggregate(
             total=models.Sum("total")
         )['total']
     else:
         products = store_models.Product.objects.filter(created_by=request.user)
-        orders = store_models.Order.objects.all()
         revenue = store_models.OrderItem.objects.filter(vendor=request.user, order__payment_status="Paid").aggregate(
             total=models.Sum("total")
         )['total']
+    orders = order_access.orders_queryset_for_vendor_user(request.user)
     notis = vendor_models.Notifications.objects.filter(user=request.user, seen=False)
     reviews = store_models.Review.objects.filter(product__vendor=request.user)
     rating = store_models.Review.objects.filter(product__vendor=request.user).aggregate(avg = models.Avg("rating"))['avg']
-    monthly_sales = get_monthly_sales()
+    monthly_sales = get_monthly_sales(request.user)
 
     # Extract months and order counts
     labels = [sale['month'].strftime('%B %Y') for sale in monthly_sales]  # Format the month
@@ -106,7 +113,7 @@ def products(request):
 @login_required
 @permission_required(ManagerPermission)
 def orders(request):
-    orders_list = store_models.Order.objects.all().order_by("-date")
+    orders_list = order_access.orders_queryset_for_vendor_user(request.user)
     orders = paginate_queryset(request, orders_list, 10)
 
     context = {
@@ -119,7 +126,7 @@ def orders(request):
 @login_required
 @permission_required(ManagerPermission)
 def order_detail(request, order_id):
-    order = get_object_or_404(store_models.Order, order_id=order_id)
+    order = order_access.get_order_for_vendor(request, order_id)
 
     context = {
         "order": order,
@@ -130,7 +137,7 @@ def order_detail(request, order_id):
 @login_required
 @permission_required(ManagerPermission)
 def order_item_detail(request, order_id, item_id):
-    order = get_object_or_404(store_models.Order, order_id=order_id)
+    order = order_access.get_order_for_vendor(request, order_id)
     item = get_object_or_404(store_models.OrderItem, item_id=item_id, order=order)
     context = {
         "order": order,
@@ -142,7 +149,7 @@ def order_item_detail(request, order_id, item_id):
 @login_required
 @permission_required(ManagerPermission)
 def update_order_status(request, order_id):
-    order = get_object_or_404(store_models.Order, order_id=order_id)
+    order = order_access.get_order_for_vendor(request, order_id)
     
     if request.method == "POST":
         new_status = request.POST.get("status") or request.POST.get("order_status")
@@ -174,7 +181,7 @@ def update_order_status(request, order_id):
 @login_required
 @permission_required(ManagerPermission)
 def update_order_item_status(request, order_id, item_id):
-    order = get_object_or_404(store_models.Order, order_id=order_id)
+    order = order_access.get_order_for_vendor(request, order_id)
     item = get_object_or_404(store_models.OrderItem, item_id=item_id, order=order)
     
     if request.method == "POST":
@@ -274,7 +281,12 @@ def reviews(request):
 @login_required
 @permission_required(ManagerPermission)
 def update_reply(request, id):
-    review = get_object_or_404(store_models.Review, id=id)
+    if request.user.is_superuser or getattr(request.user, "role", None) == "superadmin":
+        review = get_object_or_404(store_models.Review, id=id)
+    else:
+        review = get_object_or_404(
+            store_models.Review, id=id, product__vendor=request.user
+        )
     
     if request.method == "POST":
         reply = request.POST.get("reply")
@@ -318,7 +330,11 @@ def profile(request):
         full_name = request.POST.get("full_name")
         mobile = request.POST.get("mobile")
     
-        if image != None:
+        if image is not None:
+            err = validate_uploaded_image(image, field_name="Фото")
+            if err:
+                messages.error(request, err)
+                return redirect("vendor:profile")
             profile.image = image
 
         profile.full_name = full_name
@@ -366,27 +382,38 @@ def create_product(request):
 
     if request.method == "POST":
         image = request.FILES.get("image")
-        name = request.POST.get("name")
-        category_id = request.POST.get("category_id")
-        description = request.POST.get("description")
+        name = clamp_text(request.POST.get("name"), 500)
+        category_pk = parse_positive_int(request.POST.get("category_id"), default=None)
+        description = clamp_text(request.POST.get("description"), 50000)
         price = request.POST.get("price")
         regular_price = request.POST.get("regular_price")
         shipping = request.POST.get("shipping")
         stock = request.POST.get("stock")
+
+        if not name:
+            messages.error(request, "Укажите название товара.")
+            return render(request, "vendor/create_product.html", {"categories": categories})
+        if category_pk is None:
+            messages.error(request, "Выберите категорию.")
+            return render(request, "vendor/create_product.html", {"categories": categories})
+        if image is not None:
+            err = validate_uploaded_image(image, field_name="Изображение товара")
+            if err:
+                messages.error(request, err)
+                return render(request, "vendor/create_product.html", {"categories": categories})
 
         product = store_models.Product.objects.create(
             vendor=request.user,
             created_by=request.user,
             image=image,
             name=name,
-            category_id=category_id,
+            category_id=category_pk,
             description=description,
             price=price,
             regular_price=regular_price,
             shipping=shipping,
             stock=stock,
         )
-
         return redirect("vendor:update_product", product.id)
     context = {
         'categories': categories
@@ -420,7 +447,11 @@ def update_product(request, id):
         product.shipping = shipping
         product.stock = stock
 
-        if image:  # Update image only if a new one is uploaded
+        if image:
+            err = validate_uploaded_image(image, field_name="Изображение товара")
+            if err:
+                messages.error(request, err)
+                return redirect("vendor:update_product", product.id)
             product.image = image
 
         if not product.created_by:
@@ -439,13 +470,18 @@ def update_product(request, id):
             for i, variant_id in enumerate(variant_ids):
                 variant_name = variant_titles[i]
                 
-                if variant_id:  # If variant exists, update it
-                    variant = store_models.Variant.objects.filter(id=variant_id).first()
-                    if variant:
-                        variant.name = variant_name
-                        variant.save()
+                if variant_id:  # If variant exists, update it (только вариант этого товара)
+                    variant = store_models.Variant.objects.filter(
+                        id=variant_id, product=product
+                    ).first()
+                    if not variant:
+                        continue
+                    variant.name = variant_name
+                    variant.save()
                 else:  # Create new variant
-                    variant = store_models.Variant.objects.create(product=product, name=variant_name)
+                    variant = store_models.Variant.objects.create(
+                        product=product, name=variant_name
+                    )
                 
                 # Now handle items for this variant
                 item_ids = request.POST.getlist(f'item_id_{i}[]')
@@ -459,8 +495,10 @@ def update_product(request, id):
                         item_title = item_titles[j]
                         item_description = item_descriptions[j]
                         
-                        if item_id:  # Update existing item
-                            variant_item = store_models.VariantItem.objects.filter(id=item_id).first()
+                        if item_id:  # Update existing item (только в рамках этого товара)
+                            variant_item = store_models.VariantItem.objects.filter(
+                                id=item_id, variant=variant
+                            ).first()
                             if variant_item:
                                 variant_item.title = item_title
                                 variant_item.content = item_description
@@ -474,7 +512,13 @@ def update_product(request, id):
         # Handle product gallery images
         # Get all dynamically added image inputs
         for file_key, image_file in request.FILES.items():
-            if file_key.startswith('image_'):  # Identify the dynamically added image inputs
+            if file_key.startswith("image_"):
+                err = validate_uploaded_image(
+                    image_file, field_name="Изображение галереи"
+                )
+                if err:
+                    messages.error(request, err)
+                    return redirect("vendor:update_product", product.id)
                 store_models.Gallery.objects.create(product=product, image=image_file)
 
 
@@ -540,19 +584,33 @@ def categories(request):
     categories_qs = store_models.Category.objects.order_by("-id")
 
     if request.method == "POST":
+        if not SuperAdminPermission.has_permission(request):
+            messages.error(
+                request,
+                "Создание категорий доступно только суперадминистратору.",
+            )
+            return redirect("vendor:categories")
+
         title = request.POST.get("title", "").strip()
         image = request.FILES.get("image")
 
         if not title:
             messages.error(request, "Название категории обязательно.")
-        else:
-            slug = _generate_unique_category_slug(title)
-            category = store_models.Category(title=title, slug=slug)
-            if image:
-                category.image = image
-            category.save()
-            messages.success(request, "Категория успешно создана.")
             return redirect("vendor:categories")
+
+        if image is not None:
+            err = validate_uploaded_image(image, field_name="Изображение категории")
+            if err:
+                messages.error(request, err)
+                return redirect("vendor:categories")
+
+        slug = _generate_unique_category_slug(title)
+        category = store_models.Category(title=title, slug=slug)
+        if image:
+            category.image = image
+        category.save()
+        messages.success(request, "Категория успешно создана.")
+        return redirect("vendor:categories")
 
     context = {"categories": categories_qs}
     return render(request, "vendor/categories.html", context)
@@ -560,6 +618,7 @@ def categories(request):
 
 @login_required
 @permission_required(ManagerPermission)
+@permission_required(SuperAdminPermission)
 def category_edit(request, category_id):
     category = get_object_or_404(store_models.Category, id=category_id)
 
@@ -572,7 +631,11 @@ def category_edit(request, category_id):
         else:
             category.title = title
             category.slug = _generate_unique_category_slug(title, exclude_id=category.id)
-            if image:
+            if image is not None:
+                err = validate_uploaded_image(image, field_name="Изображение категории")
+                if err:
+                    messages.error(request, err)
+                    return redirect("vendor:category_edit", category_id=category.id)
                 category.image = image
             category.save()
             messages.success(request, "Категория обновлена.")
@@ -584,6 +647,7 @@ def category_edit(request, category_id):
 
 @login_required
 @permission_required(ManagerPermission)
+@permission_required(SuperAdminPermission)
 def category_delete(request, category_id):
     category = get_object_or_404(store_models.Category, id=category_id)
 

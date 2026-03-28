@@ -1,4 +1,4 @@
-{% extends 'partials/base.html' %} {% load static %} {% load humanize %}
+{% extends 'partials/base.html' %} {% load static %} {% load humanize %} {% load sanitize_html %}
 {% block title %}Блог о бытовой технике | ASCO.KG{% endblock %}
 {% block meta_description %}Полезные статьи ASCO.KG о выборе, уходе и эксплуатации бытовой техники в Бишкеке и Кыргызстане.{% endblock %}
 {% block meta_keywords %}блог бытовой техники, советы по бытовой технике, asco блог, ремонт и уход за техникой{% endblock %}
@@ -29,7 +29,8 @@
                             <div class="_blog_caption">
                                 <span class="text-muted mb-3">{{blog.date|date:"d M, Y"}}</span>
                                 <h5 class="bl_title lh-1"><a href="{% url 'blog:blog_detail' blog.slug %}">{{blog.title|truncatechars:50}}</a></h5>
-                                <p>{{blog.content|safe|truncatechars:150}}</p>
+                                {# Анонс из админки (доверенный HTML) #}
+                                <p>{{ blog.content|sanitize_html|truncatechars_html:150 }}</p>
                                 <a href="{% url 'blog:blog_detail' blog.slug %}" class="btn bg-primary text-white btn-sm rounded fs-sm">Читать далее <i class="fas fa-eye ms-1"></i></a>
                             </div>
                         </div>

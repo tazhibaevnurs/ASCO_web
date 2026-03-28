@@ -1,7 +1,10 @@
-from django.http import JsonResponse
-from django.shortcuts import redirect, render
+import hmac
+
+from django.http import JsonResponse, Http404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.db import models, transaction
 from django.conf import settings
 from django.urls import reverse
@@ -10,14 +13,35 @@ from django.core.mail import EmailMultiAlternatives, send_mail
 from django.utils import timezone
 
 from decimal import Decimal
+from urllib.parse import urlencode
 import logging
+import uuid
 import requests
 import stripe
 from plugin.service_fee import calculate_service_fee
 import razorpay
+from razorpay.errors import SignatureVerificationError
+from django_ratelimit.decorators import ratelimit
 
 from plugin.paginate_queryset import paginate_queryset
+from plugin.input_validation import (
+    MAX_CART_COLOR_SIZE_LEN,
+    MAX_CONTACT_FIELD,
+    clamp_text,
+    parse_bounded_decimal,
+    parse_category_slug,
+    parse_filter_tokens,
+    parse_int_id_list,
+    parse_product_qty,
+    parse_positive_int,
+    parse_rating_list,
+    parse_search_q,
+)
 from store import models as store_models
+from store.forms import ContactForm
+from store import order_access
+from store.cart_utils import clear_cart_items
+from store.stripe_fulfillment import try_fulfill_stripe_checkout_session
 from customer import models as customer_models
 from vendor import models as vendor_models
 from userauths import models as userauths_models
@@ -36,7 +60,7 @@ def _apply_search(queryset, query):
 
 def search_suggestions(request):
     """JSON-ответ для подсказок поиска: превью, название, цена, ссылка на товар."""
-    q = (request.GET.get("q") or "").strip()
+    q = parse_search_q(request.GET.get("q"))
     if not q:
         return JsonResponse({"results": []})
     products = store_models.Product.objects.filter(status="Published")
@@ -56,19 +80,15 @@ def search_suggestions(request):
 # stripe.api_key = settings.STRIPE_SECRET_KEY
 # razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
-def clear_cart_items(request):
-    try:
-        cart_id = request.session['cart_id']
-        store_models.Cart.objects.filter(cart_id=cart_id).delete()
-    except:
-        pass
-    return
-
 def index(request):
     # Если в URL есть поисковый запрос — показываем результаты на странице магазина
-    if request.GET.get("q"):
+    q_redirect = parse_search_q(request.GET.get("q"))
+    if q_redirect:
         from urllib.parse import urlencode
-        return redirect("{}?{}".format(reverse("store:search"), urlencode({"q": request.GET.get("q")})))
+
+        return redirect(
+            "{}?{}".format(reverse("store:search"), urlencode({"q": q_redirect}))
+        )
     products = store_models.Product.objects.filter(status="Published")
     categories = store_models.Category.objects.all()
     hero_slides = store_models.HeroSlide.objects.filter(is_active=True).order_by("order")
@@ -83,31 +103,27 @@ def _shop_queryset(request):
     """Единая база запроса для магазина: q, category, min_price, max_price, sort."""
     qs = store_models.Product.objects.filter(status="Published")
 
-    q = request.GET.get("q", "").strip()
+    q = parse_search_q(request.GET.get("q", ""))
     if q:
         qs = qs.filter(name__icontains=q)
 
-    category = request.GET.get("category")  # slug категории
+    category = parse_category_slug(request.GET.get("category"))
     if category:
         qs = qs.filter(category__slug=category)
-    categories_ids = request.GET.getlist("categories[]")  # для совместимости с filter_products
+    categories_ids = parse_int_id_list(request.GET.getlist("categories[]"))
     if categories_ids:
         qs = qs.filter(category__id__in=categories_ids)
 
-    try:
-        min_price = request.GET.get("min_price")
-        if min_price is not None and min_price != "":
-            qs = qs.filter(price__gte=Decimal(min_price))
-    except (TypeError, ValueError):
-        pass
-    try:
-        max_price = request.GET.get("max_price")
-        if max_price is not None and max_price != "":
-            qs = qs.filter(price__lte=Decimal(max_price))
-    except (TypeError, ValueError):
-        pass
+    min_price = parse_bounded_decimal(request.GET.get("min_price"))
+    if min_price is not None:
+        qs = qs.filter(price__gte=min_price)
+    max_price = parse_bounded_decimal(request.GET.get("max_price"))
+    if max_price is not None:
+        qs = qs.filter(price__lte=max_price)
 
-    sort = request.GET.get("sort", "")
+    sort = (request.GET.get("sort") or "").strip()
+    if sort not in ("price_asc", "price_desc", "newest", "name", ""):
+        sort = ""
     if sort == "price_asc":
         qs = qs.order_by("price")
     elif sort == "price_desc":
@@ -117,8 +133,9 @@ def _shop_queryset(request):
     elif sort == "name":
         qs = qs.order_by("name")
     else:
-        # legacy: prices=lowest / highest
-        price_order = request.GET.get("prices")
+        price_order = (request.GET.get("prices") or "").strip()
+        if price_order not in ("lowest", "highest"):
+            price_order = ""
         if price_order == "lowest":
             qs = qs.order_by("-price")
         elif price_order == "highest":
@@ -204,8 +221,13 @@ def shop(request):
     }
     return render(request, "store/shop.html", context)
 
-def category(request, id):
-    category = store_models.Category.objects.get(id=id)
+def category_legacy_redirect(request, legacy_id):
+    cat = get_object_or_404(store_models.Category, pk=legacy_id)
+    return redirect("store:category", slug=cat.slug, permanent=True)
+
+
+def category(request, slug):
+    category = get_object_or_404(store_models.Category, slug=slug)
     products_list = store_models.Product.objects.filter(status="Published", category=category)
     query = request.GET.get("q")
     products_list = _apply_search(products_list, query)
@@ -245,20 +267,36 @@ def product_detail(request, slug):
 def add_to_cart(request):
     # Get parameters from the request (ID, color, size, quantity, cart_id)
     id = request.GET.get("id")
-    qty = request.GET.get("qty")
-    color = request.GET.get("color")
-    size = request.GET.get("size")
-    cart_id = request.GET.get("cart_id")
-    
-    request.session['cart_id'] = cart_id
+    qty_raw = request.GET.get("qty")
+    color = clamp_text(request.GET.get("color"), MAX_CART_COLOR_SIZE_LEN)
+    size = clamp_text(request.GET.get("size"), MAX_CART_COLOR_SIZE_LEN)
+    client_cart = request.GET.get("cart_id")
 
-    # Validate required fields
-    if not id or not qty or not cart_id:
-        return JsonResponse({"error": "No color or size selected"}, status=400)
+    product_pk = parse_positive_int(id, default=None)
+    if product_pk is None:
+        return JsonResponse({"error": "Некорректный товар"}, status=400)
+    qty = parse_product_qty(qty_raw)
+    if qty is None:
+        return JsonResponse({"error": "Некорректное количество"}, status=400)
+
+    session_cart = request.session.get("cart_id")
+    new_cart_assigned = False
+    if session_cart:
+        if client_cart and (
+            len(str(client_cart)) > 80 or client_cart != session_cart
+        ):
+            return JsonResponse({"error": "Некорректная корзина"}, status=403)
+        cart_id = session_cart
+    else:
+        # Не доверяем cart_id с клиента при первой привязке: иначе можно подставить UUID чужой корзины.
+        cart_id = str(uuid.uuid4())
+        request.session["cart_id"] = cart_id
+        request.session.modified = True
+        new_cart_assigned = True
 
     # Try to fetch the product, return an error if it doesn't exist
     try:
-        product = store_models.Product.objects.get(status="Published", id=id)
+        product = store_models.Product.objects.get(status="Published", id=product_pk)
     except store_models.Product.DoesNotExist:
         return JsonResponse({"error": "Product not found"}, status=404)
 
@@ -305,12 +343,17 @@ def add_to_cart(request):
     cart_sub_total = store_models.Cart.objects.filter(cart_id=cart_id).aggregate(sub_total = models.Sum("sub_total"))['sub_total']
 
     # Return the response with the cart update message and total cart items
-    return JsonResponse({
-        "message": message ,
+    payload = {
+        "message": message,
         "total_cart_items": total_cart_items.count(),
         "cart_sub_total": "{:,.2f}".format(cart_sub_total),
-        "item_sub_total": "{:,.2f}".format(existing_cart_item.sub_total) if existing_cart_item else "{:,.2f}".format(cart.sub_total) 
-    })
+        "item_sub_total": "{:,.2f}".format(existing_cart_item.sub_total)
+        if existing_cart_item
+        else "{:,.2f}".format(cart.sub_total),
+    }
+    if new_cart_assigned:
+        payload["cart_id"] = cart_id
+    return JsonResponse(payload)
 
 def cart(request):
     if "cart_id" in request.session:
@@ -334,9 +377,9 @@ def delivery_request(request):
         messages.error(request, "Пожалуйста, заполните форму оформления доставки")
         return redirect("store:cart")
 
-    full_name = request.POST.get("full_name", "").strip()
-    phone = request.POST.get("phone", "").strip()
-    address = request.POST.get("address", "").strip()
+    full_name = clamp_text(request.POST.get("full_name"), MAX_CONTACT_FIELD)
+    phone = clamp_text(request.POST.get("phone"), 40)
+    address = clamp_text(request.POST.get("address"), 2000)
 
     if not full_name or not phone or not address:
         messages.error(request, "Пожалуйста, заполните все поля формы")
@@ -479,6 +522,9 @@ def delivery_request(request):
         except Exception:
             logger.exception("delivery_request: исключение при отправке в Telegram")
 
+    if order_for_email:
+        order_access.register_order_session_access(request, order_for_email.pk)
+
     messages.success(request, "Заявка успешно отправлена. Мы свяжемся с вами в ближайшее время!")
     return redirect("store:shop")
 
@@ -487,18 +533,26 @@ def delete_cart_item(request):
     id = request.GET.get("id")
     item_id = request.GET.get("item_id")
     cart_id = request.GET.get("cart_id")
-    
-    # Validate required fields
-    if not id and not item_id and not cart_id:
+    session_cart = request.session.get("cart_id")
+
+    product_pk = parse_positive_int(id, default=None)
+    line_pk = parse_positive_int(item_id, default=None)
+    if product_pk is None or line_pk is None or not cart_id:
         return JsonResponse({"error": "Item or Product id not found"}, status=400)
+    if len(str(cart_id)) > 80 or not session_cart or cart_id != session_cart:
+        return JsonResponse({"error": "Forbidden"}, status=403)
 
     try:
-        product = store_models.Product.objects.get(status="Published", id=id)
+        product = store_models.Product.objects.get(status="Published", id=product_pk)
     except store_models.Product.DoesNotExist:
         return JsonResponse({"error": "Product not found"}, status=404)
 
-    # Check if the item is already in the cart
-    item = store_models.Cart.objects.get(product=product, id=item_id)
+    try:
+        item = store_models.Cart.objects.get(
+            product=product, id=line_pk, cart_id=cart_id
+        )
+    except store_models.Cart.DoesNotExist:
+        return JsonResponse({"error": "Cart item not found"}, status=404)
     item.delete()
 
     # Count the total number of items in the cart
@@ -511,75 +565,89 @@ def delete_cart_item(request):
         "cart_sub_total": "{:,.2f}".format(cart_sub_total) if cart_sub_total else 0.00
     })
 
+
+@login_required
 def create_order(request):
-    if request.method == "POST":
-        address_id = request.POST.get("address")
-        if not address_id:
-            messages.warning(request, "Пожалуйста, выберите адрес для продолжения")
-            return redirect("store:cart")
-        
-        address = customer_models.Address.objects.filter(user=request.user, id=address_id).first()
+    if request.method != "POST":
+        return redirect("store:cart")
 
-        if "cart_id" in request.session:
-            cart_id = request.session['cart_id']
-        else:
-            cart_id = None
+    address_id = parse_positive_int(request.POST.get("address"), default=None)
+    if address_id is None:
+        messages.warning(request, "Пожалуйста, выберите адрес для продолжения")
+        return redirect("store:cart")
 
-        items = store_models.Cart.objects.filter(cart_id=cart_id)
-        cart_sub_total = store_models.Cart.objects.filter(cart_id=cart_id).aggregate(sub_total = models.Sum("sub_total"))['sub_total']
-        cart_shipping_total = store_models.Cart.objects.filter(cart_id=cart_id).aggregate(shipping = models.Sum("shipping"))['shipping']
-        
-        order = store_models.Order()
-        order.sub_total = cart_sub_total
-        order.customer = request.user
-        order.address = address
-        order.shipping = cart_shipping_total
-        order.tax = tax_calculation(address.country, cart_sub_total)
-        order.total = order.sub_total + order.shipping + Decimal(order.tax)
-        order.service_fee = calculate_service_fee(order.total)
-        order.total += order.service_fee
-        order.status = "new"
-        order.status_changed_by = request.user if request.user.is_authenticated else None
-        order.status_changed_at = timezone.now()
-        order.cancel_comment = ""
-        order.save()
+    address = customer_models.Address.objects.filter(
+        user=request.user, id=address_id
+    ).first()
+    if not address:
+        messages.warning(request, "Адрес не найден")
+        return redirect("store:cart")
 
-        for i in items:
-            store_models.OrderItem.objects.create(
-                order=order,
-                product=i.product,
-                qty=i.qty,
-                color=i.color,
-                size=i.size,
-                price=i.price,
-                sub_total=i.sub_total,
-                shipping=i.shipping,
-                tax=tax_calculation(address.country, i.sub_total),
-                total=i.total,
-                initial_total=i.total,
-                vendor=i.product.vendor,
-                status="new",
-            )
+    cart_id = request.session.get("cart_id")
+    items = store_models.Cart.objects.filter(cart_id=cart_id)
+    if not items.exists():
+        messages.warning(request, "Корзина пуста")
+        return redirect("store:cart")
 
-            v_user = i.product.vendor
-            if v_user is not None:
-                order.vendors.add(v_user)
-        
-    
+    cart_sub_total = store_models.Cart.objects.filter(cart_id=cart_id).aggregate(
+        sub_total=models.Sum("sub_total")
+    )["sub_total"]
+    cart_shipping_total = store_models.Cart.objects.filter(cart_id=cart_id).aggregate(
+        shipping=models.Sum("shipping")
+    )["shipping"]
+
+    order = store_models.Order()
+    order.sub_total = cart_sub_total
+    order.customer = request.user
+    order.address = address
+    order.shipping = cart_shipping_total
+    order.tax = tax_calculation(address.country, cart_sub_total)
+    order.total = order.sub_total + order.shipping + Decimal(order.tax)
+    order.service_fee = calculate_service_fee(order.total)
+    order.total += order.service_fee
+    order.status = "new"
+    order.status_changed_by = request.user
+    order.status_changed_at = timezone.now()
+    order.cancel_comment = ""
+    order.save()
+
+    for i in items:
+        store_models.OrderItem.objects.create(
+            order=order,
+            product=i.product,
+            qty=i.qty,
+            color=i.color,
+            size=i.size,
+            price=i.price,
+            sub_total=i.sub_total,
+            shipping=i.shipping,
+            tax=tax_calculation(address.country, i.sub_total),
+            total=i.total,
+            initial_total=i.total,
+            vendor=i.product.vendor,
+            status="new",
+        )
+
+        v_user = i.product.vendor
+        if v_user is not None:
+            order.vendors.add(v_user)
+
+    order_access.register_order_session_access(request, order.pk)
     return redirect("store:checkout", order.order_id)
 
+
+@login_required
 def coupon_apply(request, order_id):
-    print("Order Id ========", order_id)
-    
     try:
-        order = store_models.Order.objects.get(order_id=order_id)
-        order_items = store_models.OrderItem.objects.filter(order=order)
-    except store_models.Order.DoesNotExist:
+        order = order_access.get_order_for_customer(request, order_id)
+    except Http404:
         messages.error(request, "Заказ не найден")
         return redirect("store:cart")
 
+    order_items = store_models.OrderItem.objects.filter(order=order)
+
     if request.method == 'POST':
-        coupon_code = request.POST.get("coupon_code")
+        coupon_code = clamp_text(request.POST.get("coupon_code"), 64)
         
         if not coupon_code:
             messages.error(request, "Купон не введён")
@@ -618,8 +686,16 @@ def coupon_apply(request, order_id):
         messages.success(request, "Купон активирован")
         return redirect("store:checkout", order.order_id)
 
+    return redirect("store:checkout", order.order_id)
+
+
+@login_required
 def checkout(request, order_id):
-    order = store_models.Order.objects.get(order_id=order_id)
+    try:
+        order = order_access.get_order_for_customer(request, order_id)
+    except Http404:
+        messages.error(request, "Заказ не найден")
+        return redirect("store:cart")
     
     amount_in_inr = convert_usd_to_inr(order.total)
     amount_in_kobo = convert_usd_to_kobo(order.total)
@@ -631,8 +707,12 @@ def checkout(request, order_id):
             "currency": "INR",
             "payment_capture": "1"
         })
-    except:
+    except Exception:
         razorpay_order = None
+    flutterwave_cb = reverse("store:flutterwave_payment_callback", args=[order.order_id])
+    flutterwave_redirect_url = (
+        request.build_absolute_uri(flutterwave_cb) + "?" + urlencode({"payment_method": "Flutterwave"})
+    )
     context = {
         "order": order,
         "amount_in_inr":amount_in_inr,
@@ -644,18 +724,20 @@ def checkout(request, order_id):
         "razorpay_key_id":settings.RAZORPAY_KEY_ID,
         "paystack_public_key":settings.PAYSTACK_PUBLIC_KEY,
         "flutterwave_public_key":settings.FLUTTERWAVE_PUBLIC_KEY,
+        "flutterwave_redirect_url": flutterwave_redirect_url,
     }
 
     return render(request, "store/checkout.html", context)
 
 
+@login_required
 def update_checkout_phone(request, order_id):
     """Обновление телефона на странице checkout (нормализация +996 для Telegram)."""
     if request.method != "POST":
         return JsonResponse({"ok": False, "error": "POST only"}, status=405)
     try:
-        order = store_models.Order.objects.get(order_id=order_id)
-    except store_models.Order.DoesNotExist:
+        order = order_access.get_order_for_customer(request, order_id)
+    except Http404:
         return JsonResponse({"ok": False, "error": "Order not found"}, status=404)
     if not order.address:
         return JsonResponse({"ok": False, "error": "No address"}, status=400)
@@ -672,80 +754,70 @@ def update_checkout_phone(request, order_id):
     return JsonResponse({"ok": True, "phone": normalized})
 
 
+@login_required
 @csrf_exempt
 def stripe_payment(request, order_id):
-    order = store_models.Order.objects.get(order_id=order_id)
+    try:
+        order = order_access.get_order_for_customer(request, order_id)
+    except Http404:
+        return JsonResponse({"error": "Order not found"}, status=404)
+
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
+    unit_cents = int((order.total * Decimal("100")).quantize(Decimal("1")))
+
     checkout_session = stripe.checkout.Session.create(
-        customer_email = order.address.email,
-        payment_method_types=['card'],
-        line_items = [
+        customer_email=order.address.email,
+        payment_method_types=["card"],
+        line_items=[
             {
-                'price_data': {
-                    'currency': 'USD',
-                    'product_data': {
-                        'name': order.address.full_name
+                "price_data": {
+                    "currency": "USD",
+                    "product_data": {
+                        "name": order.address.full_name,
                     },
-                    'unit_amount': int(order.total * 100)
+                    "unit_amount": unit_cents,
                 },
-                'quantity': 1
+                "quantity": 1,
             }
         ],
-        mode = 'payment',
-        success_url = request.build_absolute_uri(reverse("store:stripe_payment_verify", args=[order.order_id])) + "?session_id={CHECKOUT_SESSION_ID}" + "&payment_method=Stripe",
-        cancel_url = request.build_absolute_uri(reverse("store:stripe_payment_verify", args=[order.order_id]))
+        mode="payment",
+        metadata={
+            "order_id": str(order.order_id),
+            "order_pk": str(order.pk),
+        },
+        success_url=request.build_absolute_uri(
+            reverse("store:stripe_payment_verify", args=[order.order_id])
+        )
+        + "?session_id={CHECKOUT_SESSION_ID}"
+        + "&payment_method=Stripe",
+        cancel_url=request.build_absolute_uri(
+            reverse("store:stripe_payment_verify", args=[order.order_id])
+        ),
     )
 
-    print("checkkout session", checkout_session)
     return JsonResponse({"sessionId": checkout_session.id})
 
+
+@login_required
 def stripe_payment_verify(request, order_id):
-    order = store_models.Order.objects.get(order_id=order_id)
+    try:
+        order = order_access.get_order_for_customer(request, order_id)
+    except Http404:
+        return redirect("store:cart")
 
     session_id = request.GET.get("session_id")
-    session = stripe.checkout.Session.retrieve(session_id)
+    if not session_id:
+        return redirect(f"/payment_status/{order_id}/?payment_status=failed")
 
-    if session.payment_status == "paid":
-        if order.payment_status == "Processing":
-            order.payment_status = "Paid"
-            order.save()
-            clear_cart_items(request)
-            customer_models.Notifications.objects.create(type="New Order", user=request.user)
-            customer_merge_data = {
-                'order': order,
-                'order_items': order.order_items(),
-            }
-            subject = f"New Order!"
-            text_body = render_to_string("email/order/customer/customer_new_order.txt", customer_merge_data)
-            html_body = render_to_string("email/order/customer/customer_new_order.html", customer_merge_data)
-
-            msg = EmailMultiAlternatives(
-                subject=subject, from_email=settings.FROM_EMAIL,
-                to=[order.address.email], body=text_body
-            )
-            msg.attach_alternative(html_body, "text/html")
-            msg.send()
-
-            # Send Order Emails to Vendors
-            for item in order.order_items():
-                
-                vendor_merge_data = {
-                    'item': item,
-                }
-                subject = f"New Order!"
-                text_body = render_to_string("email/order/vendor/vendor_new_order.txt", vendor_merge_data)
-                html_body = render_to_string("email/order/vendor/vendor_new_order.html", vendor_merge_data)
-
-                msg = EmailMultiAlternatives(
-                    subject=subject, from_email=settings.FROM_EMAIL,
-                    to=[item.vendor.email], body=text_body
-                )
-                msg.attach_alternative(html_body, "text/html")
-                msg.send()
-
-            return redirect(f"/payment_status/{order.order_id}/?payment_status=paid")
-    
+    result = try_fulfill_stripe_checkout_session(
+        order_pk=order.pk,
+        session_id=session_id,
+        request=request,
+        clear_cart=True,
+    )
+    if result in ("fulfilled", "already_fulfilled"):
+        return redirect(f"/payment_status/{order.order_id}/?payment_status=paid")
     return redirect(f"/payment_status/{order.order_id}/?payment_status=failed")
     
 def get_paypal_access_token():
@@ -757,10 +829,15 @@ def get_paypal_access_token():
     if response.status_code == 200:
         return response.json()['access_token']
     else:
-        raise Exception(f'Failed to get access token from PayPal. Status code: {response.status_code}') 
+        raise Exception(f'Failed to get access token from PayPal. Status code: {response.status_code}')
 
+
+@login_required
 def paypal_payment_verify(request, order_id):
-    order = store_models.Order.objects.get(order_id=order_id)
+    try:
+        order = order_access.get_order_for_customer(request, order_id)
+    except Http404:
+        return redirect("store:cart")
 
     transaction_id = request.GET.get("transaction_id")
     paypal_api_url = f'https://api-m.sandbox.paypal.com/v2/checkout/orders/{transaction_id}'
@@ -784,56 +861,68 @@ def paypal_payment_verify(request, order_id):
     else:
         return redirect(f"/payment_status/{order.order_id}/?payment_status=failed")
 
+
+@login_required
 @csrf_exempt
 def razorpay_payment_verify(request, order_id):
-    order = store_models.Order.objects.get(order_id=order_id)
+    try:
+        order = order_access.get_order_for_customer(request, order_id)
+    except Http404:
+        return redirect("store:cart")
     payment_method = request.GET.get("payment_method")
 
     if request.method == "POST":
         data = request.POST
-
-        # Extract payment data
-        razorpay_order_id = data.get('razorpay_order_id')
-        razorpay_payment_id = data.get('razorpay_payment_id')
-        razorpay_signature = data.get('razorpay_signature')
-
-        print("razorpay_order_id: ====", razorpay_order_id)
-        print("razorpay_payment_id: ====", razorpay_payment_id)
-        print("razorpay_signature: ====", razorpay_signature)
-
+        razorpay_order_id = data.get("razorpay_order_id")
+        razorpay_payment_id = data.get("razorpay_payment_id")
+        razorpay_signature = data.get("razorpay_signature")
         params_dict = {
-            'razorpay_order_id': razorpay_order_id,
-            'razorpay_payment_id': razorpay_payment_id,
-            'razorpay_signature': razorpay_signature
+            "razorpay_order_id": razorpay_order_id,
+            "razorpay_payment_id": razorpay_payment_id,
+            "razorpay_signature": razorpay_signature,
         }
+        if not all(
+            [razorpay_order_id, razorpay_payment_id, razorpay_signature]
+        ) or not settings.RAZORPAY_KEY_ID or not settings.RAZORPAY_KEY_SECRET:
+            return redirect(
+                f"/payment_status/{order.order_id}/?payment_status=failed"
+            )
+        client = razorpay.Client(
+            auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+        )
+        try:
+            client.utility.verify_payment_signature(params_dict)
+        except SignatureVerificationError:
+            return redirect(
+                f"/payment_status/{order.order_id}/?payment_status=failed"
+            )
 
-        # Verify the payment signature
-        razorpay_client.utility.verify_payment_signature({
-            'razorpay_order_id': razorpay_order_id,
-            'razorpay_payment_id': razorpay_payment_id,
-            'razorpay_signature': razorpay_signature
-        })
-
-        razorpay_client.utility.verify_payment_signature(params_dict)
-
-        # Success response
         if order.payment_status == "Processing":
             order.payment_status = "Paid"
             order.payment_method = payment_method
             order.save()
             clear_cart_items(request)
-            customer_models.Notifications.objects.create(type="New Order", user=request.user)
+            customer_models.Notifications.objects.create(
+                type="New Order",
+                user=order.customer if order.customer_id else None,
+            )
             for item in order.order_items():
-                vendor_models.Notifications.objects.create(type="New Order", user=item.vendor)
+                if item.vendor_id:
+                    vendor_models.Notifications.objects.create(
+                        type="New Order", user=item.vendor
+                    )
 
             return redirect(f"/payment_status/{order.order_id}/?payment_status=paid")
 
-        
-
     return redirect(f"/payment_status/{order.order_id}/?payment_status=failed")
 
+
+@login_required
 def paystack_payment_verify(request, order_id):
-    order = store_models.Order.objects.get(order_id=order_id)
+    try:
+        order = order_access.get_order_for_customer(request, order_id)
+    except Http404:
+        return redirect("store:cart")
     reference = request.GET.get('reference', '')
 
     if reference:
@@ -865,8 +954,20 @@ def paystack_payment_verify(request, order_id):
     else:
         return redirect(f"/payment_status/{order.order_id}/?payment_status=failed")
 
+
+@login_required
 def flutterwave_payment_callback(request, order_id):
-    order = store_models.Order.objects.get(order_id=order_id)
+    try:
+        order = order_access.get_order_for_customer(request, order_id)
+    except Http404:
+        return redirect("store:cart")
+
+    expected_hash = (getattr(settings, "FLUTTERWAVE_SECRET_HASH", "") or "").strip()
+    if expected_hash:
+        sig = request.headers.get("Verif-Hash") or request.headers.get("verif-hash")
+        if not sig or not hmac.compare_digest(sig, expected_hash):
+            messages.error(request, "Некорректная подпись платежа.")
+            return redirect("store:cart")
 
     payment_id = request.GET.get('tx_ref')
     status = request.GET.get('status')
@@ -889,8 +990,13 @@ def flutterwave_payment_callback(request, order_id):
     else:
         return redirect(f"/payment_status/{order.order_id}/?payment_status=failed")
 
+
+@login_required
 def payment_status(request, order_id):
-    order = store_models.Order.objects.get(order_id=order_id)
+    try:
+        order = order_access.get_order_for_customer(request, order_id)
+    except Http404:
+        return redirect("store:cart")
     payment_status = request.GET.get("payment_status")
 
     context = {
@@ -903,13 +1009,15 @@ def filter_products(request):
     products = store_models.Product.objects.filter(status="Published")
 
     # Get filters from the AJAX request
-    categories = request.GET.getlist('categories[]')
-    rating = request.GET.getlist('rating[]')
-    sizes = request.GET.getlist('sizes[]')
-    colors = request.GET.getlist('colors[]')
-    price_order = request.GET.get('prices')
-    search_filter = request.GET.get('searchFilter')
-    display = request.GET.get('display')
+    categories = parse_int_id_list(request.GET.getlist("categories[]"))
+    rating = parse_rating_list(request.GET.getlist("rating[]"))
+    sizes = parse_filter_tokens(request.GET.getlist("sizes[]"))
+    colors = parse_filter_tokens(request.GET.getlist("colors[]"))
+    price_order = (request.GET.get("prices") or "").strip()
+    if price_order not in ("lowest", "highest", ""):
+        price_order = ""
+    search_filter = parse_search_q(request.GET.get("searchFilter"))
+    display = request.GET.get("display")
 
     # Apply category filtering
     if categories:
@@ -918,8 +1026,6 @@ def filter_products(request):
     # Apply rating filtering
     if rating:
         products = products.filter(reviews__rating__in=rating).distinct()
-
-    
 
     # Apply size filtering
     if sizes:
@@ -930,15 +1036,19 @@ def filter_products(request):
         products = products.filter(variant__variant_items__content__in=colors).distinct()
 
     # Apply price ordering
-    if price_order == 'lowest':
-        products = products.order_by('-price')
-    elif price_order == 'highest':
-        products = products.order_by('price')
+    if price_order == "lowest":
+        products = products.order_by("-price")
+    elif price_order == "highest":
+        products = products.order_by("price")
 
     products = _apply_search(products, search_filter)
 
     if display:
-        products = products.filter()[:int(display)]
+        try:
+            lim = min(max(int(display), 1), 200)
+            products = products[:lim]
+        except (TypeError, ValueError):
+            pass
 
 
     # Wishlist IDs for heart icons in partial
@@ -951,19 +1061,26 @@ def filter_products(request):
 
 def order_tracker_page(request):
     if request.method == "POST":
-        item_id = request.POST.get("item_id")
-        return redirect("store:order_tracker_detail", item_id)
+        raw = (request.POST.get("item_id") or "").strip()[:128]
+        if not raw or any(c in raw for c in "\n\r\x00"):
+            messages.error(request, "Укажите корректный номер заказа или трекинга.")
+            return redirect("store:order_tracker_page")
+        return redirect("store:order_tracker_detail", raw)
     
     return render(request, "store/order_tracker_page.html")
 
 def order_tracker_detail(request, item_id):
-    try:
-        item = store_models.OrderItem.objects.filter(models.Q(item_id=item_id) | models.Q(tracking_id=item_id)).first()
-    except:
-        item = None
+    item = store_models.OrderItem.objects.filter(
+        models.Q(item_id=item_id) | models.Q(tracking_id=item_id)
+    ).first()
+    if not item:
         messages.error(request, "Заказ не найден!")
         return redirect("store:order_tracker_page")
-    
+
+    if not order_access.customer_can_access_order(request, item.order):
+        messages.error(request, "Заказ не найден!")
+        return redirect("store:order_tracker_page")
+
     context = {
         "item": item,
     }
@@ -972,22 +1089,29 @@ def order_tracker_detail(request, item_id):
 def about(request):
     return render(request, "pages/about.html")
 
+@ratelimit(key="ip", rate="30/h", method="POST", block=False, group="contact_form")
 def contact(request):
-    if request.method == "POST":
-        full_name = request.POST.get("full_name")
-        email = request.POST.get("email")
-        subject = request.POST.get("subject")
-        message = request.POST.get("message")
-
-        userauths_models.ContactMessage.objects.create(
-            full_name=full_name,
-            email=email,
-            subject=subject,
-            message=message,
+    if getattr(request, "limited", False) and request.method == "POST":
+        messages.error(
+            request,
+            "Слишком много сообщений с этого адреса. Попробуйте позже.",
         )
-        messages.success(request, "Сообщение успешно отправлено")
-        return redirect("store:contact")
-    return render(request, "pages/contact.html")
+        return render(request, "pages/contact.html", {"form": ContactForm()})
+
+    if request.method == "POST":
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            userauths_models.ContactMessage.objects.create(
+                full_name=form.cleaned_data["full_name"].strip(),
+                email=form.cleaned_data["email"].strip(),
+                subject=form.cleaned_data["subject"].strip(),
+                message=form.cleaned_data["message"].strip(),
+            )
+            messages.success(request, "Сообщение успешно отправлено")
+            return redirect("store:contact")
+    else:
+        form = ContactForm()
+    return render(request, "pages/contact.html", {"form": form})
 
 def faqs(request):
     return render(request, "pages/faqs.html")

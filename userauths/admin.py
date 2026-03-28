@@ -5,7 +5,7 @@ class UserAdmin(admin.ModelAdmin):
     list_display = ['username', 'email']
 
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'full_name']
+    list_display = ['user', 'full_name', 'subscription_plan']
 
 class ContactMessageAdmin(admin.ModelAdmin):
     list_display = ['full_name', 'email', 'subject', 'date']

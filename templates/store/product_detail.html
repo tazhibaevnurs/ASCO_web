@@ -2,6 +2,7 @@
 {% load static %}
 {% load humanize %}
 {% load wishlist_tags %}
+{% load sanitize_html %}
 {% block title %}{{ product.name }} - купить в Бишкеке | ASCO.KG{% endblock %}
 {% block meta_description %}{{ product.name }} в магазине ASCO.KG. Цена, характеристики, фото и доставка по Бишкеку и Кыргызстану.{% endblock %}
 {% block meta_keywords %}{{ product.name }}, купить {{ product.name }} Бишкек, asco, бытовая техника Бишкек, техника Кыргызстан{% endblock %}
@@ -16,6 +17,12 @@
     .product-carousel { scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
     .product-carousel img { scroll-snap-align: start; }
     .product-gallery-main img { cursor: zoom-in; }
+    /* Вкладки товара: без жёсткой обводки от Bootstrap / UA */
+    .product-detail-tab:focus,
+    .product-detail-tab:focus-visible {
+        outline: none !important;
+        box-shadow: none !important;
+    }
 </style>
 
 <section class="tw-bg-white tw-py-4 md:tw-py-8" x-data="productDetail()" @keydown.escape.window="closeModal()" @keydown.arrow-left.window="if (modalOpen) prev()" @keydown.arrow-right.window="if (modalOpen) next()">
@@ -236,23 +243,24 @@
 <section class="tw-bg-gray-50 tw-py-8 tw-mb-8" x-data="{ activeTab: 'description' }">
     <div class="tw-container tw-mx-auto tw-px-4">
         <div class="tw-flex tw-flex-wrap tw-gap-1 tw-border-b tw-border-gray-200 tw-mb-6">
-            <button type="button" @click="activeTab = 'description'" class="tw-px-4 tw-py-3 tw-font-medium tw-text-sm tw-rounded-t-lg tw-transition-colors"
-                    :class="activeTab === 'description' ? 'tw-bg-white tw-text-[#EB332C] tw-border tw-border-b-0 tw-border-gray-200 -tw-mb-px' : 'tw-text-gray-600 hover:tw-text-gray-900'">
+            <button type="button" @click="activeTab = 'description'" class="product-detail-tab tw-px-4 tw-py-3 tw-font-medium tw-text-sm tw-rounded-t-lg tw-transition-colors focus:tw-outline-none focus:tw-ring-0 focus:tw-shadow-none"
+                    :class="activeTab === 'description' ? 'tw-bg-white tw-text-[#EB332C] tw-border tw-border-b-0 tw-border-gray-200 -tw-mb-px' : 'tw-border-0 tw-bg-gray-100 tw-text-gray-600 hover:tw-text-gray-900'">
                 Описание
             </button>
-            <button type="button" @click="activeTab = 'specs'" class="tw-px-4 tw-py-3 tw-font-medium tw-text-sm tw-rounded-t-lg tw-transition-colors"
-                    :class="activeTab === 'specs' ? 'tw-bg-white tw-text-[#EB332C] tw-border tw-border-b-0 tw-border-gray-200 -tw-mb-px' : 'tw-text-gray-600 hover:tw-text-gray-900'">
+            <button type="button" @click="activeTab = 'specs'" class="product-detail-tab tw-px-4 tw-py-3 tw-font-medium tw-text-sm tw-rounded-t-lg tw-transition-colors focus:tw-outline-none focus:tw-ring-0 focus:tw-shadow-none"
+                    :class="activeTab === 'specs' ? 'tw-bg-white tw-text-[#EB332C] tw-border tw-border-b-0 tw-border-gray-200 -tw-mb-px' : 'tw-border-0 tw-bg-gray-100 tw-text-gray-600 hover:tw-text-gray-900'">
                 Характеристики
             </button>
-            <button type="button" @click="activeTab = 'reviews'" class="tw-px-4 tw-py-3 tw-font-medium tw-text-sm tw-rounded-t-lg tw-transition-colors"
-                    :class="activeTab === 'reviews' ? 'tw-bg-white tw-text-[#EB332C] tw-border tw-border-b-0 tw-border-gray-200 -tw-mb-px' : 'tw-text-gray-600 hover:tw-text-gray-900'">
+            <button type="button" @click="activeTab = 'reviews'" class="product-detail-tab tw-px-4 tw-py-3 tw-font-medium tw-text-sm tw-rounded-t-lg tw-transition-colors focus:tw-outline-none focus:tw-ring-0 focus:tw-shadow-none"
+                    :class="activeTab === 'reviews' ? 'tw-bg-white tw-text-[#EB332C] tw-border tw-border-b-0 tw-border-gray-200 -tw-mb-px' : 'tw-border-0 tw-bg-gray-100 tw-text-gray-600 hover:tw-text-gray-900'">
                 Отзывы
             </button>
         </div>
 
         <div x-show="activeTab === 'description'" x-cloak class="tw-bg-white tw-rounded-xl tw-border tw-border-gray-200 tw-p-6 tw-prose tw-prose-gray tw-max-w-none">
             <div class="product-description-content">
-                {{ product.description|safe }}
+                {# HTML из редактора админки (доверенный контент); пользовательский ввод сюда не попадает #}
+                {{ product.description|sanitize_html }}
             </div>
         </div>
 

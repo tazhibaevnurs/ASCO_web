@@ -1,0 +1,22 @@
+# Проверка известных CVE в зависимостях Python (см. pip-audit).
+name: security
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  pip-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pip-audit
+        run: pip install pip-audit
+      - name: Audit requirements.txt
+        run: pip-audit -r requirements.txt --desc-on-failure

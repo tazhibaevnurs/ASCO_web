@@ -33,6 +33,13 @@
                                 {{ form.password }}
                             </div>
                             <div class="col-12">
+                                <label class="form-label fw-medium">Капча</label>
+                                {% if form.captcha.errors %}
+                                    <div class="text-danger small mb-1">{{ form.captcha.errors|striptags }}</div>
+                                {% endif %}
+                                {{ form.captcha }}
+                            </div>
+                            <div class="col-12">
                                 <button type="submit" class="btn bg-primary text-white rounded w-100">
                                     Войти <i class="fas fa-sign-in-alt ms-2"></i>
                                 </button>

@@ -12,9 +12,55 @@
 	#product-grid-skeleton { display: none; }
 	#product-grid-skeleton.htmx-request { display: grid !important; }
 	#product-grid.htmx-request { opacity: 0.4; pointer-events: none; }
+	/* Перебиваем глобальный styles.css (.form-control:focus { border-color: #252525 }) */
+	.shop-page .form-control,
+	.shop-page select.form-control {
+		border: 1px solid #e5e7eb !important;
+		border-radius: 0.75rem !important;
+		outline: none !important;
+		box-shadow: none !important;
+	}
+	.shop-page .form-control:hover,
+	.shop-page .form-control:focus,
+	.shop-page select.form-control:hover,
+	.shop-page select.form-control:focus {
+		border-color: #e5e7eb !important;
+		outline: none !important;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+	}
+	.shop-page .form-check-input {
+		border-color: #d1d5db !important;
+	}
+	.shop-page .form-check-input:focus {
+		outline: none !important;
+		box-shadow: 0 0 0 2px rgba(235, 51, 44, 0.15) !important;
+		border-color: #d1d5db !important;
+	}
+	.shop-page .shop-search-submit:focus,
+	.shop-page .shop-search-submit:focus-visible {
+		outline: none !important;
+		box-shadow: none !important;
+		border: none !important;
+	}
+	/* Кнопки фильтров (аккордеон, сброс, моб. панель, drawer): без жёсткой обводки от Bootstrap/UA */
+	.shop-page .shop-filters-sidebar button,
+	.shop-page #shop-filters-drawer button,
+	.shop-page .shop-mobile-filters-row button {
+		border: none !important;
+	}
+	.shop-page .shop-filters-sidebar button:focus,
+	.shop-page .shop-filters-sidebar button:focus-visible,
+	.shop-page #shop-filters-drawer button:focus,
+	.shop-page #shop-filters-drawer button:focus-visible,
+	.shop-page .shop-mobile-filters-row button:focus,
+	.shop-page .shop-mobile-filters-row button:focus-visible {
+		outline: none !important;
+		box-shadow: none !important;
+		border: none !important;
+	}
 </style>
 
-<section class="tw-min-h-screen tw-bg-gray-50" x-data="shopCatalog()" x-init="init()">
+<section class="shop-page tw-min-h-screen tw-bg-gray-50" x-data="shopCatalog()" x-init="init()">
 	<div class="tw-container tw-mx-auto tw-px-4 tw-py-4 md:tw-py-6">
 		<form id="shop-filters-form" action="{% url 'store:shop' %}" method="get"
 		      hx-get="{% url 'store:shop' %}"
@@ -29,7 +75,7 @@
 			<h1 class="tw-text-xl md:tw-text-2xl tw-font-bold tw-text-gray-900">Все товары (<span id="shop-product-count" class="product_count">{{ products_list.count }}</span>)</h1>
 			<div class="tw-flex tw-gap-2 tw-w-full sm:tw-w-auto">
 				<input type="text" name="q" class="form-control rounded search-filter tw-flex-1 sm:tw-max-w-sm md:tw-max-w-2xl" placeholder="Поиск товаров..." value="{{ request.GET.q }}" aria-label="Поиск">
-				<button type="submit" class="btn rounded text-white tw-shrink-0" style="background-color: #EB332C;"><i class="fas fa-search"></i></button>
+				<button type="submit" class="shop-search-submit btn rounded text-white tw-shrink-0 tw-border-0 focus:tw-outline-none focus:tw-ring-0 focus:tw-shadow-none" style="background-color: #EB332C;"><i class="fas fa-search"></i></button>
 			</div>
 		</div>
 
@@ -43,24 +89,24 @@
 		</select>
 
 		{# Мобильная плашка: Фильтры + Сортировка (только на мобилке) #}
-		<div class="tw-flex tw-gap-2 tw-mb-4 md:tw-hidden tw-relative" x-cloak>
-			<button type="button" @click="filtersOpen = true" class="tw-flex-1 tw-flex tw-items-center tw-justify-center tw-gap-2 tw-py-3 tw-px-4 tw-rounded-xl tw-bg-white tw-shadow-sm tw-border tw-border-gray-200 tw-text-gray-700 tw-font-medium">
+		<div class="shop-mobile-filters-row tw-flex tw-gap-2 tw-mb-4 md:tw-hidden tw-relative" x-cloak>
+			<button type="button" @click="filtersOpen = true" class="tw-flex-1 tw-flex tw-items-center tw-justify-center tw-gap-2 tw-py-3 tw-px-4 tw-rounded-xl tw-border-0 tw-bg-white tw-shadow-sm tw-text-gray-700 tw-font-medium focus:tw-outline-none focus:tw-ring-0">
 				<i class="fas fa-sliders-h"></i> Фильтры
 			</button>
 			<div class="tw-flex-1 tw-relative">
-				<button type="button" @click="sortOpen = !sortOpen" class="tw-w-full tw-flex tw-items-center tw-justify-center tw-gap-2 tw-py-3 tw-px-4 tw-rounded-xl tw-bg-white tw-shadow-sm tw-border tw-border-gray-200 tw-text-gray-700 tw-font-medium" :aria-expanded="sortOpen">
+				<button type="button" @click="sortOpen = !sortOpen" class="tw-w-full tw-flex tw-items-center tw-justify-center tw-gap-2 tw-py-3 tw-px-4 tw-rounded-xl tw-border-0 tw-bg-white tw-shadow-sm tw-text-gray-700 tw-font-medium focus:tw-outline-none focus:tw-ring-0" :aria-expanded="sortOpen">
 					<i class="fas fa-sort-amount-down"></i> Сортировка
 				</button>
 				{# Выпадающее меню сортировки #}
 				<div x-show="sortOpen" x-transition:enter="tw-transition tw-duration-150 tw-ease-out" x-transition:enter-start="tw-opacity-0 tw-scale-95" x-transition:enter-end="tw-opacity-100 tw-scale-100"
 				     x-transition:leave="tw-transition tw-duration-100" x-transition:leave-start="tw-opacity-100" x-transition:leave-end="tw-opacity-0"
 				     @click.outside="sortOpen = false"
-				     class="tw-absolute tw-left-0 tw-right-0 tw-top-full tw-mt-1 tw-z-30 tw-bg-white tw-rounded-xl tw-shadow-lg tw-border tw-border-gray-200 tw-py-1 tw-overflow-hidden">
-					<button type="button" @click="$refs.sortSelect.value=''; $refs.sortSelect.dispatchEvent(new Event('change', {bubbles: true})); sortOpen = false" class="tw-w-full tw-text-left tw-px-4 tw-py-2.5 tw-text-sm tw-text-gray-700 hover:tw-bg-gray-50">По умолчанию</button>
-					<button type="button" @click="$refs.sortSelect.value='newest'; $refs.sortSelect.dispatchEvent(new Event('change', {bubbles: true})); sortOpen = false" class="tw-w-full tw-text-left tw-px-4 tw-py-2.5 tw-text-sm tw-text-gray-700 hover:tw-bg-gray-50">Сначала новинки</button>
-					<button type="button" @click="$refs.sortSelect.value='price_asc'; $refs.sortSelect.dispatchEvent(new Event('change', {bubbles: true})); sortOpen = false" class="tw-w-full tw-text-left tw-px-4 tw-py-2.5 tw-text-sm tw-text-gray-700 hover:tw-bg-gray-50">По цене: сначала дешевые</button>
-					<button type="button" @click="$refs.sortSelect.value='price_desc'; $refs.sortSelect.dispatchEvent(new Event('change', {bubbles: true})); sortOpen = false" class="tw-w-full tw-text-left tw-px-4 tw-py-2.5 tw-text-sm tw-text-gray-700 hover:tw-bg-gray-50">По цене: сначала дорогие</button>
-					<button type="button" @click="$refs.sortSelect.value='name'; $refs.sortSelect.dispatchEvent(new Event('change', {bubbles: true})); sortOpen = false" class="tw-w-full tw-text-left tw-px-4 tw-py-2.5 tw-text-sm tw-text-gray-700 hover:tw-bg-gray-50">По названию</button>
+				     class="tw-absolute tw-left-0 tw-right-0 tw-top-full tw-mt-1 tw-z-30 tw-bg-white tw-rounded-xl tw-shadow-lg tw-py-1 tw-overflow-hidden">
+					<button type="button" @click="$refs.sortSelect.value=''; $refs.sortSelect.dispatchEvent(new Event('change', {bubbles: true})); sortOpen = false" class="tw-w-full tw-border-0 tw-text-left tw-px-4 tw-py-2.5 tw-text-sm tw-text-gray-700 hover:tw-bg-gray-50 focus:tw-outline-none focus:tw-ring-0">По умолчанию</button>
+					<button type="button" @click="$refs.sortSelect.value='newest'; $refs.sortSelect.dispatchEvent(new Event('change', {bubbles: true})); sortOpen = false" class="tw-w-full tw-border-0 tw-text-left tw-px-4 tw-py-2.5 tw-text-sm tw-text-gray-700 hover:tw-bg-gray-50 focus:tw-outline-none focus:tw-ring-0">Сначала новинки</button>
+					<button type="button" @click="$refs.sortSelect.value='price_asc'; $refs.sortSelect.dispatchEvent(new Event('change', {bubbles: true})); sortOpen = false" class="tw-w-full tw-border-0 tw-text-left tw-px-4 tw-py-2.5 tw-text-sm tw-text-gray-700 hover:tw-bg-gray-50 focus:tw-outline-none focus:tw-ring-0">По цене: сначала дешевые</button>
+					<button type="button" @click="$refs.sortSelect.value='price_desc'; $refs.sortSelect.dispatchEvent(new Event('change', {bubbles: true})); sortOpen = false" class="tw-w-full tw-border-0 tw-text-left tw-px-4 tw-py-2.5 tw-text-sm tw-text-gray-700 hover:tw-bg-gray-50 focus:tw-outline-none focus:tw-ring-0">По цене: сначала дорогие</button>
+					<button type="button" @click="$refs.sortSelect.value='name'; $refs.sortSelect.dispatchEvent(new Event('change', {bubbles: true})); sortOpen = false" class="tw-w-full tw-border-0 tw-text-left tw-px-4 tw-py-2.5 tw-text-sm tw-text-gray-700 hover:tw-bg-gray-50 focus:tw-outline-none focus:tw-ring-0">По названию</button>
 				</div>
 			</div>
 		</div>
@@ -68,10 +114,10 @@
 		<div class="tw-flex tw-gap-6 tw-relative">
 			{# Боковая панель фильтров: на мобилке — drawer, на десктопе — липкая колонка #}
 			<aside id="shop-filters" class="shop-filters-sidebar tw-w-full md:tw-w-64 lg:tw-w-72 tw-flex-shrink-0 tw-hidden md:tw-block md:tw-self-start md:tw-sticky tw-top-24 tw-max-h-[calc(100vh-6rem)] tw-overflow-y-auto">
-				<div class="tw-bg-white tw-rounded-2xl tw-shadow-sm tw-border tw-border-gray-100 tw-p-4 tw-space-y-2">
+				<div class="tw-bg-white tw-rounded-2xl tw-shadow-sm tw-p-4 tw-space-y-2">
 					{# Категории (аккордеон) #}
-					<div class="tw-border-b tw-border-gray-100 tw-pb-3" x-data="{ open: true }">
-						<button type="button" @click="open = !open" class="tw-w-full tw-flex tw-items-center tw-justify-between tw-py-2 tw-text-left tw-font-semibold tw-text-gray-900">
+					<div class="tw-pb-3 tw-mb-1" x-data="{ open: true }">
+						<button type="button" @click="open = !open" class="tw-w-full tw-flex tw-items-center tw-justify-between tw-py-2 tw-rounded-lg tw-border-0 tw-text-left tw-font-semibold tw-text-gray-900 focus:tw-outline-none focus:tw-ring-0">
 							Категории
 							<i class="fas tw-text-gray-400" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
 						</button>
@@ -91,8 +137,8 @@
 					</div>
 
 					{# Цена (аккордеон) #}
-					<div class="tw-border-b tw-border-gray-100 tw-pb-3" x-data="{ open: true }">
-						<button type="button" @click="open = !open" class="tw-w-full tw-flex tw-items-center tw-justify-between tw-py-2 tw-text-left tw-font-semibold tw-text-gray-900">
+					<div class="tw-pb-3 tw-mb-1" x-data="{ open: true }">
+						<button type="button" @click="open = !open" class="tw-w-full tw-flex tw-items-center tw-justify-between tw-py-2 tw-rounded-lg tw-border-0 tw-text-left tw-font-semibold tw-text-gray-900 focus:tw-outline-none focus:tw-ring-0">
 							Цена
 							<i class="fas tw-text-gray-400" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
 						</button>
@@ -110,14 +156,14 @@
 
 					{# Цвета #}
 					{% if colors %}
-					<div class="tw-border-b tw-border-gray-100 tw-pb-3" x-data="{ open: false }">
-						<button type="button" @click="open = !open" class="tw-w-full tw-flex tw-items-center tw-justify-between tw-py-2 tw-text-left tw-font-semibold tw-text-gray-900">
+					<div class="tw-pb-3 tw-mb-1" x-data="{ open: false }">
+						<button type="button" @click="open = !open" class="tw-w-full tw-flex tw-items-center tw-justify-between tw-py-2 tw-rounded-lg tw-border-0 tw-text-left tw-font-semibold tw-text-gray-900 focus:tw-outline-none focus:tw-ring-0">
 							Цвета
 							<i class="fas tw-text-gray-400" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
 						</button>
 						<div x-show="open" class="tw-pt-2 tw-flex tw-flex-wrap tw-gap-2">
 							{% for c in colors %}
-							<label class="tw-cursor-pointer tw-w-8 tw-h-8 tw-rounded-full tw-border-2 tw-border-gray-200 tw-shadow-inner tw-flex-shrink-0" style="background-color: {{ c.content }};" title="{{ c.title }}">
+							<label class="tw-cursor-pointer tw-w-8 tw-h-8 tw-rounded-full tw-ring-1 tw-ring-inset tw-ring-gray-200/80 tw-shadow-inner tw-flex-shrink-0" style="background-color: {{ c.content }};" title="{{ c.title }}">
 								<input type="checkbox" class="colors-filter tw-sr-only" value="{{ c.content }}" id="color{{ c.content }}">
 							</label>
 							{% endfor %}
@@ -127,8 +173,8 @@
 
 					{# Размеры #}
 					{% if sizes %}
-					<div class="tw-border-b tw-border-gray-100 tw-pb-3" x-data="{ open: false }">
-						<button type="button" @click="open = !open" class="tw-w-full tw-flex tw-items-center tw-justify-between tw-py-2 tw-text-left tw-font-semibold tw-text-gray-900">
+					<div class="tw-pb-3 tw-mb-1" x-data="{ open: false }">
+						<button type="button" @click="open = !open" class="tw-w-full tw-flex tw-items-center tw-justify-between tw-py-2 tw-rounded-lg tw-border-0 tw-text-left tw-font-semibold tw-text-gray-900 focus:tw-outline-none focus:tw-ring-0">
 							Размеры
 							<i class="fas tw-text-gray-400" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
 						</button>
@@ -145,7 +191,7 @@
 					</div>
 					{% endif %}
 
-					<button type="button" class="reset_shop_filter_btn tw-w-full tw-py-2 tw-px-3 tw-rounded-lg tw-text-sm tw-font-medium tw-bg-gray-100 tw-text-gray-700 hover:tw-bg-gray-200 tw-transition-colors">
+					<button type="button" class="reset_shop_filter_btn tw-w-full tw-py-2 tw-px-3 tw-rounded-lg tw-border-0 tw-text-sm tw-font-medium tw-bg-gray-100 tw-text-gray-700 hover:tw-bg-gray-200 tw-transition-colors focus:tw-outline-none focus:tw-ring-0">
 						<i class="fas fa-rotate tw-mr-2"></i> Сбросить фильтр
 					</button>
 				</div>
@@ -258,16 +304,16 @@
 	     x-transition:leave-start="tw-opacity-100"
 	     x-transition:leave-end="tw-opacity-0">
 		<div class="tw-absolute tw-inset-0 tw-bg-black/50" @click="filtersOpen = false" aria-hidden="true"></div>
-		<div class="tw-absolute tw-top-0 tw-right-0 tw-bottom-0 tw-w-full tw-max-w-sm tw-bg-white tw-shadow-xl tw-overflow-y-auto"
+		<div id="shop-filters-drawer" class="tw-absolute tw-top-0 tw-right-0 tw-bottom-0 tw-w-full tw-max-w-sm tw-bg-white tw-shadow-xl tw-overflow-y-auto"
 		     x-transition:enter="tw-transition tw-duration-200"
 		     x-transition:enter-start="tw-translate-x-full"
 		     x-transition:enter-end="tw-translate-x-0"
 		     x-transition:leave="tw-transition tw-duration-150"
 		     x-transition:leave-start="tw-translate-x-0"
 		     x-transition:leave-end="tw-translate-x-full">
-			<div class="tw-p-4 tw-sticky tw-top-0 tw-bg-white tw-flex tw-items-center tw-justify-between tw-border-b tw-border-gray-200 tw-z-10">
+			<div class="tw-p-4 tw-sticky tw-top-0 tw-bg-white tw-flex tw-items-center tw-justify-between tw-z-10 tw-shadow-sm">
 				<h2 class="tw-text-lg tw-font-bold tw-text-gray-900">Фильтры</h2>
-				<button type="button" @click="filtersOpen = false" class="tw-p-2 tw-rounded-lg tw-text-gray-500 hover:tw-bg-gray-100" aria-label="Закрыть">
+				<button type="button" @click="filtersOpen = false" class="tw-p-2 tw-rounded-lg tw-border-0 tw-text-gray-500 hover:tw-bg-gray-100 focus:tw-outline-none focus:tw-ring-0" aria-label="Закрыть">
 					<i class="fas fa-times"></i>
 				</button>
 			</div>
@@ -300,7 +346,7 @@
 						<h3 class="tw-font-semibold tw-text-gray-900 tw-mb-2">Цвета</h3>
 						<div class="tw-flex tw-flex-wrap tw-gap-2">
 							{% for c in colors %}
-							<label class="tw-w-8 tw-h-8 tw-rounded-full tw-border-2 tw-border-gray-200 tw-cursor-pointer tw-flex-shrink-0" style="background-color: {{ c.content }};" title="{{ c.title }}">
+							<label class="tw-w-8 tw-h-8 tw-rounded-full tw-ring-1 tw-ring-inset tw-ring-gray-200/80 tw-cursor-pointer tw-flex-shrink-0" style="background-color: {{ c.content }};" title="{{ c.title }}">
 								<input type="checkbox" class="colors-filter tw-sr-only" value="{{ c.content }}">
 							</label>
 							{% endfor %}
@@ -318,10 +364,10 @@
 						{% endfor %}
 					</div>
 					{% endif %}
-					<button type="button" class="reset_shop_filter_btn tw-w-full tw-py-3 tw-rounded-xl tw-bg-gray-100 tw-text-gray-700 tw-font-medium">
+					<button type="button" class="reset_shop_filter_btn tw-w-full tw-py-3 tw-rounded-xl tw-border-0 tw-bg-gray-100 tw-text-gray-700 tw-font-medium focus:tw-outline-none focus:tw-ring-0">
 						<i class="fas fa-rotate tw-mr-2"></i> Сбросить фильтр
 					</button>
-					<button type="button" @click="filtersOpen = false; applyFiltersFromDrawer()" class="tw-w-full tw-py-3 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-medium">
+					<button type="button" @click="filtersOpen = false; applyFiltersFromDrawer()" class="tw-w-full tw-py-3 tw-rounded-xl tw-border-0 tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-medium focus:tw-outline-none focus:tw-ring-0">
 						Показать товары
 					</button>
 				</div>
