@@ -4,6 +4,14 @@
 {% block content %}
 <style>
 	.add_to_cart:focus, .btn:focus { outline: none !important; box-shadow: none !important; border: none !important; }
+	/* Корзина: без focus-ring у иконок количества / удаления */
+	.update_cart_qty:focus,
+	.update_cart_qty:focus-visible,
+	.delete_cart_item:focus,
+	.delete_cart_item:focus-visible {
+		outline: none !important;
+		box-shadow: none !important;
+	}
 </style>
 
 <section class="tw-min-h-screen tw-bg-gray-50">
@@ -44,15 +52,15 @@
 										<span class="tw-font-semibold tw-text-gray-900 tw-text-sm md:tw-text-base">{{ item.price|intcomma }} сом</span>
 									</div>
 									<div class="tw-flex tw-items-center tw-gap-1">
-										<button type="button" class="update_cart_qty tw-w-9 tw-h-9 tw-flex tw-items-center tw-justify-center tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-text-gray-700 hover:tw-bg-gray-50 tw-font-medium tw-text-lg" data-update_type="decrease" data-product_id="{{ item.product.id }}" data-item_id="{{ item.id }}" aria-label="Уменьшить">−</button>
-										<input type="number" readonly class="item-qty-{{ item.id }} tw-w-12 tw-h-9 tw-text-center tw-rounded-lg tw-border tw-border-gray-200 tw-text-sm tw-font-medium" value="{{ item.qty }}" />
-										<button type="button" class="update_cart_qty tw-w-9 tw-h-9 tw-flex tw-items-center tw-justify-center tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-text-gray-700 hover:tw-bg-gray-50 tw-font-medium tw-text-lg" data-update_type="increase" data-product_id="{{ item.product.id }}" data-item_id="{{ item.id }}" aria-label="Увеличить">+</button>
+										<button type="button" class="update_cart_qty tw-w-9 tw-h-9 tw-flex tw-items-center tw-justify-center tw-rounded-lg tw-border tw-border-solid tw-border-gray-200 tw-bg-white tw-text-gray-700 hover:tw-bg-gray-50 tw-font-medium tw-text-lg" data-update_type="decrease" data-product_id="{{ item.product.id }}" data-item_id="{{ item.id }}" aria-label="Уменьшить">−</button>
+										<input type="number" readonly class="item-qty-{{ item.id }} tw-w-12 tw-h-9 tw-text-center tw-rounded-lg tw-border tw-border-solid tw-border-gray-200 tw-text-sm tw-font-medium tw-outline-none focus:tw-ring-0" value="{{ item.qty }}" />
+										<button type="button" class="update_cart_qty tw-w-9 tw-h-9 tw-flex tw-items-center tw-justify-center tw-rounded-lg tw-border tw-border-solid tw-border-gray-200 tw-bg-white tw-text-gray-700 hover:tw-bg-gray-50 tw-font-medium tw-text-lg" data-update_type="increase" data-product_id="{{ item.product.id }}" data-item_id="{{ item.id }}" aria-label="Увеличить">+</button>
 									</div>
 									<div class="tw-flex tw-items-center tw-gap-2">
 										<span class="tw-text-xs tw-text-gray-500 md:tw-hidden">Итого:</span>
 										<span class="tw-font-bold tw-text-[#EB332C] tw-text-sm md:tw-text-base"><span class="item_sub_total_{{ item.id }}">{{ item.sub_total|intcomma }}</span> сом</span>
 									</div>
-									<button type="button" class="delete_cart_item tw-w-9 tw-h-9 tw-flex tw-items-center tw-justify-center tw-rounded-lg tw-bg-red-50 hover:tw-bg-red-100 tw-text-red-600 tw-transition-colors" data-item_id="{{ item.id }}" data-product_id="{{ item.product.id }}" aria-label="Удалить"><i class="fas fa-trash tw-text-sm"></i></button>
+									<button type="button" class="delete_cart_item tw-w-9 tw-h-9 tw-flex tw-items-center tw-justify-center tw-rounded-lg tw-border-0 tw-bg-red-50 hover:tw-bg-red-100 tw-text-red-600 tw-transition-colors tw-outline-none focus:tw-ring-0" data-item_id="{{ item.id }}" data-product_id="{{ item.product.id }}" aria-label="Удалить"><i class="fas fa-trash tw-text-sm"></i></button>
 								</div>
 							</div>
 						</div>
@@ -110,19 +118,19 @@
 						{% csrf_token %}
 						<div class="tw-mb-3">
 							<label class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Имя и фамилия *</label>
-							<input type="text" name="full_name" class="form-control tw-rounded-xl tw-border-gray-200" placeholder="Ваше имя" required>
+							<input type="text" name="full_name" class="form-control tw-rounded-xl tw-border tw-border-solid tw-border-gray-200 tw-outline-none focus:tw-ring-0" placeholder="Ваше имя" required>
 						</div>
 						<div class="tw-mb-3">
 							<label class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Номер телефона (Кыргызстан, +996) *</label>
-							<input type="tel" name="phone" id="delivery-phone" class="form-control tw-rounded-xl tw-border-gray-200" placeholder="+996 XXX XXX XXX" maxlength="16" required autocomplete="tel">
+							<input type="tel" name="phone" id="delivery-phone" class="form-control tw-rounded-xl tw-border tw-border-solid tw-border-gray-200 tw-outline-none focus:tw-ring-0" placeholder="+996 XXX XXX XXX" maxlength="16" required autocomplete="tel">
 						</div>
 						<div class="tw-mb-4">
 							<label class="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-1">Адрес доставки *</label>
-							<textarea name="address" rows="3" class="form-control tw-rounded-xl tw-border-gray-200" placeholder="Полный адрес доставки" required></textarea>
+							<textarea name="address" rows="3" class="form-control tw-rounded-xl tw-border tw-border-solid tw-border-gray-200 tw-outline-none focus:tw-ring-0" placeholder="Полный адрес доставки" required></textarea>
 						</div>
 						<div class="tw-flex tw-justify-end tw-gap-2">
-							<button type="button" class="tw-px-4 tw-py-2 tw-rounded-xl tw-border tw-border-gray-200 tw-text-gray-700 tw-font-medium hover:tw-bg-gray-50" data-bs-dismiss="modal">Отмена</button>
-							<button type="submit" class="tw-px-4 tw-py-2 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-medium">Заказ в один клик <i class="fas fa-bolt tw-ml-1"></i></button>
+							<button type="button" class="tw-px-4 tw-py-2 tw-rounded-xl tw-border tw-border-solid tw-border-gray-200 tw-text-gray-700 tw-font-medium hover:tw-bg-gray-50 tw-outline-none focus:tw-ring-0" data-bs-dismiss="modal">Отмена</button>
+							<button type="submit" class="tw-px-4 tw-py-2 tw-rounded-xl tw-border-0 tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-medium tw-outline-none focus:tw-ring-0">Заказ в один клик <i class="fas fa-bolt tw-ml-1"></i></button>
 						</div>
 					</form>
 				</div>
@@ -138,7 +146,7 @@
 					<div class="tw-mb-4"><i class="fas fa-check-circle tw-text-[#22c55e] tw-text-5xl"></i></div>
 					<h5 class="tw-font-bold tw-text-gray-900 tw-mb-2" id="deliverySuccessModalLabel">Заявка успешно отправлена!</h5>
 					<p class="tw-text-gray-500 tw-mb-4">Мы свяжемся с вами в ближайшее время.</p>
-					<button type="button" class="tw-px-4 tw-py-2 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-medium" data-bs-dismiss="modal">Закрыть</button>
+					<button type="button" class="tw-px-4 tw-py-2 tw-rounded-xl tw-border-0 tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-medium tw-outline-none focus:tw-ring-0" data-bs-dismiss="modal">Закрыть</button>
 				</div>
 			</div>
 		</div>
