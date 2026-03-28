@@ -352,9 +352,11 @@ def delivery_request(request):
     cart_sub_total = items.aggregate(total=models.Sum("sub_total"))['total'] or Decimal("0.00")
     cart_shipping_total = items.aggregate(total=models.Sum("shipping"))['total'] or Decimal("0.00")
 
-    # Снимок корзины до удаления (для писем после commit). select_related — меньше запросов к БД.
+    # Снимок корзины до удаления (для писем после commit).
+    # product.vendor — это User; у User нет цепочки __user (было бы FieldError → 500 до try).
+    # OneToOne vendor.Vendor: user.vendor → профиль магазина (store_name).
     cart_rows = list(
-        items.select_related("product", "product__vendor", "product__vendor__user")
+        items.select_related("product", "product__vendor", "product__vendor__vendor")
     )
 
     def _d(v):
@@ -433,11 +435,22 @@ def delivery_request(request):
         vendor_items_map.setdefault(vendor, []).append(row)
 
     for vendor, vendor_items in vendor_items_map.items():
-        if not vendor or not getattr(vendor, "user", None) or not vendor.user.email:
+        # vendor здесь — userauths.User (FK с товара), письмо на vendor.email
+        if not vendor or not getattr(vendor, "email", None):
             continue
         try:
+            try:
+                v_shop = vendor.vendor
+            except Exception:
+                v_shop = None
+            vendor_greeting = (
+                (v_shop.store_name if v_shop and v_shop.store_name else None)
+                or vendor.get_full_name()
+                or vendor.email
+            )
             context = {
                 "vendor": vendor,
+                "vendor_greeting": vendor_greeting,
                 "items": vendor_items,
                 "full_name": full_name,
                 "phone": phone,
@@ -448,7 +461,7 @@ def delivery_request(request):
             subject = "Новая заявка на доставку"
             text_body = render_to_string("email/order/vendor/delivery_request.txt", context)
             html_body = render_to_string("email/order/vendor/delivery_request.html", context)
-            email = EmailMultiAlternatives(subject=subject, body=text_body, from_email=from_email, to=[vendor.user.email])
+            email = EmailMultiAlternatives(subject=subject, body=text_body, from_email=from_email, to=[vendor.email])
             email.attach_alternative(html_body, "text/html")
             email.send(fail_silently=True)
         except Exception:

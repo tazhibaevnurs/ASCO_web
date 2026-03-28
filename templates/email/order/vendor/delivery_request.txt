@@ -1,4 +1,4 @@
-Здравствуйте, {{ vendor.store_name|default:vendor.user.get_full_name|default:vendor.user.email }}!
+Здравствуйте, {{ vendor_greeting }}!
 
 Получена новая заявка на доставку от клиента.
 

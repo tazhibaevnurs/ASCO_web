@@ -1,5 +1,5 @@
 {% autoescape off %}
-<p>Здравствуйте, {{ vendor.store_name|default:vendor.user.get_full_name|default:vendor.user.email }}!</p>
+<p>Здравствуйте, {{ vendor_greeting }}!</p>
 <p>Получена новая заявка на доставку от клиента.</p>
 <p>
     <strong>Имя:</strong> {{ full_name }}<br>
