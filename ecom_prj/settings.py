@@ -198,8 +198,14 @@ ANYMAIL = {
 }
 
 # Telegram Bot: уведомления о новых заказах
-TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN", default="")
-TELEGRAM_CHAT_ID = env("TELEGRAM_CHAT_ID", default="")
+TELEGRAM_BOT_TOKEN = (env("TELEGRAM_BOT_TOKEN", default="") or "").strip()
+_raw_tg_chat = env("TELEGRAM_CHAT_ID", default="")
+# ID группы/чата может быть int (-100...) — API принимает строку или число
+TELEGRAM_CHAT_ID = (
+    ""
+    if _raw_tg_chat is None or _raw_tg_chat == ""
+    else str(_raw_tg_chat).strip()
+)
 
 MESSAGE_TAGS = {
     messages.ERROR: 'danger',

@@ -472,9 +472,12 @@ def delivery_request(request):
         try:
             from orders.services import send_order_to_telegram
 
-            send_order_to_telegram(order_pk_for_telegram)
+            if not send_order_to_telegram(order_pk_for_telegram):
+                logger.warning(
+                    "delivery_request: уведомление в Telegram не отправлено (см. логи orders.services / проверьте .env и api.telegram.org)."
+                )
         except Exception:
-            logger.exception("delivery_request: ошибка отправки в Telegram")
+            logger.exception("delivery_request: исключение при отправке в Telegram")
 
     messages.success(request, "Заявка успешно отправлена. Мы свяжемся с вами в ближайшее время!")
     return redirect("store:shop")
