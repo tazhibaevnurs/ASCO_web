@@ -2,7 +2,7 @@
 {% load wishlist_tags %}
 {% load image_tags %}
 {% for p in products %}
-	<div class="product-card tw-bg-white tw-rounded-2xl tw-shadow-md hover:tw-shadow-lg tw-overflow-hidden tw-transition-shadow tw-group">
+	<div class="product-card tw-bg-white tw-rounded-2xl tw-shadow-md tw-overflow-hidden tw-transition-transform tw-duration-300 hover:-tw-translate-y-0.5 tw-group">
 			<div class="tw-relative tw-aspect-square tw-bg-gray-100 tw-overflow-hidden">
 				<a href="{% url 'store:product_detail' p.slug %}" class="tw-block tw-absolute tw-inset-0 tw-z-0">
 					{% if p.image %}

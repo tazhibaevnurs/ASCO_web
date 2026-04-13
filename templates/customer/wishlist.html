@@ -24,7 +24,7 @@
 		<div id="wishlist-grid-wrapper" class="tw-grid tw-grid-cols-2 lg:tw-grid-cols-3 xl:tw-grid-cols-4 tw-gap-3 md:tw-gap-4 lg:tw-gap-6">
 			{% for w in wishlist %}
 				<div id="wishlist-item-{{ w.id }}" class="wishlist-card-item tw-flex tw-flex-col">
-					<div class="tw-bg-white tw-rounded-2xl tw-shadow-sm hover:tw-shadow-md tw-overflow-hidden tw-transition-shadow tw-group tw-flex tw-flex-col tw-flex-1">
+					<div class="tw-bg-white tw-rounded-2xl tw-shadow-sm tw-overflow-hidden tw-transition-transform tw-duration-300 hover:-tw-translate-y-0.5 tw-group tw-flex tw-flex-col tw-flex-1">
 						<div class="tw-relative tw-aspect-square tw-bg-gray-100 tw-overflow-hidden tw-flex-shrink-0">
 							<a href="{% url 'store:product_detail' w.product.slug %}" class="tw-block tw-absolute tw-inset-0 tw-z-0">
 								{% if w.product.image %}

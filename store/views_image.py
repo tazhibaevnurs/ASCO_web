@@ -59,10 +59,17 @@ def image_fit(request, rel_path: str):
         w = 960
     w = max(200, min(w, 2560))
 
+    # Меньше q для мелких ширин — меньше байт на карточках и мобильном LCP без явного ?q=
+    if w <= 640:
+        default_q = 74
+    elif w <= 960:
+        default_q = 78
+    else:
+        default_q = 82
     try:
-        q = int(request.GET.get("q", "82"))
+        q = int(request.GET.get("q", str(default_q)))
     except ValueError:
-        q = 82
+        q = default_q
     q = max(60, min(q, 95))
 
     fmt = (request.GET.get("fmt") or "webp").lower()

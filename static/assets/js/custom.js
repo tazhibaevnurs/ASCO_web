@@ -251,6 +251,9 @@ $(function () {
 
     // Слайдеры, range, smoothproducts — после простоя (TBT / главный поток)
     function initHeavyWidgets() {
+    var reduceMotion =
+        typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     $(".sp-wrap").smoothproducts();
 
     $(".js-range-slider").ionRangeSlider({
@@ -288,8 +291,8 @@ $(function () {
         arrows: false,
         dots: false,
         infinite: true,
-        autoplaySpeed: 2000,
-        autoplay: true,
+        autoplaySpeed: 5000,
+        autoplay: !reduceMotion,
         responsive: [
             {
                 breakpoint: 1024,
@@ -316,8 +319,8 @@ $(function () {
         arrows: true,
         dots: false,
         infinite: true,
-        autoplaySpeed: 2000,
-        autoplay: true,
+        autoplaySpeed: 5000,
+        autoplay: !reduceMotion,
         responsive: [
             {
                 breakpoint: 1024,
@@ -344,8 +347,8 @@ $(function () {
         arrows: true,
         dots: true,
         infinite: true,
-        autoplaySpeed: 2000,
-        autoplay: true,
+        autoplaySpeed: 5000,
+        autoplay: !reduceMotion,
         responsive: [
             {
                 breakpoint: 1024,
@@ -372,10 +375,10 @@ $(function () {
         arrows: true,
         dots: false,
         infinite: true,
-        speed: 500,
+        speed: 400,
         cssEase: "linear",
-        autoplaySpeed: 2000,
-        autoplay: true,
+        autoplaySpeed: 5000,
+        autoplay: !reduceMotion,
         responsive: [
             {
                 breakpoint: 1024,

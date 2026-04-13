@@ -322,7 +322,7 @@
     <h2 class="tw-text-xl tw-font-bold tw-text-gray-900 tw-mb-6">Похожие товары</h2>
     <div class="tw-grid tw-grid-cols-2 md:tw-grid-cols-4 tw-gap-4">
         {% for p in related_products %}
-        <a href="{% url 'store:product_detail' p.slug %}" class="tw-group tw-block tw-bg-white tw-rounded-xl tw-shadow-md hover:tw-shadow-lg tw-overflow-hidden tw-transition-shadow">
+        <a href="{% url 'store:product_detail' p.slug %}" class="tw-group tw-block tw-bg-white tw-rounded-xl tw-shadow-md tw-overflow-hidden tw-transition-transform tw-duration-300 hover:-tw-translate-y-0.5">
             <div class="tw-aspect-square tw-bg-gray-100 tw-overflow-hidden">
                 {% if p.image %}
                 <img src="{% media_fit_url p.image 400 'webp' %}" srcset="{% media_fit_srcset p.image '200,400,600' 'webp' %}" sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 22vw" alt="{{ p.name }}" width="400" height="400" class="tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform" loading="lazy" decoding="async" />
