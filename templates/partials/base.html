@@ -9,6 +9,7 @@
         <meta name="keywords" content="{% block meta_keywords %}asco, asco.kg, бытовая техника Бишкек, техника Бишкек, магазин бытовой техники Кыргызстан, купить бытовую технику Бишкек, холодильник Бишкек, стиральная машина Бишкек, посудомоечная машина Бишкек, кондиционер Бишкек{% endblock %}" />
         <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}" />
         <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}" />
+        {% block extra_head %}{% endblock %}
         <meta property="og:type" content="{% block og_type %}website{% endblock %}" />
         <meta property="og:site_name" content="ASCO.KG" />
         <meta property="og:title" content="{% block og_title %}{% block page_title %}ASCO.KG - бытовая техника в Бишкеке{% endblock %}{% endblock %}" />
@@ -21,20 +22,14 @@
         <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'assets/img/asco_logo_black.svg' %}{% endblock %}" />
         <link rel="icon" href="{% static 'assets/img/favicon-v3.svg' %}" type="image/svg+xml" />
         <link rel="shortcut icon" href="{% static 'assets/img/favicon-v3.svg' %}" type="image/svg+xml" />
-        <meta name="theme-color" content="#eb332c" />
+        <meta name="theme-color" content="#c62828" />
         <title>{% block title %}ASCO.KG{% endblock %}</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
 
+        <link href="{% static 'assets/css/tw-compiled.css' %}?v=1" rel="stylesheet" />
         <link href="{% static 'assets/css/styles.css' %}?v=4" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script>
-            tailwind.config = {
-                prefix: 'tw-',
-                corePlugins: { preflight: false }
-            };
-        </script>
         <style>
             body {
                 -webkit-tap-highlight-color: transparent;
@@ -95,6 +90,38 @@
                 appearance: none;
                 -webkit-appearance: none;
                 border: none;
+            }
+            /* WCAG 2.4.7: видимый фокус с клавиатуры (перебивает сброс outline выше) */
+            button:focus-visible,
+            a:focus-visible,
+            input:focus-visible,
+            select:focus-visible,
+            textarea:focus-visible,
+            .btn:focus-visible,
+            .btn-close:focus-visible,
+            [role="button"]:focus-visible {
+                outline: 3px solid #0f2744 !important;
+                outline-offset: 2px !important;
+                box-shadow: none !important;
+            }
+            /* WCAG 1.4.3: красный бренд темнее (#EB332C ≈4.16:1 → ≥4.5:1 с белым и с фоном) */
+            .tw-bg-\[\#EB332C\] {
+                background-color: #c62828 !important;
+            }
+            .hover\:tw-bg-\[\#c12721\]:hover {
+                background-color: #9e1f1f !important;
+            }
+            .tw-text-\[\#EB332C\] {
+                color: #b71c1c !important;
+            }
+            .hover\:tw-text-\[\#EB332C\]:hover {
+                color: #b71c1c !important;
+            }
+            .tw-border-\[\#EB332C\] {
+                border-color: #c62828 !important;
+            }
+            .hover\:tw-border-\[\#EB332C\]:hover {
+                border-color: #c62828 !important;
             }
         </style>
         <style>
@@ -540,10 +567,10 @@
                                     <div class="address mt-3">
                                         <ul class="list-inline">
                                             <li class="list-inline-item">
-                                                <a href="#"><i class="fab fa-facebook"></i></a>
+                                                <a href="#" aria-label="Facebook"><i class="fab fa-facebook" aria-hidden="true"></i></a>
                                             </li>
                                             <li class="list-inline-item">
-                                                <a href="#"><i class="fab fa-twitter"></i></a>
+                                                <a href="#" aria-label="X (Twitter)"><i class="fab fa-twitter" aria-hidden="true"></i></a>
                                             </li>
                                         </ul>
                                     </div>

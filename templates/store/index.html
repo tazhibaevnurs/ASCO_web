@@ -2,6 +2,15 @@
 {% load static %}
 {% load humanize %}
 {% load wishlist_tags %}
+{% block extra_head %}
+    {% if hero_slides %}
+        {% with s=hero_slides.0 %}
+        <link rel="preload" as="image" href="{% if s.image %}{{ s.image.url }}{% else %}{% static 'assets/img/home-hero.jpg' %}{% endif %}" fetchpriority="high" />
+        {% endwith %}
+    {% else %}
+        <link rel="preload" as="image" href="{% static 'assets/img/home-hero.jpg' %}" fetchpriority="high" />
+    {% endif %}
+{% endblock %}
 {% block title %}ASCO.KG - бытовая техника в Бишкеке{% endblock %}
 {% block meta_description %}ASCO.KG - магазин бытовой техники в Бишкеке. Холодильники, стиральные и посудомоечные машины, кондиционеры, пылесосы и другая техника с доставкой.{% endblock %}
 {% block meta_keywords %}asco, asco.kg, бытовая техника Бишкек, купить технику в Бишкеке, магазин техники Кыргызстан, холодильники Бишкек, стиральные машины Бишкек, посудомоечные машины Бишкек{% endblock %}
@@ -24,9 +33,9 @@
             {% for slide in hero_slides %}
             <div class="tw-w-full tw-flex-shrink-0 tw-relative">
                 {% if slide.image %}
-                    <img src="{{ slide.image.url }}" alt="{{ slide.title }}" class="tw-w-full tw-h-full tw-object-cover" />
+                    <img src="{{ slide.image.url }}" alt="{{ slide.title }}" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" decoding="async"{% endif %} />
                 {% else %}
-                    <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ slide.title }}" class="tw-w-full tw-h-full tw-object-cover" />
+                    <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ slide.title }}" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" decoding="async"{% endif %} />
                 {% endif %}
                 <div class="tw-absolute tw-inset-0 tw-bg-black/30 tw-flex tw-items-center tw-justify-center">
                     <div class="tw-text-center tw-text-white tw-px-4">
@@ -54,9 +63,9 @@
     {% with first_slide=hero_slides.0 %}
     <div class="tw-block md:tw-hidden tw-relative tw-w-full home-hero-mobile">
         {% if first_slide.image %}
-            <img src="{{ first_slide.image.url }}" alt="{{ first_slide.title }}" class="tw-w-full tw-h-full tw-object-cover" />
+            <img src="{{ first_slide.image.url }}" alt="{{ first_slide.title }}" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" decoding="async" />
         {% else %}
-            <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ first_slide.title }}" class="tw-w-full tw-h-full tw-object-cover" />
+            <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ first_slide.title }}" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" decoding="async" />
         {% endif %}
         <div class="tw-absolute tw-inset-0 tw-bg-black/35 tw-flex tw-items-end tw-justify-center tw-pb-6 tw-px-4">
             <div class="tw-text-center tw-text-white">
@@ -71,7 +80,7 @@
     {# Нет слайдов в админке — один статичный баннер #}
     <div class="tw-hidden md:tw-block tw-relative tw-w-full home-hero-desktop">
         <div class="tw-absolute tw-inset-0">
-            <img src="{% static 'assets/img/home-hero.jpg' %}" alt="ASCO.KG" class="tw-w-full tw-h-full tw-object-cover" />
+            <img src="{% static 'assets/img/home-hero.jpg' %}" alt="ASCO.KG" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" decoding="async" />
             <div class="tw-absolute tw-inset-0 tw-bg-black/30 tw-flex tw-items-center tw-justify-center">
                 <div class="tw-text-center tw-text-white tw-px-4">
                     <h1 class="tw-text-3xl lg:tw-text-5xl tw-font-bold tw-mb-2 tw-text-white">Техника и гаджеты</h1>
@@ -82,7 +91,7 @@
         </div>
     </div>
     <div class="tw-block md:tw-hidden tw-relative tw-w-full home-hero-mobile">
-        <img src="{% static 'assets/img/home-hero.jpg' %}" alt="ASCO.KG" class="tw-w-full tw-h-full tw-object-cover" />
+        <img src="{% static 'assets/img/home-hero.jpg' %}" alt="ASCO.KG" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" decoding="async" />
         <div class="tw-absolute tw-inset-0 tw-bg-black/35 tw-flex tw-items-end tw-justify-center tw-pb-6 tw-px-4">
             <div class="tw-text-center tw-text-white">
                 <h1 class="tw-text-xl tw-font-bold tw-mb-1 tw-text-white">Техника и гаджеты</h1>

@@ -150,6 +150,9 @@ $RECYCLE.BIN/
 # Linux
 *~
 
+# Node (Tailwind build)
+node_modules/
+
 # Project specific
 *.sqlite3
 *.sqlite3-journal
