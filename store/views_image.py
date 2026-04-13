@@ -39,7 +39,7 @@ def _cache_path(rel_path: str, w: int, q: int, fmt: str) -> Path:
 
 
 @require_GET
-@cache_control(public=True, max_age=86400)
+@cache_control(public=True, max_age=31536000, immutable=True)
 def image_fit(request, rel_path: str):
     """
     GET ?w=800&q=82&fmt=webp|jpeg|png

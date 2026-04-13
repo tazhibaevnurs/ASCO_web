@@ -81,6 +81,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'django.middleware.gzip.GZipMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'ecom_prj.abuse_middleware.ApiRequestBodySizeLimitMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',

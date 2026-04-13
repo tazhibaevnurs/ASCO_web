@@ -2,9 +2,11 @@
   "name": "asco-web",
   "private": true,
   "devDependencies": {
+    "sharp": "^0.33.5",
     "tailwindcss": "^3.4.17"
   },
   "scripts": {
-    "build:css": "tailwindcss -i ./static/assets/css/tailwind-input.css -o ./static/assets/css/tw-compiled.css --minify"
+    "build:css": "tailwindcss -i ./static/assets/css/tailwind-input.css -o ./static/assets/css/tw-compiled.css --minify",
+    "optimize:images": "node scripts/optimize-static-images.cjs"
   }
 }

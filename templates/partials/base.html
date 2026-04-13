@@ -24,8 +24,11 @@
         <link rel="shortcut icon" href="{% static 'assets/img/favicon-v3.svg' %}" type="image/svg+xml" />
         <meta name="theme-color" content="#c62828" />
         <title>{% block title %}ASCO.KG{% endblock %}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
         <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
         {# Критический минимум для первого кадра: базовый размер шрифта (читаемость / tap), без layout shift у шапки #}
         <style>
@@ -35,7 +38,9 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous" />
 
         <link href="{% static 'assets/css/tw-compiled.css' %}?v=1" rel="stylesheet" />
-        <link href="{% static 'assets/css/styles.css' %}?v=5" rel="stylesheet" />
+        {# Тема и плагины — не критичны для первого кадра; после onload применяется как all #}
+        <link href="{% static 'assets/css/styles.css' %}?v=6" rel="stylesheet" media="print" onload="this.media='all'" />
+        <noscript><link href="{% static 'assets/css/styles.css' %}?v=6" rel="stylesheet" /></noscript>
         {# Иконочные шрифты — не блокируют первую отрисовку (PageSpeed «render-blocking») #}
         <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'" />
         <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" /></noscript>
@@ -491,82 +496,11 @@
             <div id="django-toasts" class="tw-fixed tw-z-[110] tw-flex tw-flex-col tw-gap-3 tw-pointer-events-none tw-p-4 max-md:tw-hidden" style="top: 1rem; right: 1rem; left: auto; bottom: auto;"></div>
             <div id="django-toasts-mobile" class="tw-fixed tw-z-[110] tw-flex tw-flex-col-reverse tw-gap-3 tw-pointer-events-none tw-p-4 tw-pb-24 md:tw-hidden" style="bottom: 0; left: 0; right: 0; top: auto;"></div>
             <script>
-            (function() {
-                var messages = [
-                    {% for message in messages %}
-                    { text: "{{ message|escapejs }}", tag: "{{ message.tags|default:'info' }}" }{% if not forloop.last %},{% endif %}
-                    {% endfor %}
-                ];
-                if (messages.length > 0) {
-                    var icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', danger: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
-                    var colors = { success: 'tw-bg-green-50 tw-border-green-200 tw-text-green-800', error: 'tw-bg-red-50 tw-border-red-200 tw-text-red-800', danger: 'tw-bg-red-50 tw-border-red-200 tw-text-red-800', warning: 'tw-bg-amber-50 tw-border-amber-200 tw-text-amber-800', info: 'tw-bg-blue-50 tw-border-blue-200 tw-text-blue-800' };
-                    var iconColors = { success: 'tw-text-green-500', error: 'tw-text-red-500', danger: 'tw-text-red-500', warning: 'tw-text-amber-500', info: 'tw-text-blue-500' };
-                    var container = document.getElementById('django-toasts');
-                    var containerMobile = document.getElementById('django-toasts-mobile');
-                    messages.forEach(function(m) {
-                        var tag = (m.tag === 'error' || m.tag === 'danger') ? 'error' : (m.tag || 'info');
-                        var icon = icons[tag] || icons.info;
-                        var color = colors[tag] || colors.info;
-                        var iconColor = iconColors[tag] || iconColors.info;
-                        var text = (m.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-                        var div = document.createElement('div');
-                        div.className = 'django-toast tw-pointer-events-auto tw-flex tw-items-start tw-gap-3 tw-p-4 tw-rounded-xl tw-shadow-lg tw-border tw-max-w-sm tw-w-full tw-bg-white ' + color;
-                        div.setAttribute('role', 'alert');
-                        div.innerHTML = '<span class="tw-flex-shrink-0 ' + iconColor + '"><i class="fas ' + icon + ' tw-text-xl"></i></span><p class="tw-flex-1 tw-m-0 tw-text-sm tw-font-medium">' + text + '</p><button type="button" class="django-toast-close tw-flex-shrink-0 tw-p-1 tw-rounded tw-text-gray-400 hover:tw-text-gray-600 tw-bg-transparent tw-border-0 tw-outline-none focus:tw-outline-none focus:tw-ring-0" aria-label="Закрыть">&times;</button>';
-                        container.appendChild(div);
-                        var divMobile = div.cloneNode(true);
-                        containerMobile.appendChild(divMobile);
-                        var closeToast = function() { [div, divMobile].forEach(function(t) { if (t.parentNode) t.parentNode.removeChild(t); }); };
-                        div.querySelector('.django-toast-close').addEventListener('click', closeToast);
-                        divMobile.querySelector('.django-toast-close').addEventListener('click', closeToast);
-                        setTimeout(closeToast, 5000);
-                    });
-                }
-                window.showToast = function(text, tag) {
-                    var icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', danger: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
-                    var colors = { success: 'tw-bg-green-50 tw-border-green-200 tw-text-green-800', error: 'tw-bg-red-50 tw-border-red-200 tw-text-red-800', danger: 'tw-bg-red-50 tw-border-red-200 tw-text-red-800', warning: 'tw-bg-amber-50 tw-border-amber-200 tw-text-amber-800', info: 'tw-bg-blue-50 tw-border-blue-200 tw-text-blue-800' };
-                    var iconColors = { success: 'tw-text-green-500', error: 'tw-text-red-500', danger: 'tw-text-red-500', warning: 'tw-text-amber-500', info: 'tw-text-blue-500' };
-                    var container = document.getElementById('django-toasts');
-                    var containerMobile = document.getElementById('django-toasts-mobile');
-                    if (!container || !containerMobile) return;
-                    tag = (tag === 'error' || tag === 'danger') ? 'error' : (tag || 'info');
-                    var icon = icons[tag] || icons.info;
-                    var color = colors[tag] || colors.info;
-                    var iconColor = iconColors[tag] || iconColors.info;
-                    var safeText = (text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-                    var div = document.createElement('div');
-                    div.className = 'django-toast tw-pointer-events-auto tw-flex tw-items-start tw-gap-3 tw-p-4 tw-rounded-xl tw-shadow-lg tw-border tw-max-w-sm tw-w-full tw-bg-white ' + color;
-                    div.setAttribute('role', 'alert');
-                    div.innerHTML = '<span class="tw-flex-shrink-0 ' + iconColor + '"><i class="fas ' + icon + ' tw-text-xl"></i></span><p class="tw-flex-1 tw-mt-0 tw-mb-0 tw-text-sm tw-font-medium">' + safeText + '</p><button type="button" class="django-toast-close tw-flex-shrink-0 tw-p-1 tw-rounded tw-text-gray-400 hover:tw-text-gray-600 tw-bg-transparent tw-border-0 tw-outline-none focus:tw-outline-none focus:tw-ring-0" aria-label="Закрыть">&times;</button>';
-                    container.appendChild(div);
-                    var divMobile = div.cloneNode(true);
-                    containerMobile.appendChild(divMobile);
-                    var closeToast = function() { [div, divMobile].forEach(function(t) { if (t.parentNode) t.parentNode.removeChild(t); }); };
-                    div.querySelector('.django-toast-close').addEventListener('click', closeToast);
-                    divMobile.querySelector('.django-toast-close').addEventListener('click', closeToast);
-                    setTimeout(closeToast, 5000);
-                };
-                document.body.addEventListener('showWishlistToast', function(e) {
-                    var d = e.detail;
-                    if (d && d.text) window.showToast(d.text, d.tag || 'success');
-                });
-                document.body.addEventListener('wishlistIds', function(e) {
-                    if (e.detail && Array.isArray(e.detail)) try { localStorage.setItem('wishlist_ids', JSON.stringify(e.detail)); } catch (err) {}
-                });
-                if (document.body.getAttribute('data-user-authenticated') !== 'true') {
-                    try {
-                        var stored = localStorage.getItem('wishlist_ids');
-                        if (stored) {
-                            var arr = JSON.parse(stored);
-                            if (Array.isArray(arr) && arr.length > 0) {
-                                var idsParam = arr.join(',');
-                                var syncUrl = document.body.getAttribute('data-sync-wishlist-url');
-                                if (syncUrl) fetch(syncUrl + '?ids=' + encodeURIComponent(idsParam), { credentials: 'same-origin' }).then(function(r) { return r.json(); }).then(function(data) { if (data.reload) location.reload(); });
-                            }
-                        }
-                    } catch (err) {}
-                }
-            })();
+            window.__DJANGO_MESSAGES__ = [
+                {% for message in messages %}
+                { text: "{{ message|escapejs }}", tag: "{{ message.tags|default:'info' }}" }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ];
             </script>
 
             {# Mini-cart popup (desktop): показывается при добавлении товара #}
@@ -643,18 +577,10 @@
             </footer>
         </div>
 
-        {# HTMX + jQuery — синхронно: инлайны ниже и обработчики ожидают их до отложенных плагинов #}
-        <script src="https://unpkg.com/htmx.org@1.9.10" crossorigin="anonymous"></script>
-        <script>
-            document.body.addEventListener('htmx:responseError', function(evt) {
-                var xhr = evt.detail.xhr;
-                var status = xhr ? xhr.status : 'unknown';
-                if (status === 403 || status === 404 || status >= 500) {
-                    console.error('[HTMX] Ошибка запроса:', { status: status, url: evt.detail.requestConfig.pathInfo.requestPath, response: xhr ? xhr.responseText : '' });
-                }
-            });
-        </script>
-        <script src="{% static 'assets/js/jquery.min.js' %}"></script>
+        {# HTMX + jQuery — defer; порядок важен; base-init.js — после jQuery #}
+        <script defer src="https://unpkg.com/htmx.org@1.9.10" crossorigin="anonymous"></script>
+        <script defer src="{% static 'assets/js/jquery.min.js' %}"></script>
+        <script defer src="{% static 'assets/js/base-init.js' %}?v=1"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous" defer></script>
         <script src="{% static 'assets/js/ion.rangeSlider.min.js' %}" defer></script>
         <script src="{% static 'assets/js/slick.js' %}" defer></script>
@@ -667,49 +593,6 @@
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
         <script src="{% static 'assets/js/function.js' %}?v=3" defer></script>
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-        
-        <script>
-            // Обработка мобильного меню
-            $(document).ready(function() {
-                // Выпадающие разделы меню - используем делегирование событий
-                $(document).on('click', '.mobile-dropdown-link', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    var $link = $(this);
-                    var $parent = $link.closest('.mobile-dropdown-item');
-                    var $submenu = $parent.find('.mobile-submenu-list');
-                    
-                    // Закрываем другие открытые подменю
-                    $('.mobile-dropdown-item').not($parent).removeClass('active').find('.mobile-submenu-list').slideUp(300);
-                    
-                    // Переключаем текущее подменю
-                    $parent.toggleClass('active');
-                    $submenu.slideToggle(300);
-                });
-                
-                // Инициализация: закрываем все подменю при загрузке
-                $('.mobile-dropdown-item').removeClass('active');
-                $('.mobile-submenu-list').hide();
-            });
-
-            // Mini-cart popup (desktop): показ при добавлении товара
-            function showMiniCart(count, total) {
-                if (window.innerWidth < 768) return;
-                $('#mini-cart-count').text(count);
-                $('#mini-cart-total').text(total);
-                $('#mini-cart-popup').css('display', 'block').attr('aria-hidden', 'false');
-                $('#mini-cart-backdrop').css('display', 'block').attr('aria-hidden', 'false');
-            }
-            function hideMiniCart() {
-                $('#mini-cart-popup').css('display', 'none').attr('aria-hidden', 'true');
-                $('#mini-cart-backdrop').css('display', 'none').attr('aria-hidden', 'true');
-            }
-            $(document).on('click', '.mini-cart-close, #mini-cart-backdrop', hideMiniCart);
-            window.addEventListener('show-mini-cart', function(e) {
-                showMiniCart(e.detail.total_cart_items, e.detail.cart_sub_total);
-            });
-        </script>
         {% block extra_js %}{% endblock %}
 
     </body>

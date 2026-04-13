@@ -15,6 +15,10 @@ class ExtraSecurityHeadersMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
+        # HTML: не кэшировать агрессивно у CDN/браузера (актуальный контент, корзина, CSRF).
+        ct = (response.get("Content-Type") or "").split(";")[0].strip().lower()
+        if ct == "text/html" and "Cache-Control" not in response:
+            response["Cache-Control"] = "no-cache, private, must-revalidate"
         # Referrer-Policy (если не задан Django SecurityMiddleware в вашей версии — дублирование безопасно)
         rp = getattr(settings, "SECURE_REFERRER_POLICY", None)
         if rp and "Referrer-Policy" not in response:

@@ -4,11 +4,14 @@
 {% load wishlist_tags %}
 {% load image_tags %}
 {% block extra_head %}
+    {# LCP: отдельный preload под мобильный и десктопный viewport — браузер запрашивает только нужный ресурс #}
     {% if hero_slides %}
         {% with s=hero_slides.0 %}
         {% if s.image %}
-        <link rel="preload" as="image" href="{% media_fit_url s.image 1400 'webp' %}" type="image/webp" fetchpriority="high" />
+        <link rel="preload" as="image" href="{% media_fit_url s.image 960 'webp' %}" type="image/webp" media="(max-width: 767px)" fetchpriority="high" />
+        <link rel="preload" as="image" href="{% media_fit_url s.image 1600 'webp' %}" type="image/webp" media="(min-width: 768px)" fetchpriority="high" />
         {% else %}
+        {# Статичный файл: preload JPEG (всегда в деплое); WebP — в <picture> ниже после npm run optimize:images #}
         <link rel="preload" as="image" href="{% static 'assets/img/home-hero.jpg' %}" fetchpriority="high" />
         {% endif %}
         {% endwith %}
@@ -40,10 +43,10 @@
                 {% if slide.image %}
                 <picture>
                     <source type="image/webp" srcset="{% media_fit_srcset slide.image '800,1200,1600' 'webp' %}" sizes="100vw" />
-                    <img src="{% media_fit_url slide.image 1600 'jpeg' %}" alt="{{ slide.title }}" width="1920" height="823" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" decoding="async"{% else %}loading="lazy" decoding="async"{% endif %} />
+                    <img src="{% media_fit_url slide.image 1600 'jpeg' %}" alt="{{ slide.title }}" width="1920" height="823" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" loading="eager" decoding="async"{% else %}loading="lazy" decoding="async"{% endif %} />
                 </picture>
                 {% else %}
-                    <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ slide.title }}" width="1920" height="823" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" decoding="async"{% else %}loading="lazy" decoding="async"{% endif %} />
+                    <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ slide.title }}" width="1920" height="823" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" loading="eager" decoding="async"{% else %}loading="lazy" decoding="async"{% endif %} />
                 {% endif %}
                 <div class="tw-absolute tw-inset-0 tw-bg-black/30 tw-flex tw-items-center tw-justify-center">
                     <div class="tw-text-center tw-text-white tw-px-4">
@@ -77,10 +80,10 @@
         {% if first_slide.image %}
         <picture>
             <source type="image/webp" srcset="{% media_fit_srcset first_slide.image '640,960,1200' 'webp' %}" sizes="100vw" />
-            <img src="{% media_fit_url first_slide.image 960 'jpeg' %}" alt="{{ first_slide.title }}" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" decoding="async" />
+            <img src="{% media_fit_url first_slide.image 960 'jpeg' %}" alt="{{ first_slide.title }}" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="async" />
         </picture>
         {% else %}
-            <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ first_slide.title }}" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" decoding="async" />
+            <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ first_slide.title }}" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="async" />
         {% endif %}
         <div class="tw-absolute tw-inset-0 tw-bg-black/35 tw-flex tw-items-end tw-justify-center tw-pb-6 tw-px-4">
             <div class="tw-text-center tw-text-white">
@@ -95,7 +98,10 @@
     {# Нет слайдов в админке — статичный баннер #}
     <div class="tw-hidden md:tw-block tw-relative tw-w-full home-hero-desktop">
         <div class="tw-absolute tw-inset-0">
-            <img src="{% static 'assets/img/home-hero.jpg' %}" alt="ASCO.KG" width="1920" height="823" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" decoding="async" />
+            <picture>
+                <source type="image/webp" srcset="{% static 'assets/img/home-hero.webp' %}" />
+                <img src="{% static 'assets/img/home-hero.jpg' %}" alt="ASCO.KG" width="1920" height="823" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="async" />
+            </picture>
             <div class="tw-absolute tw-inset-0 tw-bg-black/30 tw-flex tw-items-center tw-justify-center">
                 <div class="tw-text-center tw-text-white tw-px-4">
                     <h1 class="tw-text-3xl lg:tw-text-5xl tw-font-bold tw-mb-2 tw-text-white">Техника и гаджеты</h1>
@@ -106,7 +112,10 @@
         </div>
     </div>
     <div class="tw-block md:tw-hidden tw-relative tw-w-full home-hero-mobile">
-        <img src="{% static 'assets/img/home-hero.jpg' %}" alt="ASCO.KG" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" decoding="async" />
+        <picture>
+            <source type="image/webp" srcset="{% static 'assets/img/home-hero.webp' %}" />
+            <img src="{% static 'assets/img/home-hero.jpg' %}" alt="ASCO.KG" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="async" />
+        </picture>
         <div class="tw-absolute tw-inset-0 tw-bg-black/35 tw-flex tw-items-end tw-justify-center tw-pb-6 tw-px-4">
             <div class="tw-text-center tw-text-white">
                 <h1 class="tw-text-xl tw-font-bold tw-mb-1 tw-text-white">Техника и гаджеты</h1>
