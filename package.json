@@ -9,14 +9,16 @@
     "postcss-cli": "^11.0.0",
     "postcss-import": "^16.1.0",
     "sharp": "^0.33.5",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^3.4.17",
+    "terser": "^5.36.0"
   },
   "scripts": {
     "build:css": "tailwindcss -i ./static/assets/css/tailwind-input.css -o ./static/assets/css/tw-compiled.css --minify",
     "build:theme": "postcss static/assets/css/styles.css -o static/assets/css/styles.min.css",
     "build:theme:purge": "node scripts/run-purgecss.cjs",
     "build:assets": "npm run build:css && npm run build:theme",
-    "build:assets:full": "npm run build:assets && npm run build:theme:purge",
+    "minify:js": "node scripts/minify-site-js.cjs",
+    "build:assets:full": "npm run build:assets && npm run build:theme:purge && npm run minify:js",
     "optimize:images": "node scripts/optimize-static-images.cjs"
   }
 }
