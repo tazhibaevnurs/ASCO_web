@@ -35,6 +35,12 @@ def _load_theme_jquery_plugins(path: str) -> bool:
     return True
 
 
+def _load_bootstrap_icons_css(path: str) -> bool:
+    """Bootstrap Icons только в ЛК/кабинете — −~80 KiB CSS на витрине (PSI unused CSS)."""
+    p = path or "/"
+    return p.startswith("/customer/") or p.startswith("/vendor/")
+
+
 def default(request):
     category_ = store_models.Category.objects.all()
     total_cart_items = 0
@@ -73,5 +79,6 @@ def default(request):
         "wishlist_product_ids": wishlist_product_ids,
         "category_": category_,
         "asco_load_theme_jquery_plugins": _load_theme_jquery_plugins(request.path),
+        "asco_load_bootstrap_icons": _load_bootstrap_icons_css(request.path),
         "use_minified_js": settings.USE_MINIFIED_JS,
     }
