@@ -29,8 +29,10 @@ def _safe_relpath(path: str) -> str:
     return normalized
 
 
-def _cache_path(rel_path: str, w: int, q: int, fmt: str) -> Path:
+def _cache_path(rel_path: str, w: int, q: int, fmt: str, webp_method: int | None = None) -> Path:
     key = f"{rel_path}|{w}|{q}|{fmt}"
+    if fmt == "webp" and webp_method is not None:
+        key += f"|wm{webp_method}"
     h = hashlib.sha256(key.encode("utf-8")).hexdigest()[:32]
     ext = ".webp" if fmt == "webp" else ".jpg" if fmt == "jpeg" else ".png"
     d = Path(settings.MEDIA_ROOT) / ".cache" / "fit"
@@ -76,7 +78,8 @@ def image_fit(request, rel_path: str):
     if fmt not in ("webp", "jpeg", "png"):
         fmt = "webp"
 
-    cache_file = _cache_path(rel_path, w, q, fmt)
+    webp_method = (4 if w <= 800 else 6) if fmt == "webp" else None
+    cache_file = _cache_path(rel_path, w, q, fmt, webp_method)
     if cache_file.is_file():
         data = cache_file.read_bytes()
         return _response(data, fmt)
@@ -106,12 +109,12 @@ def image_fit(request, rel_path: str):
                 im = im.convert("RGBA")
             im.save(buf, format="PNG", optimize=True)
         else:
-            # webp
+            # webp: method 4 быстрее на CPU при холодном кэше (лучше TTFB/LCP), 6 — для крупных десктопных кадров
             if im.mode == "RGBA":
-                im.save(buf, format="WEBP", quality=q, method=6)
+                im.save(buf, format="WEBP", quality=q, method=webp_method)
             else:
                 im = im.convert("RGB") if im.mode != "RGB" else im
-                im.save(buf, format="WEBP", quality=q, method=6)
+                im.save(buf, format="WEBP", quality=q, method=webp_method)
 
         data = buf.getvalue()
 

@@ -4,11 +4,11 @@
 {% load wishlist_tags %}
 {% load image_tags %}
 {% block extra_head %}
-    {# LCP: мобильный preload; q65 + 360–640w — меньше байт на узких экранах #}
+    {# LCP: preload совпадает с типичным 360w WebP @q62; мелкие ширины в srcset для Moto G и т.п. #}
     {% if hero_slides %}
         {% with s=hero_slides.0 %}
         {% if s.image %}
-        <link rel="preload" as="image" href="{% media_fit_url s.image 400 'webp' 65 %}" imagesrcset="{% media_fit_srcset s.image '360,400,480,640' 'webp' 65 %}" imagesizes="100vw" fetchpriority="high" media="(max-width: 767px)" />
+        <link rel="preload" as="image" href="{% media_fit_url s.image 360 'webp' 62 %}" imagesrcset="{% media_fit_srcset s.image '320,360,400,480,640' 'webp' 62 %}" imagesizes="100vw" fetchpriority="high" media="(max-width: 767px)" />
         <link rel="preload" as="image" href="{% media_fit_url s.image 1200 'webp' 82 %}" imagesrcset="{% media_fit_srcset s.image '800,1200,1600' 'webp' 82 %}" imagesizes="100vw" fetchpriority="high" media="(min-width: 768px)" />
         {% else %}
         <link rel="preload" as="image" href="{% static 'assets/img/home-hero.webp' %}" type="image/webp" fetchpriority="high" />
@@ -24,7 +24,8 @@
 {% block content %}
 <style>
     .home-hero-desktop { aspect-ratio: 21/9; min-height: 120px; }
-    .home-hero-mobile { aspect-ratio: 1/1; min-height: 200px; }
+    /* Квадрат под LCP: фиксируем соотношение до загрузки картинки (CLS). Плейсхолдер — нейтральный серый. */
+    .home-hero-mobile { aspect-ratio: 1/1; min-height: 200px; width: 100%; background-color: #ececec; contain: layout; }
     .bento-tile { transition: transform 0.3s ease; }
     .bento-tile:hover { transform: scale(1.03); }
     .home-product-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.5rem; }
@@ -41,8 +42,8 @@
     <div class="tw-block md:tw-hidden tw-relative tw-w-full home-hero-mobile">
         {% if first_slide.image %}
         <picture>
-            <source type="image/webp" srcset="{% media_fit_srcset first_slide.image '360,400,480,640' 'webp' 65 %}" sizes="100vw" />
-            <img src="{% media_fit_url first_slide.image 400 'jpeg' 65 %}" alt="{{ first_slide.title }}" width="400" height="400" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="sync" />
+            <source type="image/webp" srcset="{% media_fit_srcset first_slide.image '320,360,400,480,640' 'webp' 62 %}" sizes="100vw" />
+            <img src="{% media_fit_url first_slide.image 360 'jpeg' 62 %}" alt="{{ first_slide.title }}" width="360" height="360" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="sync" />
         </picture>
         {% else %}
             <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ first_slide.title }}" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="sync" />
