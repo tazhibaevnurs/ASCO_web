@@ -1,6 +1,7 @@
 {% extends 'partials/base.html' %}
 {% load static %}
 {% load humanize %}
+{% load image_tags %}
 {% block content %}
 <style>
 	.add_to_cart:focus, .btn:focus { outline: none !important; box-shadow: none !important; border: none !important; }
@@ -34,7 +35,7 @@
 								<div class="tw-flex tw-gap-3 tw-flex-shrink-0">
 									<div class="tw-w-20 tw-h-20 sm:tw-w-24 sm:tw-h-24 tw-rounded-xl tw-overflow-hidden tw-bg-gray-100 tw-flex-shrink-0">
 										{% if item.product.image %}
-											<img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="tw-w-full tw-h-full tw-object-cover" />
+											<img src="{% media_fit_url item.product.image 192 'webp' %}" alt="{{ item.product.name }}" class="tw-w-full tw-h-full tw-object-cover" loading="lazy" decoding="async" />
 										{% else %}
 											<div class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-text-gray-400"><i class="fas fa-image tw-text-2xl"></i></div>
 										{% endif %}

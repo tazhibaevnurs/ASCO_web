@@ -1,6 +1,7 @@
 {% extends 'partials/base.html' %}
 {% load static %}
 {% load humanize %}
+{% load image_tags %}
 {% block content %}
 <style>
 	.shop-product-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -27,7 +28,7 @@
 						<div class="tw-relative tw-aspect-square tw-bg-gray-100 tw-overflow-hidden tw-flex-shrink-0">
 							<a href="{% url 'store:product_detail' w.product.slug %}" class="tw-block tw-absolute tw-inset-0 tw-z-0">
 								{% if w.product.image %}
-									<img src="{{ w.product.image.url }}" alt="{{ w.product.name }}" class="tw-absolute tw-inset-0 tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-300" />
+									<img src="{% media_fit_url w.product.image 600 'webp' %}" alt="{{ w.product.name }}" class="tw-absolute tw-inset-0 tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-300" loading="lazy" decoding="async" />
 								{% else %}
 									<div class="tw-absolute tw-inset-0 tw-flex tw-items-center tw-justify-center tw-text-gray-400">
 										<i class="fas fa-image tw-text-4xl md:tw-text-5xl"></i>

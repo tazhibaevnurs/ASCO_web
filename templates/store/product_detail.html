@@ -3,6 +3,7 @@
 {% load humanize %}
 {% load wishlist_tags %}
 {% load sanitize_html %}
+{% load image_tags %}
 {% block title %}{{ product.name }} - купить в Бишкеке | ASCO.KG{% endblock %}
 {% block meta_description %}{{ product.name }} в магазине ASCO.KG. Цена, характеристики, фото и доставка по Бишкеку и Кыргызстану.{% endblock %}
 {% block meta_keywords %}{{ product.name }}, купить {{ product.name }} Бишкек, asco, бытовая техника Бишкек, техника Кыргызстан{% endblock %}
@@ -69,15 +70,17 @@
                     </div>
                     <div class="tw-flex tw-gap-2 tw-overflow-x-auto tw-pb-1">
                         {% if product.image %}
-                        <button type="button" @click="setImage('{{ product.image.url }}')" class="tw-flex-shrink-0 tw-w-16 tw-h-16 tw-rounded-lg tw-overflow-hidden tw-border-2 tw-transition-colors product-gallery-thumb"
-                                :class="currentImageUrl === '{{ product.image.url }}' ? 'tw-border-[#EB332C]' : 'tw-border-transparent hover:tw-border-gray-300'">
-                            <img src="{{ product.image.url }}" alt="" class="tw-w-full tw-h-full tw-object-cover" />
+                        {% media_fit_url product.image 1200 'webp' as product_main_fit %}
+                        <button type="button" @click="setImage('{{ product_main_fit|escapejs }}')" class="tw-flex-shrink-0 tw-w-16 tw-h-16 tw-rounded-lg tw-overflow-hidden tw-border-2 tw-transition-colors product-gallery-thumb"
+                                :class="currentImageUrl === '{{ product_main_fit|escapejs }}' ? 'tw-border-[#EB332C]' : 'tw-border-transparent hover:tw-border-gray-300'">
+                            <img src="{% media_fit_url product.image 256 'webp' %}" alt="" class="tw-w-full tw-h-full tw-object-cover" loading="lazy" decoding="async" />
                         </button>
                         {% endif %}
                         {% for image in product.gallery %}
-                        <button type="button" @click="setImage('{{ image.image.url }}')" class="tw-flex-shrink-0 tw-w-16 tw-h-16 tw-rounded-lg tw-overflow-hidden tw-border-2 tw-transition-colors product-gallery-thumb"
-                                :class="currentImageUrl === '{{ image.image.url }}' ? 'tw-border-[#EB332C]' : 'tw-border-transparent hover:tw-border-gray-300'">
-                            <img src="{{ image.image.url }}" alt="" class="tw-w-full tw-h-full tw-object-cover" />
+                        {% media_fit_url image.image 1200 'webp' as gallery_fit %}
+                        <button type="button" @click="setImage('{{ gallery_fit|escapejs }}')" class="tw-flex-shrink-0 tw-w-16 tw-h-16 tw-rounded-lg tw-overflow-hidden tw-border-2 tw-transition-colors product-gallery-thumb"
+                                :class="currentImageUrl === '{{ gallery_fit|escapejs }}' ? 'tw-border-[#EB332C]' : 'tw-border-transparent hover:tw-border-gray-300'">
+                            <img src="{% media_fit_url image.image 256 'webp' %}" alt="" class="tw-w-full tw-h-full tw-object-cover" loading="lazy" decoding="async" />
                         </button>
                         {% endfor %}
                     </div>
@@ -318,7 +321,7 @@
         <a href="{% url 'store:product_detail' p.slug %}" class="tw-group tw-block tw-bg-white tw-rounded-xl tw-shadow-md hover:tw-shadow-lg tw-overflow-hidden tw-transition-shadow">
             <div class="tw-aspect-square tw-bg-gray-100 tw-overflow-hidden">
                 {% if p.image %}
-                <img src="{{ p.image.url }}" alt="{{ p.name }}" class="tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform" />
+                <img src="{% media_fit_url p.image 600 'webp' %}" alt="{{ p.name }}" class="tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform" loading="lazy" decoding="async" />
                 {% else %}
                 <div class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-text-gray-400"><i class="fas fa-image tw-text-4xl"></i></div>
                 {% endif %}
@@ -336,8 +339,8 @@
 
 <script>
 window.__productImageUrls = [];
-{% if product.image %}window.__productImageUrls.push("{{ product.image.url|escapejs }}");{% endif %}
-{% for image in product.gallery %}window.__productImageUrls.push("{{ image.image.url|escapejs }}");{% endfor %}
+{% if product.image %}{% media_fit_url product.image 1200 'webp' as _u0 %}window.__productImageUrls.push("{{ _u0|escapejs }}");{% endif %}
+{% for image in product.gallery %}{% media_fit_url image.image 1200 'webp' as _ug %}window.__productImageUrls.push("{{ _ug|escapejs }}");{% endfor %}
 </script>
 <script>
 document.addEventListener('alpine:init', function() {

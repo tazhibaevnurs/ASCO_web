@@ -2,10 +2,15 @@
 {% load static %}
 {% load humanize %}
 {% load wishlist_tags %}
+{% load image_tags %}
 {% block extra_head %}
     {% if hero_slides %}
         {% with s=hero_slides.0 %}
-        <link rel="preload" as="image" href="{% if s.image %}{{ s.image.url }}{% else %}{% static 'assets/img/home-hero.jpg' %}{% endif %}" fetchpriority="high" />
+        {% if s.image %}
+        <link rel="preload" as="image" href="{% media_fit_url s.image 1400 'webp' %}" type="image/webp" fetchpriority="high" />
+        {% else %}
+        <link rel="preload" as="image" href="{% static 'assets/img/home-hero.jpg' %}" fetchpriority="high" />
+        {% endif %}
         {% endwith %}
     {% else %}
         <link rel="preload" as="image" href="{% static 'assets/img/home-hero.jpg' %}" fetchpriority="high" />
@@ -33,9 +38,12 @@
             {% for slide in hero_slides %}
             <div class="tw-w-full tw-flex-shrink-0 tw-relative">
                 {% if slide.image %}
-                    <img src="{{ slide.image.url }}" alt="{{ slide.title }}" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" decoding="async"{% endif %} />
+                <picture>
+                    <source type="image/webp" srcset="{% media_fit_srcset slide.image '800,1200,1600' 'webp' %}" sizes="100vw" />
+                    <img src="{% media_fit_url slide.image 1600 'jpeg' %}" alt="{{ slide.title }}" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" decoding="async"{% else %}loading="lazy" decoding="async"{% endif %} />
+                </picture>
                 {% else %}
-                    <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ slide.title }}" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" decoding="async"{% endif %} />
+                    <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ slide.title }}" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" decoding="async"{% else %}loading="lazy" decoding="async"{% endif %} />
                 {% endif %}
                 <div class="tw-absolute tw-inset-0 tw-bg-black/30 tw-flex tw-items-center tw-justify-center">
                     <div class="tw-text-center tw-text-white tw-px-4">
@@ -63,7 +71,10 @@
     {% with first_slide=hero_slides.0 %}
     <div class="tw-block md:tw-hidden tw-relative tw-w-full home-hero-mobile">
         {% if first_slide.image %}
-            <img src="{{ first_slide.image.url }}" alt="{{ first_slide.title }}" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" decoding="async" />
+        <picture>
+            <source type="image/webp" srcset="{% media_fit_srcset first_slide.image '640,960,1200' 'webp' %}" sizes="100vw" />
+            <img src="{% media_fit_url first_slide.image 960 'jpeg' %}" alt="{{ first_slide.title }}" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" decoding="async" />
+        </picture>
         {% else %}
             <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ first_slide.title }}" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" decoding="async" />
         {% endif %}
@@ -111,7 +122,7 @@
             <a href="{% url 'store:category' c.slug %}" class="bento-tile tw-group tw-block tw-rounded-2xl tw-overflow-hidden tw-shadow-md hover:tw-shadow-xl tw-bg-gray-100 {% if forloop.counter0 == 0 %}tw-col-span-2 tw-row-span-2{% elif forloop.counter0 == 3 or forloop.counter0 == 6 %}tw-col-span-2{% endif %}">
                 <div class="tw-relative tw-w-full tw-h-full tw-min-h-[120px] md:tw-min-h-[140px] {% if forloop.counter0 == 0 %}tw-min-h-[220px] md:tw-min-h-[280px]{% endif %}">
                     {% if c.image %}
-                        <img src="{{ c.image.url }}" alt="{{ c.title }}" class="tw-absolute tw-inset-0 tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-300" />
+                        <img src="{% media_fit_url c.image 900 'webp' %}" alt="{{ c.title }}" class="tw-absolute tw-inset-0 tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-300" loading="lazy" decoding="async" sizes="(max-width: 768px) 50vw, 33vw" />
                     {% else %}
                         <div class="tw-absolute tw-inset-0 tw-bg-gradient-to-br tw-from-[#1e3a5f] tw-to-[#0f2744] tw-flex tw-items-center tw-justify-center">
                             <i class="fas fa-th-large tw-text-white/80 tw-text-4xl md:tw-text-5xl"></i>
@@ -139,7 +150,7 @@
                     <div class="tw-relative tw-aspect-square tw-bg-gray-100 tw-overflow-hidden">
                         <a href="{% url 'store:product_detail' p.slug %}" class="tw-block tw-absolute tw-inset-0 tw-z-0">
                             {% if p.image %}
-                                <img src="{{ p.image.url }}" alt="{{ p.name }}" class="tw-absolute tw-inset-0 tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-300" />
+                                <img src="{% media_fit_url p.image 600 'webp' %}" alt="{{ p.name }}" class="tw-absolute tw-inset-0 tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-300" loading="lazy" decoding="async" sizes="(max-width: 768px) 50vw, 25vw" />
                             {% else %}
                                 <div class="tw-absolute tw-inset-0 tw-flex tw-items-center tw-justify-center tw-text-gray-400">
                                     <i class="fas fa-image tw-text-5xl"></i>

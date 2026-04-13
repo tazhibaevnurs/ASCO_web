@@ -1,9 +1,15 @@
 from django.urls import path
 from store import views
+from store import views_image
 
 app_name = "store"
 
 urlpatterns = [
+    path(
+        "img-fit/<path:rel_path>",
+        views_image.image_fit,
+        name="image_fit",
+    ),
     path("", views.index, name="index"),
     path("shop/", views.shop, name="shop"),
     path("search/", views.shop, name="search"),
