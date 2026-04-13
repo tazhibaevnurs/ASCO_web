@@ -31,6 +31,9 @@ if not SECRET_KEY:
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DEBUG', default=False)
+# Минифицированные custom.min.js и т.д. в шаблонах (PSI «Minify JavaScript»). По умолчанию как у production: не DEBUG.
+# Можно задать USE_MINIFIED_JS=true даже при DEBUG=true для проверки бандлов.
+USE_MINIFIED_JS = env.bool('USE_MINIFIED_JS', default=not DEBUG)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['asco.kg', 'www.asco.kg'])
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=['https://asco.kg', 'https://www.asco.kg'])

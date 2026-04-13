@@ -4,11 +4,11 @@
 {% load wishlist_tags %}
 {% load image_tags %}
 {% block extra_head %}
-    {# LCP: мобильный preload первым; q68 + 400–640w — чуть легче для цели LCP около 3.5s #}
+    {# LCP: мобильный preload; q65 + 360–640w — меньше байт на узких экранах #}
     {% if hero_slides %}
         {% with s=hero_slides.0 %}
         {% if s.image %}
-        <link rel="preload" as="image" href="{% media_fit_url s.image 480 'webp' 68 %}" imagesrcset="{% media_fit_srcset s.image '400,480,640' 'webp' 68 %}" imagesizes="100vw" fetchpriority="high" media="(max-width: 767px)" />
+        <link rel="preload" as="image" href="{% media_fit_url s.image 400 'webp' 65 %}" imagesrcset="{% media_fit_srcset s.image '360,400,480,640' 'webp' 65 %}" imagesizes="100vw" fetchpriority="high" media="(max-width: 767px)" />
         <link rel="preload" as="image" href="{% media_fit_url s.image 1200 'webp' 82 %}" imagesrcset="{% media_fit_srcset s.image '800,1200,1600' 'webp' 82 %}" imagesizes="100vw" fetchpriority="high" media="(min-width: 768px)" />
         {% else %}
         <link rel="preload" as="image" href="{% static 'assets/img/home-hero.webp' %}" type="image/webp" fetchpriority="high" />
@@ -41,8 +41,8 @@
     <div class="tw-block md:tw-hidden tw-relative tw-w-full home-hero-mobile">
         {% if first_slide.image %}
         <picture>
-            <source type="image/webp" srcset="{% media_fit_srcset first_slide.image '400,480,640' 'webp' 68 %}" sizes="100vw" />
-            <img src="{% media_fit_url first_slide.image 480 'jpeg' 68 %}" alt="{{ first_slide.title }}" width="480" height="480" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="sync" />
+            <source type="image/webp" srcset="{% media_fit_srcset first_slide.image '360,400,480,640' 'webp' 65 %}" sizes="100vw" />
+            <img src="{% media_fit_url first_slide.image 400 'jpeg' 65 %}" alt="{{ first_slide.title }}" width="400" height="400" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="sync" />
         </picture>
         {% else %}
             <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ first_slide.title }}" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="sync" />

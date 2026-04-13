@@ -1,6 +1,7 @@
 from store import models as store_models
 from customer import models as customer_models
 from decimal import Decimal
+from django.conf import settings
 from django.db.models import Sum
 
 WISHLIST_SESSION_KEY = "wishlist_product_ids"
@@ -72,4 +73,5 @@ def default(request):
         "wishlist_product_ids": wishlist_product_ids,
         "category_": category_,
         "asco_load_theme_jquery_plugins": _load_theme_jquery_plugins(request.path),
+        "use_minified_js": settings.USE_MINIFIED_JS,
     }

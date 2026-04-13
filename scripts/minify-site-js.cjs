@@ -27,6 +27,7 @@ async function run() {
             compress: {
                 passes: 2,
                 drop_debugger: true,
+                drop_console: true,
             },
             mangle: true,
             format: { comments: false },
