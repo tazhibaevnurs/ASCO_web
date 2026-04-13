@@ -43,6 +43,8 @@
                             x-ref="mainImage"
                             :src="currentImageUrl"
                             alt="{{ product.name }}"
+                            width="800"
+                            height="800"
                             class="tw-w-full tw-h-full tw-object-cover"
                             x-show="currentImageUrl"
                         />
@@ -73,14 +75,14 @@
                         {% media_fit_url product.image 1200 'webp' as product_main_fit %}
                         <button type="button" @click="setImage('{{ product_main_fit|escapejs }}')" class="tw-flex-shrink-0 tw-w-16 tw-h-16 tw-rounded-lg tw-overflow-hidden tw-border-2 tw-transition-colors product-gallery-thumb"
                                 :class="currentImageUrl === '{{ product_main_fit|escapejs }}' ? 'tw-border-[#EB332C]' : 'tw-border-transparent hover:tw-border-gray-300'">
-                            <img src="{% media_fit_url product.image 256 'webp' %}" alt="" class="tw-w-full tw-h-full tw-object-cover" loading="lazy" decoding="async" />
+                            <img src="{% media_fit_url product.image 256 'webp' %}" alt="" width="256" height="256" class="tw-w-full tw-h-full tw-object-cover" loading="lazy" decoding="async" />
                         </button>
                         {% endif %}
                         {% for image in product.gallery %}
                         {% media_fit_url image.image 1200 'webp' as gallery_fit %}
                         <button type="button" @click="setImage('{{ gallery_fit|escapejs }}')" class="tw-flex-shrink-0 tw-w-16 tw-h-16 tw-rounded-lg tw-overflow-hidden tw-border-2 tw-transition-colors product-gallery-thumb"
                                 :class="currentImageUrl === '{{ gallery_fit|escapejs }}' ? 'tw-border-[#EB332C]' : 'tw-border-transparent hover:tw-border-gray-300'">
-                            <img src="{% media_fit_url image.image 256 'webp' %}" alt="" class="tw-w-full tw-h-full tw-object-cover" loading="lazy" decoding="async" />
+                            <img src="{% media_fit_url image.image 256 'webp' %}" alt="" width="256" height="256" class="tw-w-full tw-h-full tw-object-cover" loading="lazy" decoding="async" />
                         </button>
                         {% endfor %}
                     </div>
@@ -88,7 +90,7 @@
                 {# Мобилка: одно фото + кнопки переключения, по клику на фото — модалка #}
                 <div class="tw-block md:tw-hidden tw-relative tw-rounded-2xl tw-overflow-hidden tw-bg-gray-100" style="aspect-ratio: 1;">
                     <div class="tw-absolute tw-inset-0 tw-flex tw-items-center tw-justify-center" @click="allImageUrls.length && openModal(currentIndex)" role="button" tabindex="0">
-                        <img :src="currentImageUrl" alt="{{ product.name }}" class="tw-w-full tw-h-full tw-object-cover" x-show="currentImageUrl" />
+                        <img :src="currentImageUrl" alt="{{ product.name }}" width="800" height="800" class="tw-w-full tw-h-full tw-object-cover" x-show="currentImageUrl" />
                         <div x-show="!currentImageUrl" class="tw-absolute tw-inset-0 tw-flex tw-items-center tw-justify-center tw-text-gray-400">
                             <i class="fas fa-image tw-text-5xl"></i>
                         </div>
@@ -218,6 +220,8 @@
         <div class="tw-relative tw-max-w-4xl tw-max-h-[85vh] tw-w-full tw-flex tw-items-center tw-justify-center">
             <img :src="allImageUrls[currentIndex]"
                  :alt="'{{ product.name|escapejs }} — фото ' + (currentIndex + 1)"
+                 width="1200"
+                 height="1200"
                  class="tw-max-w-full tw-max-h-[85vh] tw-w-auto tw-h-auto tw-object-contain tw-select-none"
                  @click.stop />
         </div>
@@ -321,7 +325,7 @@
         <a href="{% url 'store:product_detail' p.slug %}" class="tw-group tw-block tw-bg-white tw-rounded-xl tw-shadow-md hover:tw-shadow-lg tw-overflow-hidden tw-transition-shadow">
             <div class="tw-aspect-square tw-bg-gray-100 tw-overflow-hidden">
                 {% if p.image %}
-                <img src="{% media_fit_url p.image 600 'webp' %}" alt="{{ p.name }}" class="tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform" loading="lazy" decoding="async" />
+                <img src="{% media_fit_url p.image 600 'webp' %}" alt="{{ p.name }}" width="600" height="600" class="tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform" loading="lazy" decoding="async" />
                 {% else %}
                 <div class="tw-w-full tw-h-full tw-flex tw-items-center tw-justify-center tw-text-gray-400"><i class="fas fa-image tw-text-4xl"></i></div>
                 {% endif %}

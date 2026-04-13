@@ -249,10 +249,10 @@ $(function () {
             $("#navigation").navigation();
         });
 
-    // Product Preview
+    // Слайдеры, range, smoothproducts — после простоя (TBT / главный поток)
+    function initHeavyWidgets() {
     $(".sp-wrap").smoothproducts();
 
-    // Range Slider Script
     $(".js-range-slider").ionRangeSlider({
         type: "double",
         min: 0,
@@ -262,10 +262,8 @@ $(function () {
         grid: true,
     });
 
-    // Tooltip
     $('[data-toggle="tooltip"]').tooltip();
 
-    // Bottom To Top Scroll Script
     $(window).on("scroll", function () {
         var height = $(window).scrollTop();
         if (height > 100) {
@@ -275,7 +273,6 @@ $(function () {
         }
     });
 
-    // Script For Fix Header on Scroll
     $(window).on("scroll", function () {
         var scroll = $(window).scrollTop();
 
@@ -286,7 +283,6 @@ $(function () {
         }
     });
 
-    // Brand-slide
     $(".smart-brand").slick({
         slidesToShow: 6,
         arrows: false,
@@ -438,4 +434,18 @@ $(function () {
         });
     }
     inlineCSS();
+    }
+    function scheduleHeavyWidgets() {
+        var run = function () {
+            try {
+                initHeavyWidgets();
+            } catch (e) {}
+        };
+        if (typeof window.requestIdleCallback === "function") {
+            window.requestIdleCallback(run, { timeout: 2500 });
+        } else {
+            setTimeout(run, 400);
+        }
+    }
+    scheduleHeavyWidgets();
 });

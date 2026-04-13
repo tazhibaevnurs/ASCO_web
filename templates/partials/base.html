@@ -5,11 +5,12 @@
         <meta charset="utf-8" />
         <meta name="author" content="ASCO.KG" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {# LCP / hero: preload как можно раньше в head #}
+        {% block extra_head %}{% endblock %}
         <meta name="description" content="{% block meta_description %}ASCO.KG - бытовая техника в Бишкеке и по Кыргызстану. Холодильники, стиральные машины, посудомоечные машины, кондиционеры и другая техника с доставкой.{% endblock %}" />
         <meta name="keywords" content="{% block meta_keywords %}asco, asco.kg, бытовая техника Бишкек, техника Бишкек, магазин бытовой техники Кыргызстан, купить бытовую технику Бишкек, холодильник Бишкек, стиральная машина Бишкек, посудомоечная машина Бишкек, кондиционер Бишкек{% endblock %}" />
         <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}" />
         <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}" />
-        {% block extra_head %}{% endblock %}
         <meta property="og:type" content="{% block og_type %}website{% endblock %}" />
         <meta property="og:site_name" content="ASCO.KG" />
         <meta property="og:title" content="{% block og_title %}{% block page_title %}ASCO.KG - бытовая техника в Бишкеке{% endblock %}{% endblock %}" />
@@ -30,17 +31,26 @@
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
         <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
         <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
-        {# Критический минимум для первого кадра: базовый размер шрифта (читаемость / tap), без layout shift у шапки #}
-        <style>
+        {# Критический CSS до внешних таблиц: базовая сетка (пока грузится Bootstrap), шапка, контейнеры #}
+        <style id="asco-critical-css">
             html { font-size: 16px; }
-            body { margin: 0; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
+            body { margin: 0; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; background: #fff; }
+            #main-wrapper { min-height: 100vh; }
+            .container, .container-fluid { width: 100%; padding-right: 12px; padding-left: 12px; margin-left: auto; margin-right: auto; box-sizing: border-box; }
+            .container { max-width: 1320px; }
+            .row { --bs-gutter-x: 1.5rem; display: flex; flex-wrap: wrap; margin-left: calc(var(--bs-gutter-x) * -0.5); margin-right: calc(var(--bs-gutter-x) * -0.5); }
+            .col-12, .col-xl-12, .col-lg-12, .col-md-12, .col-sm-12 { flex: 0 0 auto; width: 100%; padding-left: calc(var(--bs-gutter-x) * 0.5); padding-right: calc(var(--bs-gutter-x) * 0.5); box-sizing: border-box; }
+            .navigation { min-height: 80px; }
+            .header { position: relative; z-index: 50; }
         </style>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous" />
+        {# Bootstrap: не блокирует первую отрисовку (есть критический сеточный минимум выше) #}
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous" media="print" onload="this.media='all'" />
+        <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous" /></noscript>
 
-        <link href="{% static 'assets/css/tw-compiled.css' %}?v=1" rel="stylesheet" />
-        {# Тема и плагины — не критичны для первого кадра; после onload применяется как all #}
-        <link href="{% static 'assets/css/styles.css' %}?v=6" rel="stylesheet" media="print" onload="this.media='all'" />
-        <noscript><link href="{% static 'assets/css/styles.css' %}?v=6" rel="stylesheet" /></noscript>
+        <link href="{% static 'assets/css/tw-compiled.css' %}?v=3" rel="stylesheet" />
+        {# Тема: собранный postcss (import + cssnano) — см. npm run build:theme #}
+        <link href="{% static 'assets/css/styles.min.css' %}?v=9" rel="stylesheet" media="print" onload="this.media='all'" />
+        <noscript><link href="{% static 'assets/css/styles.min.css' %}?v=9" rel="stylesheet" /></noscript>
         {# Иконочные шрифты — не блокируют первую отрисовку (PageSpeed «render-blocking») #}
         <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'" />
         <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" /></noscript>
@@ -589,10 +599,11 @@
         <script src="{% static 'assets/js/smoothproducts.js' %}" defer></script>
         <script src="{% static 'assets/js/snackbar.min.js' %}" defer></script>
         <script src="{% static 'assets/js/jQuery.style.switcher.js' %}" defer></script>
-        <script src="{% static 'assets/js/custom.js' %}" defer></script>
+        <script src="{% static 'assets/js/custom.js' %}?v=4" defer></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
         <script src="{% static 'assets/js/function.js' %}?v=3" defer></script>
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+        <script defer src="{% static 'assets/js/third-party-deferred.js' %}?v=1"></script>
         {% block extra_js %}{% endblock %}
 
     </body>

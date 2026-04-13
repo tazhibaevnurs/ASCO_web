@@ -24,12 +24,14 @@
 {% block meta_keywords %}asco, asco.kg, бытовая техника Бишкек, купить технику в Бишкеке, магазин техники Кыргызстан, холодильники Бишкек, стиральные машины Бишкек, посудомоечные машины Бишкек{% endblock %}
 {% block content %}
 <style>
-    .home-hero-desktop { aspect-ratio: 21/9; }
-    .home-hero-mobile { aspect-ratio: 1/1; }
+    .home-hero-desktop { aspect-ratio: 21/9; min-height: 120px; }
+    .home-hero-mobile { aspect-ratio: 1/1; min-height: 200px; }
     .bento-tile { transition: transform 0.3s ease; }
     .bento-tile:hover { transform: scale(1.03); }
     .home-product-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.5rem; }
     .add_to_cart:focus { outline: none !important; box-shadow: none !important; border: none !important; }
+    .home-popular-products { min-height: 280px; }
+    .home-categories-grid { min-height: 200px; }
 </style>
 
 {# ========== HERO: слайды из админки (Слайды Hero). Если пусто — один статичный баннер. ========== #}
@@ -43,10 +45,10 @@
                 {% if slide.image %}
                 <picture>
                     <source type="image/webp" srcset="{% media_fit_srcset slide.image '800,1200,1600' 'webp' %}" sizes="100vw" />
-                    <img src="{% media_fit_url slide.image 1600 'jpeg' %}" alt="{{ slide.title }}" width="1920" height="823" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" loading="eager" decoding="async"{% else %}loading="lazy" decoding="async"{% endif %} />
+                    <img src="{% media_fit_url slide.image 1600 'jpeg' %}" alt="{{ slide.title }}" width="1920" height="823" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" loading="eager" decoding="sync"{% else %}loading="lazy" decoding="async"{% endif %} />
                 </picture>
                 {% else %}
-                    <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ slide.title }}" width="1920" height="823" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" loading="eager" decoding="async"{% else %}loading="lazy" decoding="async"{% endif %} />
+                    <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ slide.title }}" width="1920" height="823" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" loading="eager" decoding="sync"{% else %}loading="lazy" decoding="async"{% endif %} />
                 {% endif %}
                 <div class="tw-absolute tw-inset-0 tw-bg-black/30 tw-flex tw-items-center tw-justify-center">
                     <div class="tw-text-center tw-text-white tw-px-4">
@@ -80,10 +82,10 @@
         {% if first_slide.image %}
         <picture>
             <source type="image/webp" srcset="{% media_fit_srcset first_slide.image '640,960,1200' 'webp' %}" sizes="100vw" />
-            <img src="{% media_fit_url first_slide.image 960 'jpeg' %}" alt="{{ first_slide.title }}" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="async" />
+            <img src="{% media_fit_url first_slide.image 960 'jpeg' %}" alt="{{ first_slide.title }}" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="sync" />
         </picture>
         {% else %}
-            <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ first_slide.title }}" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="async" />
+            <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ first_slide.title }}" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="sync" />
         {% endif %}
         <div class="tw-absolute tw-inset-0 tw-bg-black/35 tw-flex tw-items-end tw-justify-center tw-pb-6 tw-px-4">
             <div class="tw-text-center tw-text-white">
@@ -100,7 +102,7 @@
         <div class="tw-absolute tw-inset-0">
             <picture>
                 <source type="image/webp" srcset="{% static 'assets/img/home-hero.webp' %}" />
-                <img src="{% static 'assets/img/home-hero.jpg' %}" alt="ASCO.KG" width="1920" height="823" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="async" />
+                <img src="{% static 'assets/img/home-hero.jpg' %}" alt="ASCO.KG" width="1920" height="823" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="sync" />
             </picture>
             <div class="tw-absolute tw-inset-0 tw-bg-black/30 tw-flex tw-items-center tw-justify-center">
                 <div class="tw-text-center tw-text-white tw-px-4">
@@ -114,7 +116,7 @@
     <div class="tw-block md:tw-hidden tw-relative tw-w-full home-hero-mobile">
         <picture>
             <source type="image/webp" srcset="{% static 'assets/img/home-hero.webp' %}" />
-            <img src="{% static 'assets/img/home-hero.jpg' %}" alt="ASCO.KG" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="async" />
+            <img src="{% static 'assets/img/home-hero.jpg' %}" alt="ASCO.KG" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="sync" />
         </picture>
         <div class="tw-absolute tw-inset-0 tw-bg-black/35 tw-flex tw-items-end tw-justify-center tw-pb-6 tw-px-4">
             <div class="tw-text-center tw-text-white">
@@ -128,7 +130,7 @@
 </section>
 
 {# ========== BENTO: популярные категории ========== #}
-<section class="tw-container tw-mx-auto tw-px-4 tw-py-10 md:tw-py-14">
+<section class="home-categories-grid tw-container tw-mx-auto tw-px-4 tw-py-10 md:tw-py-14">
     <h2 class="tw-text-2xl md:tw-text-3xl tw-font-bold tw-text-gray-900 tw-text-center tw-mb-8">Популярные категории</h2>
     <div class="tw-grid tw-grid-cols-2 md:tw-grid-cols-3 lg:tw-grid-cols-4 tw-gap-3 md:tw-gap-4 tw-grid-auto-rows-[minmax(120px,1fr)] md:tw-grid-auto-rows-[minmax(140px,1fr)]">
         {% for c in categories %}
@@ -154,7 +156,7 @@
 </section>
 
 {# ========== Популярные товары (оставляем блок как на витрине) ========== #}
-<section class="tw-bg-gray-50 tw-py-10 md:tw-py-14">
+<section class="home-popular-products tw-bg-gray-50 tw-py-10 md:tw-py-14">
     <div class="tw-container tw-mx-auto tw-px-4">
         <h2 class="tw-text-2xl md:tw-text-3xl tw-font-bold tw-text-gray-900 tw-text-center tw-mb-8">Популярные товары</h2>
         <div class="tw-grid tw-grid-cols-2 md:tw-grid-cols-3 lg:tw-grid-cols-4 tw-gap-4 md:tw-gap-6">

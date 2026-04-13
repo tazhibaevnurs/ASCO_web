@@ -81,7 +81,7 @@
                                     <li>
                                         <a :href="item.url" class="tw-flex tw-items-center tw-gap-3 tw-px-4 tw-py-3 tw-text-left hover:tw-bg-gray-50 tw-transition-colors">
                                             <span class="tw-w-12 tw-h-12 tw-rounded-lg tw-bg-gray-100 tw-shrink-0 tw-overflow-hidden tw-flex tw-items-center tw-justify-center">
-                                                <img x-show="item.image" :src="item.image" :alt="item.name" class="tw-w-full tw-h-full tw-object-cover" onerror="this.style.display='none'" />
+                                                <img x-show="item.image" :src="item.image" :alt="item.name" width="48" height="48" class="tw-w-full tw-h-full tw-object-cover" onerror="this.style.display='none'" />
                                                 <i x-show="!item.image" class="fas fa-image tw-text-gray-400"></i>
                                             </span>
                                             <div class="tw-min-w-0 tw-flex-1">
@@ -201,7 +201,7 @@
                         <li>
                             <a :href="item.url" @click="closeMobileSearch()" class="tw-flex tw-items-center tw-gap-4 tw-p-4 tw-py-4 tw-rounded-xl tw-bg-gray-50 hover:tw-bg-gray-100 active:tw-bg-gray-100 tw-transition-colors tw-text-left tw-min-h-[72px]">
                                 <span class="tw-w-[60px] tw-h-[60px] tw-rounded-lg tw-bg-gray-100 tw-shrink-0 tw-overflow-hidden tw-flex tw-items-center tw-justify-center">
-                                    <img x-show="item.image" :src="item.image" :alt="item.name" class="tw-w-full tw-h-full tw-object-cover" onerror="this.style.display='none'" />
+                                    <img x-show="item.image" :src="item.image" :alt="item.name" width="48" height="48" class="tw-w-full tw-h-full tw-object-cover" onerror="this.style.display='none'" />
                                     <i x-show="!item.image" class="fas fa-image tw-text-gray-400 tw-text-xl"></i>
                                 </span>
                                 <div class="tw-min-w-0 tw-flex-1">
@@ -263,7 +263,7 @@
     >
         <div class="tw-sticky tw-top-0 tw-flex tw-items-center tw-justify-between tw-px-4 tw-py-4 tw-bg-white tw-shadow-sm">
             <a href="{% url 'store:index' %}" class="tw-flex tw-items-center" @click="drawerOpen = false">
-                <img src="{% static 'assets/img/asco_logo_black.svg' %}" alt="ASCO.KG" class="tw-h-8 tw-w-auto tw-object-contain" />
+                <img src="{% static 'assets/img/asco_logo_black.svg' %}" alt="ASCO.KG" width="180" height="40" class="tw-h-8 tw-w-auto tw-object-contain" />
             </a>
             <button type="button" @click="drawerOpen = false" class="header-icon-btn tw-w-10 tw-h-10 tw-flex tw-items-center tw-justify-center tw-rounded-lg tw-border-0 tw-text-gray-600 hover:tw-bg-gray-100 focus:tw-outline-none focus:tw-ring-0 focus:tw-shadow-none" aria-label="Закрыть меню">
                 <i class="fas fa-times tw-text-xl"></i>

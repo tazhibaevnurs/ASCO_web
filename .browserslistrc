@@ -1,0 +1,6 @@
+# Современные браузеры — меньше legacy/polyfill в инструментах сборки
+> 0.5%
+last 2 versions
+not dead
+not IE 11
+not op_mini all
