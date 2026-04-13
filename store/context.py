@@ -5,6 +5,34 @@ from django.db.models import Sum
 
 WISHLIST_SESSION_KEY = "wishlist_product_ids"
 
+# Страницы без slick/ion/smoothproducts — главная, блог, статика, ЛК (PageSpeed: −сотни KiB JS на первом экране).
+_NO_THEME_JQUERY_PREFIXES = (
+    "/blog/",
+    "/about/",
+    "/contact/",
+    "/faqs/",
+    "/privacy_policy/",
+    "/terms_conditions/",
+    "/delivery_request/",
+    "/order_tracker",
+    "/customer/",
+    "/vendor/",
+    "/auth/",
+    "/password-reset",
+    "/admin/",
+    "/api/",
+)
+
+
+def _load_theme_jquery_plugins(path: str) -> bool:
+    p = path or "/"
+    if p in ("/", ""):
+        return False
+    for prefix in _NO_THEME_JQUERY_PREFIXES:
+        if p.startswith(prefix):
+            return False
+    return True
+
 
 def default(request):
     category_ = store_models.Category.objects.all()
@@ -43,4 +71,5 @@ def default(request):
         "wishlist_count": wishlist_count,
         "wishlist_product_ids": wishlist_product_ids,
         "category_": category_,
+        "asco_load_theme_jquery_plugins": _load_theme_jquery_plugins(request.path),
     }

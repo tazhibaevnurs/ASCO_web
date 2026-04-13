@@ -1,7 +1,6 @@
 /* Плагины темы (Bootstrap + Font Awesome 6 подключаются отдельно в base.html — дубликаты убраны для −сотен KiB CSS) */
-@import url(../css/plugins/animation.css);
+/* animation.css убран — в шаблонах не используются .animated / wow (Animate.css давал сотни KiB и «некомпозитные» анимации в PSI) */
 @import url(../css/plugins/snackbar.min.css);
-@import url(../css/plugins/light-box.css);
 @import url(../css/plugins/ion.rangeSlider.min.css);
 @import url(../css/plugins/slick.css);
 @import url(../css/plugins/slick-theme.css);

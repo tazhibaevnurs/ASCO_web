@@ -249,21 +249,11 @@ $(function () {
             $("#navigation").navigation();
         });
 
-    // Слайдеры, range, smoothproducts — после простоя (TBT / главный поток)
+    // Слайдеры, range, smoothproducts — после простоя (TBT / главный поток).
+    // На главной и «лёгких» страницах скрипты slick/ion/smoothproducts не грузятся — проверяем $.fn и наличие узлов.
     function initHeavyWidgets() {
     var reduceMotion =
         typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    $(".sp-wrap").smoothproducts();
-
-    $(".js-range-slider").ionRangeSlider({
-        type: "double",
-        min: 0,
-        max: 1000,
-        from: 100,
-        to: 750,
-        grid: true,
-    });
 
     $('[data-toggle="tooltip"]').tooltip();
 
@@ -285,6 +275,25 @@ $(function () {
             $(".header").removeClass("header-fixed");
         }
     });
+
+    if (typeof $.fn.smoothproducts === "function" && $(".sp-wrap").length) {
+        $(".sp-wrap").smoothproducts();
+    }
+
+    if (typeof $.fn.ionRangeSlider === "function" && $(".js-range-slider").length) {
+        $(".js-range-slider").ionRangeSlider({
+            type: "double",
+            min: 0,
+            max: 1000,
+            from: 100,
+            to: 750,
+            grid: true,
+        });
+    }
+
+    if (typeof $.fn.slick !== "function") {
+        return;
+    }
 
     $(".smart-brand").slick({
         slidesToShow: 6,

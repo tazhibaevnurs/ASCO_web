@@ -52,8 +52,8 @@
         {# Tailwind utility: оставляем render-blocking — иначе FOUC по всем tw-* (герой, сетки). Уменьшение веса — через purge + v #}
         <link href="{% static 'assets/css/tw-compiled.css' %}?v=4" rel="stylesheet" />
         {# Тема: собранный postcss (import + cssnano) — см. npm run build:theme #}
-        <link href="{% static 'assets/css/styles.min.css' %}?v=11" rel="stylesheet" media="print" onload="this.media='all'" />
-        <noscript><link href="{% static 'assets/css/styles.min.css' %}?v=11" rel="stylesheet" /></noscript>
+        <link href="{% static 'assets/css/styles.min.css' %}?v=12" rel="stylesheet" media="print" onload="this.media='all'" />
+        <noscript><link href="{% static 'assets/css/styles.min.css' %}?v=12" rel="stylesheet" /></noscript>
         {# Иконочные шрифты — не блокируют первую отрисовку (PageSpeed «render-blocking») #}
         <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'" />
         <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" /></noscript>
@@ -595,14 +595,14 @@
         <script defer src="{% static 'assets/js/jquery.min.js' %}"></script>
         <script defer src="{% static 'assets/js/base-init.js' %}?v=1"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous" defer></script>
+        {% if asco_load_theme_jquery_plugins %}
         <script src="{% static 'assets/js/ion.rangeSlider.min.js' %}" defer></script>
         <script src="{% static 'assets/js/slick.js' %}" defer></script>
         <script src="{% static 'assets/js/slider-bg.js' %}" defer></script>
-        <script src="{% static 'assets/js/lightbox.js' %}" defer></script>
         <script src="{% static 'assets/js/smoothproducts.js' %}" defer></script>
+        {% endif %}
         <script src="{% static 'assets/js/snackbar.min.js' %}" defer></script>
-        <script src="{% static 'assets/js/jQuery.style.switcher.js' %}" defer></script>
-        <script src="{% static 'assets/js/custom.js' %}?v=5" defer></script>
+        <script src="{% static 'assets/js/custom.js' %}?v=6" defer></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
         <script src="{% static 'assets/js/function.js' %}?v=3" defer></script>
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
