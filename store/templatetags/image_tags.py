@@ -7,10 +7,11 @@ register = template.Library()
 
 
 @register.simple_tag(takes_context=False)
-def media_fit_url(image_field, width=960, fmt="webp"):
+def media_fit_url(image_field, width=960, fmt="webp", q=None):
     """
     Возвращает URL ресайза для ImageField/FileField или пустую строку.
     fmt: webp | jpeg | png
+    q: опционально качество (60–95) для image_fit — меньше байт на мобильном LCP.
     """
     if not image_field:
         return ""
@@ -26,14 +27,17 @@ def media_fit_url(image_field, width=960, fmt="webp"):
             return image_field.url
         except Exception:
             return ""
-    q = urlencode({"w": int(width), "fmt": fmt})
-    return f"{base}?{q}"
+    params = {"w": int(width), "fmt": fmt}
+    if q is not None:
+        params["q"] = int(q)
+    return f"{base}?{urlencode(params)}"
 
 
 @register.simple_tag(takes_context=False)
-def media_fit_srcset(image_field, widths, fmt="webp"):
+def media_fit_srcset(image_field, widths, fmt="webp", q=None):
     """
     srcset для responsive: widths — строка "400,800,1200" или список.
+    q: опционально одно качество для всех дескрипторов (LCP / единый профиль).
     """
     if not image_field:
         return ""
@@ -52,6 +56,8 @@ def media_fit_srcset(image_field, widths, fmt="webp"):
         parts = [int(x) for x in widths]
     items = []
     for w in parts:
-        q = urlencode({"w": w, "fmt": fmt})
-        items.append(f"{base}?{q} {w}w")
+        params = {"w": w, "fmt": fmt}
+        if q is not None:
+            params["q"] = int(q)
+        items.append(f"{base}?{urlencode(params)} {w}w")
     return ", ".join(items)

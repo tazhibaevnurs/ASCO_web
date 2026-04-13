@@ -4,19 +4,18 @@
 {% load wishlist_tags %}
 {% load image_tags %}
 {% block extra_head %}
-    {# LCP: отдельный preload под мобильный и десктопный viewport — браузер запрашивает только нужный ресурс #}
+    {# LCP: responsive preload (imagesrcset + imagesizes) + отдельные media — мобильный грузит ~640w @q75 #}
     {% if hero_slides %}
         {% with s=hero_slides.0 %}
         {% if s.image %}
-        <link rel="preload" as="image" href="{% media_fit_url s.image 960 'webp' %}" type="image/webp" media="(max-width: 767px)" fetchpriority="high" />
-        <link rel="preload" as="image" href="{% media_fit_url s.image 1600 'webp' %}" type="image/webp" media="(min-width: 768px)" fetchpriority="high" />
+        <link rel="preload" as="image" href="{% media_fit_url s.image 640 'webp' 75 %}" imagesrcset="{% media_fit_srcset s.image '480,640,960' 'webp' 75 %}" imagesizes="100vw" fetchpriority="high" media="(max-width: 767px)" />
+        <link rel="preload" as="image" href="{% media_fit_url s.image 1200 'webp' 82 %}" imagesrcset="{% media_fit_srcset s.image '800,1200,1600' 'webp' 82 %}" imagesizes="100vw" fetchpriority="high" media="(min-width: 768px)" />
         {% else %}
-        {# Статичный файл: preload JPEG (всегда в деплое); WebP — в <picture> ниже после npm run optimize:images #}
-        <link rel="preload" as="image" href="{% static 'assets/img/home-hero.jpg' %}" fetchpriority="high" />
+        <link rel="preload" as="image" href="{% static 'assets/img/home-hero.webp' %}" type="image/webp" fetchpriority="high" />
         {% endif %}
         {% endwith %}
     {% else %}
-        <link rel="preload" as="image" href="{% static 'assets/img/home-hero.jpg' %}" fetchpriority="high" />
+        <link rel="preload" as="image" href="{% static 'assets/img/home-hero.webp' %}" type="image/webp" fetchpriority="high" />
     {% endif %}
 {% endblock %}
 {% block title %}ASCO.KG - бытовая техника в Бишкеке{% endblock %}
@@ -44,8 +43,8 @@
             <div class="tw-w-full tw-flex-shrink-0 tw-relative">
                 {% if slide.image %}
                 <picture>
-                    <source type="image/webp" srcset="{% media_fit_srcset slide.image '800,1200,1600' 'webp' %}" sizes="100vw" />
-                    <img src="{% media_fit_url slide.image 1600 'jpeg' %}" alt="{{ slide.title }}" width="1920" height="823" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" loading="eager" decoding="sync"{% else %}loading="lazy" decoding="async"{% endif %} />
+                    <source type="image/webp" srcset="{% media_fit_srcset slide.image '800,1200,1600' 'webp' 82 %}" sizes="100vw" />
+                    <img src="{% media_fit_url slide.image 1600 'jpeg' 82 %}" alt="{{ slide.title }}" width="1920" height="823" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" loading="eager" decoding="sync"{% else %}loading="lazy" decoding="async"{% endif %} />
                 </picture>
                 {% else %}
                     <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ slide.title }}" width="1920" height="823" class="tw-w-full tw-h-full tw-object-cover" {% if forloop.first %}fetchpriority="high" loading="eager" decoding="sync"{% else %}loading="lazy" decoding="async"{% endif %} />
@@ -81,8 +80,8 @@
     <div class="tw-block md:tw-hidden tw-relative tw-w-full home-hero-mobile">
         {% if first_slide.image %}
         <picture>
-            <source type="image/webp" srcset="{% media_fit_srcset first_slide.image '640,960,1200' 'webp' %}" sizes="100vw" />
-            <img src="{% media_fit_url first_slide.image 960 'jpeg' %}" alt="{{ first_slide.title }}" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="sync" />
+            <source type="image/webp" srcset="{% media_fit_srcset first_slide.image '480,640,960' 'webp' 75 %}" sizes="100vw" />
+            <img src="{% media_fit_url first_slide.image 640 'jpeg' 75 %}" alt="{{ first_slide.title }}" width="720" height="720" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="sync" />
         </picture>
         {% else %}
             <img src="{% static 'assets/img/home-hero.jpg' %}" alt="{{ first_slide.title }}" width="1080" height="1080" class="tw-w-full tw-h-full tw-object-cover" fetchpriority="high" loading="eager" decoding="sync" />
@@ -137,7 +136,7 @@
             <a href="{% url 'store:category' c.slug %}" class="bento-tile tw-group tw-block tw-rounded-2xl tw-overflow-hidden tw-shadow-md hover:tw-shadow-xl tw-bg-gray-100 {% if forloop.counter0 == 0 %}tw-col-span-2 tw-row-span-2{% elif forloop.counter0 == 3 or forloop.counter0 == 6 %}tw-col-span-2{% endif %}">
                 <div class="tw-relative tw-w-full tw-h-full tw-min-h-[120px] md:tw-min-h-[140px] {% if forloop.counter0 == 0 %}tw-min-h-[220px] md:tw-min-h-[280px]{% endif %}">
                     {% if c.image %}
-                        <img src="{% media_fit_url c.image 900 'webp' %}" alt="{{ c.title }}" width="900" height="600" class="tw-absolute tw-inset-0 tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-300" loading="lazy" decoding="async" sizes="(max-width: 768px) 50vw, 33vw" />
+                        <img src="{% media_fit_url c.image 400 'webp' %}" srcset="{% media_fit_srcset c.image '300,400,600' 'webp' %}" sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw" alt="{{ c.title }}" width="600" height="400" class="tw-absolute tw-inset-0 tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-300" loading="lazy" decoding="async" />
                     {% else %}
                         <div class="tw-absolute tw-inset-0 tw-bg-gradient-to-br tw-from-[#1e3a5f] tw-to-[#0f2744] tw-flex tw-items-center tw-justify-center" aria-hidden="true">
                             <i class="fas fa-th-large tw-text-white/80 tw-text-4xl md:tw-text-5xl"></i>
@@ -165,7 +164,7 @@
                     <div class="tw-relative tw-aspect-square tw-bg-gray-100 tw-overflow-hidden">
                         <a href="{% url 'store:product_detail' p.slug %}" class="tw-block tw-absolute tw-inset-0 tw-z-0">
                             {% if p.image %}
-                                <img src="{% media_fit_url p.image 600 'webp' %}" alt="{{ p.name }}" width="600" height="600" class="tw-absolute tw-inset-0 tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-300" loading="lazy" decoding="async" sizes="(max-width: 768px) 50vw, 25vw" />
+                                <img src="{% media_fit_url p.image 400 'webp' %}" srcset="{% media_fit_srcset p.image '200,400,600' 'webp' %}" sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 22vw" alt="{{ p.name }}" width="400" height="400" class="tw-absolute tw-inset-0 tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform tw-duration-300" loading="lazy" decoding="async" />
                             {% else %}
                                 <div class="tw-absolute tw-inset-0 tw-flex tw-items-center tw-justify-center tw-text-gray-400" aria-hidden="true">
                                     <i class="fas fa-image tw-text-5xl"></i>

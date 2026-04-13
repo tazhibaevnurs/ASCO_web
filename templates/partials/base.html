@@ -27,6 +27,8 @@
         <title>{% block title %}ASCO.KG{% endblock %}</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+        <noscript><link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet" /></noscript>
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
         <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
@@ -49,8 +51,8 @@
 
         <link href="{% static 'assets/css/tw-compiled.css' %}?v=3" rel="stylesheet" />
         {# Тема: собранный postcss (import + cssnano) — см. npm run build:theme #}
-        <link href="{% static 'assets/css/styles.min.css' %}?v=9" rel="stylesheet" media="print" onload="this.media='all'" />
-        <noscript><link href="{% static 'assets/css/styles.min.css' %}?v=9" rel="stylesheet" /></noscript>
+        <link href="{% static 'assets/css/styles.min.css' %}?v=10" rel="stylesheet" media="print" onload="this.media='all'" />
+        <noscript><link href="{% static 'assets/css/styles.min.css' %}?v=10" rel="stylesheet" /></noscript>
         {# Иконочные шрифты — не блокируют первую отрисовку (PageSpeed «render-blocking») #}
         <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'" />
         <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" /></noscript>
