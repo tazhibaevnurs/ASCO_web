@@ -249,9 +249,11 @@ def vendors(request):
     return render(request, "store/vendors.html", context)
 
 def product_detail(request, slug):
-    product = store_models.Product.objects.get(status="Published", slug=slug)
+    product = get_object_or_404(store_models.Product, status="Published", slug=slug)
     product_stock_range = range(1, max(1, product.stock) + 1)
-    related_products = store_models.Product.objects.filter(category=product.category).exclude(id=product.id)
+    related_qs = store_models.Product.objects.filter(category=product.category).exclude(id=product.id)
+    # Пустой slug ломает {% url 'store:product_detail' p.slug %} → NoReverseMatch / 500
+    related_products = related_qs.exclude(slug__isnull=True).exclude(slug="")
     has_specs = any(
         v.name not in ("Color", "Size") and v.variant_items.exists()
         for v in product.variants()

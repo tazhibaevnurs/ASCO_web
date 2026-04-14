@@ -295,10 +295,10 @@
             {% for r in product.reviews.all %}
             <div class="tw-bg-white tw-rounded-xl tw-border tw-border-gray-200 tw-p-4">
                 <div class="tw-flex tw-items-start tw-justify-between tw-gap-2 tw-mb-2">
-                    <span class="tw-font-semibold tw-text-gray-900">{{ r.user.username|default:"Гость" }}</span>
-                    <div class="tw-flex tw-text-amber-500 tw-text-sm">
+                    <span class="tw-font-semibold tw-text-gray-900">{% if r.user %}{{ r.user.get_username }}{% else %}Гость{% endif %}</span>
+                    <div class="tw-flex tw-text-sm">
                         {% with stars=r.rating|default:0 %}
-                        {% for i in "12345" %}<i class="fas fa-star{% if forloop.counter > stars %}-o tw-text-gray-300{% endif %}"></i>{% endfor %}
+                        {% for i in "12345" %}<i class="fas fa-star tw-text-sm {% if forloop.counter <= stars %}tw-text-amber-500{% else %}tw-text-gray-300{% endif %}"></i>{% endfor %}
                         {% endwith %}
                     </div>
                 </div>
@@ -322,7 +322,7 @@
     <h2 class="tw-text-xl tw-font-bold tw-text-gray-900 tw-mb-6">Похожие товары</h2>
     <div class="tw-grid tw-grid-cols-2 md:tw-grid-cols-4 tw-gap-4">
         {% for p in related_products %}
-        <a href="{% url 'store:product_detail' p.slug %}" class="tw-group tw-block tw-bg-white tw-rounded-xl tw-shadow-md tw-overflow-hidden tw-transition-transform tw-duration-300 hover:-tw-translate-y-0.5">
+        <a href="{% if p.slug %}{% url 'store:product_detail' p.slug %}{% else %}#{% endif %}" class="tw-group tw-block tw-bg-white tw-rounded-xl tw-shadow-md tw-overflow-hidden tw-transition-transform tw-duration-300 hover:-tw-translate-y-0.5">
             <div class="tw-aspect-square tw-bg-gray-100 tw-overflow-hidden">
                 {% if p.image %}
                 <img src="{% media_fit_url p.image 400 'webp' %}" srcset="{% media_fit_srcset p.image '200,400,600' 'webp' %}" sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 22vw" alt="{{ p.name }}" width="400" height="400" class="tw-w-full tw-h-full tw-object-cover group-hover:tw-scale-105 tw-transition-transform" loading="lazy" decoding="async" />
@@ -343,8 +343,8 @@
 
 <script>
 window.__productImageUrls = [];
-{% if product.image %}{% media_fit_url product.image 1200 'webp' as _u0 %}window.__productImageUrls.push("{{ _u0|escapejs }}");{% endif %}
-{% for image in product.gallery %}{% media_fit_url image.image 1200 'webp' as _ug %}window.__productImageUrls.push("{{ _ug|escapejs }}");{% endfor %}
+{% if product.image %}{% media_fit_url product.image 1200 'webp' as main_fit_u %}window.__productImageUrls.push("{{ main_fit_u|escapejs }}");{% endif %}
+{% for image in product.gallery %}{% media_fit_url image.image 1200 'webp' as gal_fit_u %}window.__productImageUrls.push("{{ gal_fit_u|escapejs }}");{% endfor %}
 </script>
 <script>
 document.addEventListener('alpine:init', function() {
