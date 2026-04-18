@@ -257,11 +257,11 @@
         x-transition:leave="tw-transition tw-ease-in tw-duration-150"
         x-transition:leave-start="tw-translate-x-0"
         x-transition:leave-end="-tw-translate-x-full"
-        class="tw-fixed tw-top-0 tw-left-0 tw-z-[70] tw-w-full tw-max-w-sm tw-h-full tw-bg-white tw-shadow-xl tw-overflow-y-auto tw-md:hidden"
+        class="tw-fixed tw-top-0 tw-left-0 tw-z-[70] tw-flex tw-h-full tw-w-full tw-max-w-sm tw-flex-col tw-overflow-hidden tw-bg-white tw-shadow-xl tw-md:hidden"
         role="dialog"
         aria-label="Меню"
     >
-        <div class="tw-sticky tw-top-0 tw-flex tw-items-center tw-justify-between tw-px-4 tw-py-4 tw-bg-white tw-shadow-sm">
+        <div class="tw-relative tw-z-10 tw-flex tw-shrink-0 tw-items-center tw-justify-between tw-bg-white tw-px-4 tw-py-4 tw-shadow-sm">
             <a href="{% url 'store:index' %}" class="tw-flex tw-items-center" @click="drawerOpen = false">
                 <img src="{% static 'assets/img/asco_logo_black.svg' %}" alt="ASCO.KG" width="180" height="40" class="tw-h-8 tw-w-auto tw-object-contain" />
             </a>
@@ -269,7 +269,7 @@
                 <i class="fas fa-times tw-text-xl"></i>
             </button>
         </div>
-        <nav class="tw-px-4 tw-py-4">
+        <nav class="tw-min-h-0 tw-flex-1 tw-overflow-y-auto tw-px-4 tw-py-4">
             <ul class="tw-space-y-0 tw-divide-y tw-divide-gray-100">
                 <li><a href="/" class="tw-block tw-py-3 tw-text-gray-800 tw-font-medium hover:tw-text-[var(--brand)]" @click="drawerOpen = false">Главная</a></li>
                 <li><a href="{% url 'store:shop' %}" class="tw-block tw-py-3 tw-text-gray-800 tw-font-medium hover:tw-text-[var(--brand)]" @click="drawerOpen = false">Магазин</a></li>
@@ -303,7 +303,7 @@
             </ul>
             <div class="tw-mt-6 tw-pt-4 tw-border-t tw-border-gray-200">
                 <p class="tw-text-sm tw-text-gray-600 tw-font-medium">Контакты</p>
-                <p class="tw-text-sm tw-text-gray-600">ТК Табылга, Жибек-Жолу 150, Бишкек</p>
+                <p class="tw-text-sm tw-text-gray-600">Кыргызстан, г.&nbsp;Бишкек, ул.&nbsp;Бейшена Егимбаева, 145/1</p>
                 <p class="tw-mt-1"><a href="tel:+996700454578" class="tw-text-[var(--brand)] hover:tw-underline">+996 700 454 578</a></p>
                 <p><a href="tel:+996705640165" class="tw-text-[var(--brand)] hover:tw-underline">+996 705 640 165</a></p>
                 <p><a href="mailto:info@asco.kg" class="tw-text-[var(--brand)] hover:tw-underline">info@asco.kg</a></p>

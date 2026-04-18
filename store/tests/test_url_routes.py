@@ -262,6 +262,36 @@ class TestPublicAndStoreURLs(ProjectURLTestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r["Content-Type"], "application/json")
 
+    def test_shop_and_filter_products_respect_categories_query_jquery_style(self):
+        """
+        jQuery $.ajax(data: { categories: [id] }) сериализует как ?categories=… без [].
+        Раньше getlist('categories[]') был пуст → показывались все товары.
+        """
+        micro = store_models.Category.objects.create(title="Микроволновки test", slug="mikro-test-unique")
+        micro_p = store_models.Product.objects.create(
+            name="Только микроволновка",
+            slug="only-microwave-test-product",
+            description="<p>x</p>",
+            category=micro,
+            price=Decimal("100.00"),
+            stock=1,
+            status="Published",
+            vendor=self.manager,
+            created_by=self.manager,
+        )
+        url_shop = f"{reverse('store:shop')}?categories={micro.pk}"
+        r = self.client.get(url_shop)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, micro_p.name, html=False)
+        self.assertNotContains(r, self.product.name, html=False)
+
+        url_fp = f"{reverse('store:filter_products')}?categories={micro.pk}"
+        r2 = self.client.get(url_fp)
+        self.assertEqual(r2.status_code, 200)
+        payload = r2.json()
+        self.assertIn(micro_p.name, payload["html"])
+        self.assertNotIn(self.product.name, payload["html"])
+
     def test_add_to_cart_json(self):
         cart_id = "test-cart-uuid-1"
         self.client.session["cart_id"] = cart_id

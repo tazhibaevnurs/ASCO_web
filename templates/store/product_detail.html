@@ -128,12 +128,12 @@
                 </div>
 
                 <div class="tw-mb-4">
-                    {% if product.regular_price and product.regular_price > product.price %}
-                    <span class="tw-text-gray-500 tw-line-through tw-text-lg tw-mr-2">{{ product.regular_price|intcomma }} сом</span>
+                    {% if product.regular_price and product.price and product.regular_price > product.price %}
+                    <span class="tw-text-gray-500 tw-line-through tw-text-lg tw-mr-2">{{ product.regular_price|default_if_none:0|intcomma }} сом</span>
                     {% endif %}
-                    <span class="tw-text-2xl tw-font-bold tw-text-[#EB332C]">{{ product.price|intcomma }} сом</span>
-                    <span class="tw-ml-3 tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-text-sm tw-font-medium {% if product.stock > 0 %}tw-bg-green-100 tw-text-green-800{% else %}tw-bg-gray-200 tw-text-gray-700{% endif %}">
-                        {% if product.stock > 0 %}В наличии{% else %}Нет в наличии{% endif %}
+                    <span class="tw-text-2xl tw-font-bold tw-text-[#EB332C]">{{ product.price|default_if_none:0|intcomma }} сом</span>
+                    <span class="tw-ml-3 tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-text-sm tw-font-medium {% if product.stock and product.stock > 0 %}tw-bg-green-100 tw-text-green-800{% else %}tw-bg-gray-200 tw-text-gray-700{% endif %}">
+                        {% if product.stock and product.stock > 0 %}В наличии{% else %}Нет в наличии{% endif %}
                     </span>
                 </div>
 
@@ -172,7 +172,7 @@
                 {% endfor %}
 
                 <div class="tw-flex tw-flex-wrap tw-gap-3 tw-mb-4 tw-items-center">
-                    {% if product.stock > 0 %}
+                    {% if product.stock and product.stock > 0 %}
                     <select class="quantity tw-rounded-lg tw-border tw-border-gray-300 tw-px-4 tw-py-2.5 tw-text-gray-900 tw-bg-white" name="quantity" id="quantity">
                         {% for qty in product_stock_range %}
                         <option value="{{ qty }}">{{ qty }}</option>
@@ -236,10 +236,10 @@
     {# Мобильный sticky-блок: цена + кнопка покупки (прилипает к низу при скролле) #}
     <div class="tw-fixed tw-bottom-0 tw-left-0 tw-right-0 tw-z-40 tw-bg-white tw-border-t tw-border-gray-200 tw-shadow-[0_-4px_12px_rgba(0,0,0,0.08)] tw-px-4 tw-py-3 tw-flex tw-items-center tw-justify-between tw-gap-4 md:tw-hidden">
         <div>
-            <span class="tw-text-xl tw-font-bold tw-text-[#EB332C]">{{ product.price|intcomma }} сом</span>
-            <span class="tw-block tw-text-xs tw-text-gray-500">{% if product.stock > 0 %}В наличии{% else %}Нет в наличии{% endif %}</span>
+            <span class="tw-text-xl tw-font-bold tw-text-[#EB332C]">{{ product.price|default_if_none:0|intcomma }} сом</span>
+            <span class="tw-block tw-text-xs tw-text-gray-500">{% if product.stock and product.stock > 0 %}В наличии{% else %}Нет в наличии{% endif %}</span>
         </div>
-        {% if product.stock > 0 %}
+        {% if product.stock and product.stock > 0 %}
         <button type="button" class="add_to_cart tw-flex-1 tw-max-w-[200px] tw-py-3 tw-rounded-xl tw-bg-[#EB332C] hover:tw-bg-[#c12721] tw-text-white tw-font-semibold" data-id="{{ product.id }}">Купить</button>
         {% endif %}
     </div>
@@ -333,7 +333,7 @@
             <div class="tw-p-3">
                 <span class="tw-text-xs tw-text-gray-500">{{ p.category.title|default:"" }}</span>
                 <h3 class="tw-font-semibold tw-text-gray-900 tw-line-clamp-2 tw-text-sm">{{ p.name }}</h3>
-                <span class="tw-font-bold tw-text-[#EB332C] tw-text-sm">{{ p.price|intcomma }} сом</span>
+                <span class="tw-font-bold tw-text-[#EB332C] tw-text-sm">{{ p.price|default_if_none:0|intcomma }} сом</span>
             </div>
         </a>
         {% endfor %}

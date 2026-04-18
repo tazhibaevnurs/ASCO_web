@@ -28,6 +28,7 @@ from plugin.input_validation import (
     MAX_CART_COLOR_SIZE_LEN,
     MAX_CONTACT_FIELD,
     clamp_text,
+    multi_getlist,
     parse_bounded_decimal,
     parse_category_slug,
     parse_filter_tokens,
@@ -49,6 +50,16 @@ from plugin.tax_calculation import tax_calculation
 from plugin.exchange_rate import convert_usd_to_inr, convert_usd_to_kobo, convert_usd_to_ngn, get_usd_to_ngn_rate
 
 logger = logging.getLogger(__name__)
+
+
+def _product_stock_int(stock) -> int:
+    """Остаток: NULL в БД → 0. Иначе TypeError в max(1, product.stock) и в int(qty) > product.stock → 500."""
+    if stock is None:
+        return 0
+    try:
+        return max(0, int(stock))
+    except (TypeError, ValueError):
+        return 0
 
 
 def _apply_search(queryset, query):
@@ -110,7 +121,7 @@ def _shop_queryset(request):
     category = parse_category_slug(request.GET.get("category"))
     if category:
         qs = qs.filter(category__slug=category)
-    categories_ids = parse_int_id_list(request.GET.getlist("categories[]"))
+    categories_ids = parse_int_id_list(multi_getlist(request, "categories"))
     if categories_ids:
         qs = qs.filter(category__id__in=categories_ids)
 
@@ -190,11 +201,18 @@ def shop(request):
         g = get.copy()
         g.pop("q", None)
         filter_chips.append({"type": "q", "label": get.get("q"), "remove_url": request.path + ("?" + g.urlencode() if g else "")})
-    for cat_id in get.getlist("categories[]"):
+    for cat_id in parse_int_id_list(multi_getlist(request, "categories")):
         cat = store_models.Category.objects.filter(id=cat_id).first()
         if cat:
             g = get.copy()
-            g.setlist("categories[]", [x for x in g.getlist("categories[]") if x != cat_id])
+            for param in ("categories[]", "categories"):
+                if param not in g:
+                    continue
+                vals = [x for x in g.getlist(param) if str(x) != str(cat_id)]
+                if vals:
+                    g.setlist(param, vals)
+                else:
+                    g.pop(param, None)
             filter_chips.append({"type": "category", "label": cat.title, "remove_url": request.path + ("?" + g.urlencode() if g else "")})
     if get.get("prices"):
         p_label = next((x["value"] for x in prices if str(x["id"]) == str(get.get("prices"))), None)
@@ -249,9 +267,21 @@ def vendors(request):
     return render(request, "store/vendors.html", context)
 
 def product_detail(request, slug):
-    product = get_object_or_404(store_models.Product, status="Published", slug=slug)
-    product_stock_range = range(1, max(1, product.stock) + 1)
-    related_qs = store_models.Product.objects.filter(category=product.category).exclude(id=product.id)
+    # first() вместо get(): при дубликатах slug в БД get() даёт MultipleObjectsReturned → 500
+    product = (
+        store_models.Product.objects.filter(status="Published", slug=slug)
+        .select_related("category", "vendor")
+        .order_by("-id")
+        .first()
+    )
+    if product is None:
+        raise Http404()
+    stock_n = _product_stock_int(product.stock)
+    product_stock_range = range(1, max(1, stock_n) + 1)
+    if product.category_id:
+        related_qs = store_models.Product.objects.filter(category_id=product.category_id).exclude(id=product.id)
+    else:
+        related_qs = store_models.Product.objects.none()
     # Пустой slug ломает {% url 'store:product_detail' p.slug %} → NoReverseMatch / 500
     related_products = related_qs.exclude(slug__isnull=True).exclude(slug="")
     has_specs = any(
@@ -306,7 +336,7 @@ def add_to_cart(request):
     existing_cart_item = store_models.Cart.objects.filter(cart_id=cart_id, product=product).first()
 
     # Check if quantity that user is adding exceed item stock qty
-    if int(qty) > product.stock:
+    if int(qty) > _product_stock_int(product.stock):
         return JsonResponse({"error": "Qty exceed current stock amount"}, status=404)
 
     # If the item is not in the cart, create a new cart entry
@@ -1011,10 +1041,10 @@ def filter_products(request):
     products = store_models.Product.objects.filter(status="Published")
 
     # Get filters from the AJAX request
-    categories = parse_int_id_list(request.GET.getlist("categories[]"))
-    rating = parse_rating_list(request.GET.getlist("rating[]"))
-    sizes = parse_filter_tokens(request.GET.getlist("sizes[]"))
-    colors = parse_filter_tokens(request.GET.getlist("colors[]"))
+    categories = parse_int_id_list(multi_getlist(request, "categories"))
+    rating = parse_rating_list(multi_getlist(request, "rating"))
+    sizes = parse_filter_tokens(multi_getlist(request, "sizes"))
+    colors = parse_filter_tokens(multi_getlist(request, "colors"))
     price_order = (request.GET.get("prices") or "").strip()
     if price_order not in ("lowest", "highest", ""):
         price_order = ""

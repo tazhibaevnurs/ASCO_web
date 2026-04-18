@@ -73,7 +73,7 @@ class Category(models.Model):
         return self.title
 
     def products(self):
-        return Product.objects.filter(category=self)
+        return Product.objects.filter(category=self, status="Published")
 
 
 class HeroSlide(models.Model):

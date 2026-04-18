@@ -80,6 +80,18 @@ def parse_int_id_list(
     return out
 
 
+def multi_getlist(request, key: str) -> list[str]:
+    """
+    Параметры вида key[] (HTML-форма, HTMX) или key (jQuery $.ajax с массивом в data).
+    Если обрабатывать только categories[], при сериализации categories=… фильтр категории
+    не применяется — в каталоге остаются все товары.
+    """
+    v = request.GET.getlist(f"{key}[]")
+    if v:
+        return list(v)
+    return list(request.GET.getlist(key))
+
+
 def parse_bounded_decimal(
     raw: str | None,
     *,

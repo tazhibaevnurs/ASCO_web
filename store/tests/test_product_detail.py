@@ -94,3 +94,24 @@ class ProductDetailTests(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, "Гость", html=False)
         self.assertContains(r, "Норм", html=False)
+
+    def test_product_detail_null_stock_returns_200(self):
+        """NULL в product.stock ломал max(1, None) в представлении → TypeError / 500."""
+        from django.urls import reverse
+
+        p = store_models.Product.objects.create(
+            name="Stock NULL product",
+            slug="stock-null-test-product",
+            description="<p>x</p>",
+            category=self.cat,
+            price=Decimal("100.00"),
+            stock=None,
+            status="Published",
+            vendor=self.manager,
+            created_by=self.manager,
+        )
+        url = reverse("store:product_detail", kwargs={"slug": p.slug})
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Stock NULL product", html=False)
+        self.assertContains(r, "Нет в наличии", html=False)
