@@ -95,13 +95,15 @@
                 {% endif %}
                 <div class="card-wrap-body">
                     <h4 class="fw-bold mb-3 text-dark">Наше местоположение</h4>
-                    <iframe 
-                        src="https://www.google.com/maps?q=%D0%9A%D1%8B%D1%80%D0%B3%D1%8B%D0%B7%D1%81%D1%82%D0%B0%D0%BD%2C%20%D0%B3.%20%D0%91%D0%B8%D1%88%D0%BA%D0%B5%D0%BA%2C%20%D1%83%D0%BB.%20%D0%91%D0%B5%D0%B9%D1%88%D0%B5%D0%BD%D0%B0%20%D0%95%D0%B3%D0%B8%D0%BC%D0%B1%D0%B0%D0%B5%D0%B2%D0%B0%2C%20145%2F1&output=embed" 
-                        width="100%" 
-                        height="450" 
-                        style="border:0; border-radius: 8px;" 
-                        allowfullscreen="" 
-                        loading="lazy" 
+                    {# Карта по координатам здания (ул. Бейшена Егимбаева, 145/1 — см. 2ГИС); текстовый поиск Google давал неверную точку «145» в центре города #}
+                    <iframe
+                        title="Магазин ASCO на карте"
+                        src="https://www.google.com/maps?q=42.813826,74.647395&amp;z=17&amp;hl=ru&amp;output=embed"
+                        width="100%"
+                        height="450"
+                        style="border:0; border-radius: 8px;"
+                        allowfullscreen=""
+                        loading="lazy"
                         referrerpolicy="no-referrer-when-downgrade">
                     </iframe>
                 </div>
