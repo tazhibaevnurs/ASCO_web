@@ -1,6 +1,6 @@
 {% extends 'partials/base.html' %} {% load static %} {% load humanize %}
 {% block title %}Контакты ASCO.KG - магазин бытовой техники Бишкек{% endblock %}
-{% block meta_description %}Контакты ASCO.KG: адрес магазина в Бишкеке, телефоны и карта проезда. Свяжитесь с нами для подбора бытовой техники.{% endblock %}
+{% block meta_description %}Контакты ASCO.KG: адреса магазинов в Бишкеке (ул. Бейшена Егимбаева, 145/1 и Tommi Mall, Бутик-116), телефоны и карты проезда.{% endblock %}
 {% block meta_keywords %}контакты asco, asco бишкек адрес, телефон магазина бытовой техники бишкек, бытовая техника бишкек контакты{% endblock %}
 {% block content %}
 <div class="gray py-3">
@@ -21,95 +21,148 @@
 
 <section class="middle">
     <div class="container">
-    
+
         <div class="row justify-content-center">
-            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
-                <div class="sec_title position-relative ">
-                    <h1 class="fw-bold pt-3">Свяжитесь с нами</h1>
+            <div class="col-12">
+                <div class="sec_title position-relative">
+                    <h1 class="fw-bold pt-3 mb-4">Свяжитесь с нами</h1>
                 </div>
             </div>
         </div>
-        
-        <div class="row align-items-start justify-content-between">
-        
-            <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12">
-                <div class="card-wrap-body mb-4">
-                    <h4 class="fw-bold mb-3 text-dark">Адрес магазина</h4>
-                    <p>Кыргызстан, г.&nbsp;Бишкек, ул.&nbsp;Бейшена Егимбаева, 145/1</p>
-                </div>
-                
-                <div class="card-wrap-body mb-3">
-                    <h4 class="fw-bold mb-3 text-dark">Позвоните нам</h4>
-                    <p class="mb-0">+996 700 454 578</p>
-                    <p class="mb-0">+996 705 640 165</p>
-                    
-                </div>
-                
-                <div class="card-wrap-body mb-3">
-                    <h4 class="fw-bold mb-3 text-dark">Напишите нам</h4>
-                    <p class="lh-1 text-dark"> info@asco.kg</p>
-                    <p class="lh-1 text-dark"> help@asco.kg</p>
-                    <p class="lh-1 text-dark"> query@asco.kg</p>
-                    <p class="lh-1 text-dark"> support@asco.kg</p>
-                    <p class="lh-1 text-dark"> call@asco.kg</p>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card-wrap-body border rounded px-3 py-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                        <h5 class="ft-medium mb-0 text-dark">Адреса</h5>
+                    </div>
+                    <p class="mb-1 small">
+                        <span class="fw-bold text-dark">ул.&nbsp;Бейшена Егимбаева, 145/1</span><br>
+                        <span class="text-muted">г.&nbsp;Бишкек</span>
+                    </p>
+                    <p class="mb-0 small">
+                        <span class="fw-bold text-dark">Tommi Mall, Бутик-116</span><br>
+                        <span class="text-muted">ул.&nbsp;Аалы Токомбаева, 21/1Б</span><br>
+                        <a href="https://2gis.kg/bishkek/geo/70000001050171369/74.618587,42.819951" target="_blank" rel="noopener noreferrer">2ГИС</a>
+                    </p>
                 </div>
             </div>
-            
-            <div class="col-xl-7 col-lg-8 col-md-12 col-sm-12">
-                {% if form %}
-                <div class="card-wrap-body border rounded shadow-sm mb-4 p-3 p-md-4">
+
+            <div class="col-sm-6 col-md-4">
+                <div class="card-wrap-body border rounded px-3 py-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-phone-alt text-primary me-2"></i>
+                        <h5 class="ft-medium mb-0 text-dark">Телефоны</h5>
+                    </div>
+                    <p class="mb-1 small"><a href="tel:+996700454578">+996 700 454 578</a></p>
+                    <p class="mb-0 small"><a href="tel:+996705640165">+996 705 640 165</a></p>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-md-4">
+                <div class="card-wrap-body border rounded px-3 py-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-envelope text-primary me-2"></i>
+                        <h5 class="ft-medium mb-0 text-dark">Email</h5>
+                    </div>
+                    <p class="mb-1 small"><a href="mailto:info@asco.kg">info@asco.kg</a></p>
+                    <p class="mb-1 small"><a href="mailto:help@asco.kg">help@asco.kg</a></p>
+                    <p class="mb-1 small"><a href="mailto:query@asco.kg">query@asco.kg</a></p>
+                    <p class="mb-1 small"><a href="mailto:support@asco.kg">support@asco.kg</a></p>
+                    <p class="mb-0 small"><a href="mailto:call@asco.kg">call@asco.kg</a></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            {% if form %}
+            <div class="col-12">
+                <div class="border rounded shadow-sm p-3 p-md-4">
                     <h4 class="fw-bold mb-3 text-dark">Написать в магазин</h4>
                     <form method="post" action="{% url 'store:contact' %}">
                         {% csrf_token %}
                         {% if form.non_field_errors %}
                             <div class="alert alert-danger">{{ form.non_field_errors }}</div>
                         {% endif %}
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Имя *</label>
-                            {{ form.full_name }}
-                            {% if form.full_name.errors %}<div class="text-danger small">{{ form.full_name.errors }}</div>{% endif %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">Имя *</label>
+                                {{ form.full_name }}
+                                {% if form.full_name.errors %}<div class="text-danger small">{{ form.full_name.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">Email *</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small">Тема *</label>
+                                {{ form.subject }}
+                                {% if form.subject.errors %}<div class="text-danger small">{{ form.subject.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small">Сообщение *</label>
+                                {{ form.message }}
+                                {% if form.message.errors %}<div class="text-danger small">{{ form.message.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">Проверка *</label>
+                                {{ form.captcha }}
+                                {% if form.captcha.errors %}<div class="text-danger small">{{ form.captcha.errors }}</div>{% endif %}
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">Отправить</button>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Email *</label>
-                            {{ form.email }}
-                            {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors }}</div>{% endif %}
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Тема *</label>
-                            {{ form.subject }}
-                            {% if form.subject.errors %}<div class="text-danger small">{{ form.subject.errors }}</div>{% endif %}
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Сообщение *</label>
-                            {{ form.message }}
-                            {% if form.message.errors %}<div class="text-danger small">{{ form.message.errors }}</div>{% endif %}
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Проверка *</label>
-                            {{ form.captcha }}
-                            {% if form.captcha.errors %}<div class="text-danger small">{{ form.captcha.errors }}</div>{% endif %}
-                        </div>
-                        <button type="submit" class="btn btn-primary">Отправить</button>
                     </form>
                 </div>
-                {% endif %}
-                <div class="card-wrap-body">
-                    <h4 class="fw-bold mb-3 text-dark">Наше местоположение</h4>
-                    {# Карта по координатам здания (ул. Бейшена Егимбаева, 145/1 — см. 2ГИС); текстовый поиск Google давал неверную точку «145» в центре города #}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="mb-2">
+            <h4 class="fw-bold text-dark mb-3">Как нас найти</h4>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="border rounded overflow-hidden h-100">
+                    <div class="px-3 py-2 border-bottom bg-light">
+                        <div class="fw-bold text-dark">ул. Бейшена Егимбаева, 145/1</div>
+                    </div>
+                    {# Координаты здания: ул. Бейшена Егимбаева, 145/1 #}
                     <iframe
-                        title="Магазин ASCO на карте"
+                        title="Магазин ASCO — ул. Бейшена Егимбаева, 145/1"
                         src="https://www.google.com/maps?q=42.813826,74.647395&amp;z=17&amp;hl=ru&amp;output=embed"
                         width="100%"
-                        height="450"
-                        style="border:0; border-radius: 8px;"
+                        height="320"
+                        style="border:0; display:block;"
                         allowfullscreen=""
                         loading="lazy"
                         referrerpolicy="no-referrer-when-downgrade">
                     </iframe>
                 </div>
             </div>
-            
+            <div class="col-md-6">
+                <div class="border rounded overflow-hidden h-100">
+                    <div class="px-3 py-2 border-bottom bg-light">
+                        <div class="fw-bold text-dark">Tommi Mall, Бутик-116</div>
+                    </div>
+                    {# Координаты Tommi Mall: 74.618587, 42.819951 (2ГИС) #}
+                    <iframe
+                        title="Магазин ASCO — Tommi Mall, Бутик-116"
+                        src="https://www.google.com/maps?q=42.819951,74.618587&amp;z=17&amp;hl=ru&amp;output=embed"
+                        width="100%"
+                        height="320"
+                        style="border:0; display:block;"
+                        allowfullscreen=""
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+            </div>
         </div>
+
     </div>
 </section>
 {% endblock content %}
