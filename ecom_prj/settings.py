@@ -250,6 +250,14 @@ EMAIL_BACKEND = env(
     'EMAIL_BACKEND',
     default='django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend',
 )
+# Gmail / SMTP (пароль приложения Google, не обычный пароль аккаунта)
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_USE_SSL = env.bool('EMAIL_USE_SSL', default=False)
+EMAIL_HOST_USER = (env('EMAIL_HOST_USER', default='') or '').strip()
+EMAIL_HOST_PASSWORD = (env('EMAIL_HOST_PASSWORD', default='') or '').strip()
+EMAIL_TIMEOUT = env.int('EMAIL_TIMEOUT', default=30)
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
